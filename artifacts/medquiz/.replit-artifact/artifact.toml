@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "MedQuiz — Tibbiyot Imtihon Platformasi"
+description = "A focused medical exam preparation app for Uzbek medical students in years 1–6, with solo quizzes, multiplayer battles, progress tracking, achievements, and rankings."
+version = "1.0.0"
+id = "artifacts/medquiz"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21046
+
+[services.development]
+run = "pnpm --filter @workspace/medquiz run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/medquiz", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/medquiz/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21046"
+BASE_PATH = "/"

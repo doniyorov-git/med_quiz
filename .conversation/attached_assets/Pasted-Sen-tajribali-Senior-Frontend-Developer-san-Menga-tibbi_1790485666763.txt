@@ -1,0 +1,203 @@
+Sen tajribali Senior Frontend Developer'san. Menga tibbiyot talabalari uchun 
+imtihonga tayyorlanish ilovasini yaratib ber. Quyidagi texnik va funksional 
+talablarga qat'iy rioya qil.
+
+═══════════════════════════════════════════════════════
+🎯 LOYIHA MAQSADI
+═══════════════════════════════════════════════════════
+Tibbiyot talabalari (1-6 kurs) test savollari orqali imtihonga tayyorlanadi. 
+Ular YAKKA (solo) yoki GURUH (multiplayer) rejimida test yechishadi. 
+Kim ko'proq to'g'ri javob bersa — shu ball va reyting oladi. 
+Gamifikatsiya tizimi orqali rag'batlantiriladi.
+
+═══════════════════════════════════════════════════════
+⚙️ TEXNOLOGIYALAR (qat'iy)
+═══════════════════════════════════════════════════════
+- Framework: Remix (React) — file-based routing
+- Styling: TailwindCSS
+- Font: Poppins (Google Fonts, 400/500/600/700 weight)
+- Icons: remixicon (https://remixicon.com) — <i className="ri-xxx-line" /> 
+  formatida ishlatiladi, CDN yoki npm orqali import qilinadi
+- State: React hooks + Context (savatcha, timer, user)
+- Mock data: local JSON fayllar (backend hozircha yo'q)
+- TypeScript majburiy
+
+═══════════════════════════════════════════════════════
+📁 LOYIHA STRUKTURASI
+═══════════════════════════════════════════════════════
+app/
+├── root.tsx                    // Poppins font + remixicon CDN
+├── routes/
+│   ├── _index.tsx              // Landing / Login
+│   ├── dashboard.tsx           // Asosiy sahifa
+│   ├── subjects.tsx            // Fanlar ro'yxati
+│   ├── quiz.$subjectId.tsx     // Yakka test yechish
+│   ├── battle.lobby.tsx        // Guruh xonasi yaratish/qo'shilish
+│   ├── battle.$roomId.tsx      // Real-time battle
+│   ├── leaderboard.tsx         // Reyting jadvali
+│   ├── profile.tsx             // Profil + statistika
+│   └── achievements.tsx        // Yutuqlar
+├── components/
+│   ├── Navbar.tsx
+│   ├── Sidebar.tsx
+│   ├── QuizCard.tsx
+│   ├── Timer.tsx
+│   ├── ProgressBar.tsx
+│   ├── BadgeCard.tsx
+│   └── LeaderboardRow.tsx
+├── context/
+│   ├── UserContext.tsx
+│   └── QuizContext.tsx
+├── data/
+│   ├── subjects.json
+│   ├── questions.json
+│   └── users.json
+└── utils/
+    ├── scoring.ts
+    └── helpers.ts
+
+═══════════════════════════════════════════════════════
+✨ ASOSIY XUSUSIYATLAR
+═══════════════════════════════════════════════════════
+
+1) 🏠 DASHBOARD
+   - Salomlashish: "Salom, [Ism] 👋"
+   - Umumiy statistika kartalari:
+     • Yechilgan testlar soni
+     • O'rtacha ball (%)
+     • Joriy streak (ketma-ket kunlar)
+     • Umumiy XP / Level
+   - "Davom etish" tugmasi (oxirgi fan)
+   - Kunlik challenge widget
+   - Top 3 foydalanuvchi mini-reyting
+
+2) 📚 FANLAR (subjects)
+   Tibbiyot fanlari: Anatomiya, Fiziologiya, Biokimyo, Patologiya, 
+   Farmakologiya, Mikrobiologiya, Ichki kasalliklar, Xirurgiya, Pediatriya, 
+   Ginekologiya...
+   - Har bir fan kartasi: ikonka, nom, savollar soni, progress %
+   - Bosilganda test boshlanadi
+
+3) ✍️ YAKKA TEST (solo quiz)
+   - Har savol uchun 30 soniya timer (doiraviy progress)
+   - 4 variantli (A/B/C/D) savollar
+   - Javob tanlanganda: yashil (to'g'ri) / qizil (noto'g'ri) animatsiya
+   - "Keyingi" tugmasi
+   - Savol raqami: "12/50"
+   - Chalg'ituvchi (flag) tugmasi
+   - Oxirida: natija ekrani
+     • To'g'ri javoblar %
+     • XP qo'shilishi
+     • Xato savollar tahlili
+     • "Qayta urinish" / "Reytingga qaytish"
+
+4) ⚔️ GURUH BATTLE (multiplayer)
+   LOBBY:
+   - Xona kodi generatsiya qilish (6 xonali)
+   - Kod orqali qo'shilish input
+   - Do'stlarni taklif qilish (link copy)
+   - O'yinchi ro'yxati (avatar + ism)
+   - Sozlamalar: savollar soni (10/20/30), vaqt (15/30/60s), fan tanlash
+   - "Boshlash" tugmasi (host)
+
+   BATTLE EKRANI:
+   - Har o'yinchi uchun real-time progress bar
+   - Har bir savolda kim birinchi to'g'ri topsa — ko'proq ball
+   - Live reyting (yon panelda)
+   - Chat (emoji reactions)
+   - Oxirida: g'olib animatsiyasi 🏆 (confetti)
+
+5) 🏆 GAMIFIKATSIYA
+   - XP tizimi: to'g'ri javob = +10 XP, tez javob = +5 bonus
+   - Level: har 500 XP da yangi daraja
+   - Streak: ketma-ket kunlar uchun bonus
+   - Badge/Yutuqlar:
+     • "Birinchi qadam" — 1-test
+     • "Anatomiya ustasi" — 100% Anatomiya
+     • "Speedster" — 10s ichida 10 to'g'ri javob
+     • "Champion" — 1-o'rin battle'da
+     • "Marafon" — 30 kun streak
+   - Leaderboard: Kunlik / Haftalik / Umumiy
+
+6) 👤 PROFIL
+   - Avatar (rasm yuklash yoki emoji)
+   - Universitet, kurs, fakultet
+   - Statistika grafigi (kunlik/haftalik)
+   - Yutuqlar galereyasi
+   - Sozlamalar
+
+═══════════════════════════════════════════════════════
+🎨 DIZAYN TALABLARI
+═══════════════════════════════════════════════════════
+- Font: `font-family: 'Poppins', sans-serif` (root.tsx da)
+- Rang palitrasi: 
+  • Primary: #2563EB (ko'k) — tibbiy, ishonchli
+  • Secondary: #10B981 (yashil) — to'g'ri javob
+  • Danger: #EF4444 (qizil)
+  • Background: #F8FAFC (light) / #0F172A (dark mode)
+  • Accent: #F59E0B (XP, yutuqlar)
+- Border-radius: 12-16px (yumshoq)
+- Shadow: soft (shadow-md)
+- Animatsiyalar: framer-motion (yoki CSS transitions)
+- Dark mode: toggle bilan
+- Mobile-first responsive (sm, md, lg)
+- Kartalar hover'da scale: 1.02
+
+═══════════════════════════════════════════════════════
+🔤 REMIXICON ISHLATISH
+═══════════════════════════════════════════════════════
+root.tsx da CDN qo'sh:
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" 
+      rel="stylesheet" />
+
+Ishlatish misollari:
+- <i className="ri-heart-pulse-line" /> — tibbiyot
+- <i className="ri-trophy-line" /> — reyting
+- <i className="ri-fire-line" /> — streak
+- <i className="ri-time-line" /> — timer
+- <i className="ri-team-line" /> — battle
+- <i className="ri-user-line" /> — profil
+- <i className="ri-medal-line" /> — badge
+
+═══════════════════════════════════════════════════════
+📦 KOMPONENTLAR TALABI
+═══════════════════════════════════════════════════════
+Har bir komponent:
+- TypeScript interface bilan
+- Props documented
+- Reusable
+- Accessibility (aria-labels)
+
+Mock data misollari:
+questions.json:
+{
+  "id": "q1",
+  "subjectId": "anatomiya",
+  "question": "Yurakning o'ng qorinchasi qanday qon bilan to'ladi?",
+  "options": ["Arterial", "Venoz", "Aralash", "Limfa"],
+  "correct": 1,
+  "explanation": "O'ng qorinchaga venoz qon keladi..."
+}
+
+═══════════════════════════════════════════════════════
+✅ YAKUNIY TALABLAR
+═══════════════════════════════════════════════════════
+1. Kod toza, kommentariyalar bilan (o'zbek tilida)
+2. Har bir route alohida fayl
+3. Error boundary va loading state
+4. LocalStorage'da user progress saqlansin
+5. Hamma sahifalar orasida navigatsiya ishlasin
+6. Placeholder emas, to'liq ishlaydigan kod
+7. Mobile va desktop'da test qilingan
+8. README.md — o'rnatish va ishga tushirish yo'riqnomasi
+
+BOSHLASH TARTIBI:
+1. Avval root.tsx va asosiy layout (Navbar + Sidebar)
+2. Keyin Dashboard va Subjects
+3. Keyin Solo Quiz (to'liq logika bilan)
+4. Keyin Gamifikatsiya (XP, level, badge)
+5. Keyin Battle Lobby (fake real-time — setInterval)
+6. Oxirida Profile va Leaderboard
+
+Har bir bosqichda to'liq kod yoz, qisqartma. 
+Boshladikmi? root.tsx dan boshla.
