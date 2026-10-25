@@ -180,20 +180,20 @@ export function BattleChat({
           ) : (
             messages.map((m) => {
               const isMe = m.userId === me?.id;
-              const time = new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              const time = new Date(m.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
               return (
                 <div key={m.id} className={`flex items-start gap-2 ${isMe ? 'flex-row-reverse' : ''}`}>
                   <div className="h-7 w-7 rounded-full overflow-hidden bg-primary/20 text-primary flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
                     {m.userAvatar ? (
                       <img src={m.userAvatar} alt="" className="h-full w-full object-cover" />
                     ) : (
-                      m.userName.slice(0, 1).toUpperCase()
+                      (m.userName || 'T').slice(0, 1).toUpperCase()
                     )}
                   </div>
                   <div className={`max-w-[78%] flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                     <div className="flex items-center gap-1.5 mb-1 px-1">
                       <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                        {isMe ? 'Siz' : m.userName}
+                        {isMe ? 'Siz' : (m.userName || 'Talaba')}
                       </span>
                       <span className="text-[10px] text-slate-400">{time}</span>
                     </div>

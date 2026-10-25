@@ -65,10 +65,10 @@ export function BattleLobby() {
     if (!bankId && banks.length > 0) {
       setBankId(banks[0].id);
     }
-  }, [bankId, banks]);
+  }, [bankId, banks.length]);
 
-  const mine = rooms.filter((room) => room.status !== 'done' && (room.players ?? []).some((player) => player.id === me?.id));
-  const others = online.filter((user) => user.id !== me?.id);
+  const mine = rooms.filter((room) => room && room.status !== 'done' && (room.players ?? []).some((player) => player?.id === me?.id));
+  const others = online.filter((user) => user && user.id !== me?.id);
   const active = mine[0];
 
   useEffect(() => {
@@ -219,10 +219,10 @@ export function BattleLobby() {
               <div key={user.id} className="flex items-center justify-between gap-3 rounded-[10px] border border-border px-3 py-3">
                 <div className="flex items-center gap-2.5">
                   <div className="h-8 w-8 rounded-[8px] overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold">
-                    {user.avatar ? <img src={user.avatar} alt="" className="h-full w-full object-cover" /> : user.name.slice(0, 2).toUpperCase()}
+                    {user.avatar ? <img src={user.avatar} alt="" className="h-full w-full object-cover" /> : (user.name || 'MQ').slice(0, 2).toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-sm font-medium">{user.name}</p>
+                    <p className="text-sm font-medium">{user.name || 'Talaba'}</p>
                     <p className="text-xs text-muted-foreground">
                       {sent
                         ? sent.status === 'pending'
@@ -442,7 +442,7 @@ export function BattleRoom() {
   const rooms = useRooms();
   const statsMap = useStatsMap();
   const cleanCode = (params.code ?? '').toLowerCase();
-  const room = rooms.find((item) => item.code.toLowerCase() === cleanCode);
+  const room = rooms.find((item) => item?.code && item.code.toLowerCase() === cleanCode);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [joined, setJoined] = useState(false);
@@ -501,6 +501,33 @@ export function BattleRoom() {
     return () => window.clearInterval(interval);
   }, [room?.code, room?.status, room?.index]);
 
+  // Auto answer for seed bots during live battle
+  useEffect(() => {
+    if (!room || room.status !== 'live') return;
+    const currentQ = (room.questions ?? [])[room.index];
+    if (!currentQ) return;
+    const key = String(room.index);
+    const answers = room.answers ?? {};
+    const botPlayers = (room.players ?? []).filter(
+      (p) => p.id.startsWith('user-seed-') && !answers[p.id]?.[key]
+    );
+    if (!botPlayers.length) return;
+
+    const timer = window.setTimeout(() => {
+      for (const bot of botPlayers) {
+        const correctIdx = (currentQ.options ?? []).findIndex((o) => o.correct);
+        const isCorrect = Math.random() < 0.75;
+        const pick =
+          isCorrect && correctIdx !== -1
+            ? correctIdx
+            : Math.floor(Math.random() * (currentQ.options ?? []).length);
+        answerRoom(bot.id, room.code, [pick]);
+      }
+    }, 2000 + Math.random() * 2000);
+
+    return () => window.clearTimeout(timer);
+  }, [room?.code, room?.status, room?.index]);
+
   useEffect(() => {
     if (me && room?.status === 'done') claimBattle(me, room);
   }, [me, room]);
@@ -528,7 +555,7 @@ export function BattleRoom() {
     );
   }
 
-  const playing = (room.players ?? []).some((player) => player.id === me.id);
+  const playing = (room.players ?? []).some((player) => player?.id === me.id);
   if (!playing) {
     return (
       <Panel className="p-8 text-center">
@@ -541,7 +568,7 @@ export function BattleRoom() {
     );
   }
 
-  const ranked = [...(room.players ?? [])].sort((a, b) => playerScore(room, b.id) - playerScore(room, a.id));
+  const ranked = [...(room.players ?? [])].sort((a, b) => playerScore(room, b?.id || '') - playerScore(room, a?.id || ''));
   const host = room.hostId === me.id;
 
   const share = async () => {
@@ -674,11 +701,11 @@ export function BattleRoom() {
               </h2>
               <div className="mt-4 space-y-2">
                 {ranked.map((player, index) => {
-                  const playerXp = statsMap[player.id]?.xp ?? 0;
+                  const playerXp = statsMap[player?.id || '']?.xp ?? 0;
                   const playerTitle = getMedicalTitle(playerXp);
                   return (
                     <div
-                      key={player.id}
+                      key={player?.id || index}
                       className="flex items-center justify-between rounded-[10px] border border-border px-3.5 py-3"
                     >
                       <div className="flex items-center gap-2.5">
@@ -694,15 +721,15 @@ export function BattleRoom() {
                           )}
                         </span>
                         <span className="text-sm font-medium">
-                          {player.name}
-                          {player.id === me.id ? ' (Siz)' : ''}
+                          {player?.name || 'Talaba'}
+                          {player?.id === me.id ? ' (Siz)' : ''}
                         </span>
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-[6px] text-[10px] font-semibold border ${playerTitle.color}`}>
                           <Icon name={playerTitle.icon} className="text-xs" />
                           {playerTitle.badge}
                         </span>
                       </div>
-                      <span className="text-sm font-semibold tabular-nums">{playerScore(room, player.id)} ball</span>
+                      <span className="text-sm font-semibold tabular-nums">{playerScore(room, player?.id || '')} ball</span>
                     </div>
                   );
                 })}
@@ -724,21 +751,21 @@ export function BattleRoom() {
                   Ishtirokchilar
                 </h2>
                 <span className="text-xs px-2.5 py-0.5 rounded-[8px] bg-primary/10 text-primary font-bold">
-                  {room.players.length} kishi
+                  {(room.players ?? []).length} kishi
                 </span>
               </div>
 
               <div className="space-y-2.5">
-                {room.players.map((player) => {
-                  const playerXp = statsMap[player.id]?.xp ?? 0;
+                {(room.players ?? []).map((player) => {
+                  const playerXp = statsMap[player?.id || '']?.xp ?? 0;
                   const playerTitle = getMedicalTitle(playerXp);
-                  const isMe = player.id === me.id;
-                  const answeredCount = Object.keys(room.answers[player.id] ?? {}).length;
-                  const progress = room.questions.length ? Math.round((answeredCount / room.questions.length) * 100) : 0;
+                  const isMe = player?.id === me.id;
+                  const answeredCount = Object.keys((room.answers ?? {})[player?.id || ''] ?? {}).length;
+                  const progress = (room.questions ?? []).length ? Math.round((answeredCount / room.questions.length) * 100) : 0;
 
                   return (
                     <div
-                      key={player.id}
+                      key={player?.id}
                       className={`p-3 rounded-[10px] border transition-all ${
                         isMe
                           ? 'border-primary/40 bg-primary/5 dark:bg-primary/10 shadow-xs'
@@ -748,15 +775,15 @@ export function BattleRoom() {
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="h-9 w-9 rounded-[8px] overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-xs shrink-0 border border-slate-300 dark:border-white/15">
-                            {player.avatar ? (
+                            {player?.avatar ? (
                               <img src={player.avatar} alt="" className="h-full w-full object-cover" />
                             ) : (
-                              player.name.slice(0, 2).toUpperCase()
+                              (player?.name || 'MQ').slice(0, 2).toUpperCase()
                             )}
                           </div>
                           <div className="min-w-0">
                             <p className="text-sm font-semibold truncate text-slate-900 dark:text-white">
-                              {player.name} {isMe && <span className="text-xs text-primary font-normal">(Siz)</span>}
+                              {player?.name || 'Talaba'} {isMe && <span className="text-xs text-primary font-normal">(Siz)</span>}
                             </p>
                             <div className={`mt-0.5 inline-flex items-center gap-1 px-1.5 py-0.2 rounded-[6px] text-[10px] font-semibold border ${playerTitle.color}`}>
                               <Icon name={playerTitle.icon} className="text-[11px]" />
@@ -769,9 +796,9 @@ export function BattleRoom() {
                         <div className="shrink-0 text-right">
                           {room.status === 'done' ? (
                             <span className="font-mono text-base font-bold text-slate-900 dark:text-white tabular-nums">
-                              {playerScore(room, player.id)} <span className="text-[11px] text-slate-400 font-normal">ball</span>
+                              {playerScore(room, player?.id || '')} <span className="text-[11px] text-slate-400 font-normal">ball</span>
                             </span>
-                          ) : player.ready ? (
+                          ) : player?.ready ? (
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[8px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold text-xs border border-emerald-500/30">
                               <Icon name="ri-check-line" /> Tayyor
                             </span>
@@ -792,14 +819,14 @@ export function BattleRoom() {
               <div className="mt-4 pt-3 border-t border-slate-200/70 dark:border-white/10">
                 <Btn
                   className={`w-full py-3 font-bold text-sm shadow-md flex items-center justify-center gap-2 ${
-                    room.players.find((player) => player.id === me.id)?.ready
+                    (room.players ?? []).find((player) => player?.id === me.id)?.ready
                       ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
                       : ''
                   }`}
                   testId="button-ready"
                   onClick={() => setPlayerReady(me.id, room.code)}
                 >
-                  {room.players.find((player) => player.id === me.id)?.ready ? (
+                  {(room.players ?? []).find((player) => player?.id === me.id)?.ready ? (
                     <>
                       <Icon name="ri-check-line" className="text-lg" /> Tayyorsiz (Bekor qilish)
                     </>
@@ -890,19 +917,19 @@ function FullscreenCountdown({ started, room }: { started: number; room: Room })
 
       {/* Ready Participants Pills */}
       <div className="relative z-10 mt-6 flex flex-wrap items-center justify-center gap-2 max-w-lg">
-        {room.players.map((p) => (
+        {(room.players ?? []).map((p) => (
           <div
-            key={p.id}
+            key={p?.id}
             className="flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-white/10 border border-white/15 text-white text-xs font-semibold backdrop-blur-xs"
           >
             <div className="h-6 w-6 rounded-[6px] overflow-hidden bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
-              {p.avatar ? (
+              {p?.avatar ? (
                 <img src={p.avatar} alt="" className="h-full w-full object-cover" />
               ) : (
-                p.name.slice(0, 2).toUpperCase()
+                (p?.name || 'MQ').slice(0, 2).toUpperCase()
               )}
             </div>
-            <span>{p.name}</span>
+            <span>{p?.name || 'Talaba'}</span>
             <Icon name="ri-check-line" className="text-emerald-400 text-sm font-bold" />
           </div>
         ))}
@@ -912,9 +939,9 @@ function FullscreenCountdown({ started, room }: { started: number; room: Room })
 }
 
 function LiveQuestion({ room, meId, host }: { room: Room; meId: string; host: boolean }) {
-  const question = room.questions[room.index];
-  const mine = room.answers[meId]?.[String(room.index)];
-  const multi = !!question && question.options.filter((option) => option.correct).length > 1;
+  const question = (room.questions ?? [])[room.index];
+  const mine = (room.answers ?? {})[meId]?.[String(room.index)];
+  const multi = !!question && (question.options ?? []).filter((option) => option?.correct).length > 1;
   const [picks, setPicks] = useState<number[]>([]);
 
   useEffect(() => setPicks([]), [room.index]);

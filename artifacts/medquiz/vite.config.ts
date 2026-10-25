@@ -61,6 +61,9 @@ export default defineConfig({
     fs: {
       strict: true,
     },
+    watch: {
+      ignored: ['**/.sync-*.json', '**/.sync-*.json*'],
+    },
   },
   preview: {
     port,

@@ -52,9 +52,9 @@ export function BattleReactions({ roomCode, me }: { roomCode: string; me: Me | n
         const raw = window.localStorage.getItem(key);
         if (raw) {
           const rx = JSON.parse(raw) as BattleReaction;
-          if (rx && rx.roomCode.toLowerCase() === roomCode.toLowerCase() && rx.createdAt > lastRxTime && rx.userId !== me?.id) {
+          if (rx && rx.roomCode && roomCode && rx.roomCode.toLowerCase() === roomCode.toLowerCase() && rx.createdAt > lastRxTime && rx.userId !== me?.id) {
             setLastRxTime(rx.createdAt);
-            spawnParticle(rx.emoji, rx.userName);
+            spawnParticle(rx.emoji, rx.userName || 'Talaba');
           }
         }
       } catch {
@@ -64,7 +64,7 @@ export function BattleReactions({ roomCode, me }: { roomCode: string; me: Me | n
 
     const onCustomEvent = (event: Event) => {
       const detail = (event as CustomEvent<BattleReaction>).detail;
-      if (detail && detail.roomCode.toLowerCase() === roomCode.toLowerCase() && detail.userId === me?.id) {
+      if (detail && detail.roomCode && roomCode && detail.roomCode.toLowerCase() === roomCode.toLowerCase() && detail.userId === me?.id) {
         spawnParticle(detail.emoji, 'Siz');
       }
     };

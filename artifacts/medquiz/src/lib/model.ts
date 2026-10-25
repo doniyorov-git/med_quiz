@@ -304,6 +304,9 @@ export function beat(me: Me) {
   }
 }
 
+let cachedOnlineUsers: PresenceUser[] = [];
+let lastOnlineSig = '';
+
 export function onlineUsers(): PresenceUser[] {
   if (typeof window === 'undefined') return [];
   const now = Date.now();
@@ -333,9 +336,9 @@ export function onlineUsers(): PresenceUser[] {
       if (!existing || (pu.seen || 0) > (existing.seen || 0)) {
         map.set(pu.id, {
           id: pu.id,
-          name: pu.name,
-          avatar: pu.avatar,
-          seen: pu.seen,
+          name: pu.name || 'Talaba',
+          avatar: pu.avatar || null,
+          seen: pu.seen || now,
         });
       }
     }
@@ -343,6 +346,14 @@ export function onlineUsers(): PresenceUser[] {
 
   const users = Array.from(map.values());
   users.sort((a, b) => (b.seen || 0) - (a.seen || 0));
+
+  // Signature based on IDs and bucketing seen to 5s
+  const sig = users.map((u) => `${u.id}:${Math.floor((u.seen || 0) / 5000)}:${u.name}`).join('|');
+  if (sig === lastOnlineSig && cachedOnlineUsers.length === users.length) {
+    return cachedOnlineUsers;
+  }
+  lastOnlineSig = sig;
+  cachedOnlineUsers = users;
   return users;
 }
 
@@ -358,9 +369,129 @@ export function subscribePresence(listener: () => void) {
 
 let banksSnap: { raw: string | null; value: Bank[] } | null = null;
 
+const DEFAULT_SAMPLE_BANK: Bank = {
+  id: 'bank-fiziologiya-demo',
+  name: 'Normal Fiziologiya (Namuna)',
+  createdAt: 1700000000000,
+  updatedAt: 1700000000000,
+  questions: [
+    {
+      id: 'fz-1',
+      image: null,
+      prompt: 'Tinchlik holatida hujayra membranasi qaysi ionga nisbatan eng yuqori o‘tkazuvchanlikka ega?',
+      options: [
+        { id: 'fz-1-1', text: 'K+ (Kaliy) ionlariga', correct: true },
+        { id: 'fz-1-2', text: 'Na+ (Natriy) ionlariga', correct: false },
+        { id: 'fz-1-3', text: 'Ca2+ (Kalsiy) ionlariga', correct: false },
+        { id: 'fz-1-4', text: 'Cl- (Xlor) ionlariga', correct: false },
+        { id: 'fz-1-5', text: 'Mg2+ (Magniy) ionlariga', correct: false },
+      ],
+    },
+    {
+      id: 'fz-2',
+      image: null,
+      prompt: 'Harakat potensialining tez depolarizatsiya fazasi qaysi ionlarning hujayra ichiga oqib kirishi hisobiga yuzaga keladi?',
+      options: [
+        { id: 'fz-2-1', text: 'Potensialga bog‘liq Na+ (Natriy) ionlarining', correct: true },
+        { id: 'fz-2-2', text: 'Potensialga bog‘liq K+ (Kaliy) ionlarining', correct: false },
+        { id: 'fz-2-3', text: 'Cl- (Xlor) ionlarining', correct: false },
+        { id: 'fz-2-4', text: 'H+ (Vodorod) ionlarining', correct: false },
+      ],
+    },
+    {
+      id: 'fz-3',
+      image: null,
+      prompt: 'Yurakning birinchi tartibli avtomatizm markazi (asosiy ritm haydovchisi - peysmeyker) qaysi tuzilma hisoblanadi?',
+      options: [
+        { id: 'fz-3-1', text: 'Sinoatrial (SA, Kis-Flak) tugun', correct: true },
+        { id: 'fz-3-2', text: 'Atrioventrikulyar (AV, Ashoff-Tavara) tugun', correct: false },
+        { id: 'fz-3-3', text: 'Gis tutami oyoqchalari', correct: false },
+        { id: 'fz-3-4', text: 'Purkinye tolalari', correct: false },
+      ],
+    },
+    {
+      id: 'fz-4',
+      image: null,
+      prompt: 'Eritrotsitlar cho‘kish tezligi (ECHT) qaysi oqsil miqdori oshganda sezilarli darajada tezlashadi?',
+      options: [
+        { id: 'fz-4-1', text: 'Fibrinogen va gamma-globulinlar', correct: true },
+        { id: 'fz-4-2', text: 'Albomunlar', correct: false },
+        { id: 'fz-4-3', text: 'Gemoglobin', correct: false },
+        { id: 'fz-4-4', text: 'Transferrin', correct: false },
+      ],
+    },
+    {
+      id: 'fz-5',
+      image: null,
+      prompt: 'Qonning normal pH ko‘rsatkichi qaysi oraliqda bo‘ladi?',
+      options: [
+        { id: 'fz-5-1', text: '7.35 — 7.45', correct: true },
+        { id: 'fz-5-2', text: '7.00 — 7.15', correct: false },
+        { id: 'fz-5-3', text: '7.50 — 7.65', correct: false },
+        { id: 'fz-5-4', text: '6.80 — 7.20', correct: false },
+      ],
+    },
+    {
+      id: 'fz-6',
+      image: null,
+      prompt: 'O‘pkaning tiriklik sig‘imi (O‘TS) nimalar yig‘indisidan iborat?',
+      options: [
+        { id: 'fz-6-1', text: 'Nafas hajmi + qo‘shimcha nafas hajmi + zaxira nafas chiqarish hajmi', correct: true },
+        { id: 'fz-6-2', text: 'Nafas hajmi + qoldiq hajm', correct: false },
+        { id: 'fz-6-3', text: 'O‘pkaning umumiy sig‘imi + qoldiq hajm', correct: false },
+        { id: 'fz-6-4', text: 'Faqat nafas olish va nafas chiqarish hajmlari', correct: false },
+      ],
+    },
+    {
+      id: 'fz-7',
+      image: null,
+      prompt: 'Neyronlar orasidagi kimyoviy sinapslarda qo‘zg‘alishni o‘tkazuvchi asosiy qo‘zg‘atuvchi mediator qaysi?',
+      options: [
+        { id: 'fz-7-1', text: 'Glutamat va Atsetilxolin', correct: true },
+        { id: 'fz-7-2', text: 'GAYK (GABA)', correct: false },
+        { id: 'fz-7-3', text: 'Glitsin', correct: false },
+        { id: 'fz-7-4', text: 'Endorfin', correct: false },
+      ],
+    },
+    {
+      id: 'fz-8',
+      image: null,
+      prompt: 'Oshqozon shirasida xlorid kislota (HCl) sintezini kuchaytiruvchi gormon qaysi?',
+      options: [
+        { id: 'fz-8-1', text: 'Gastrin', correct: true },
+        { id: 'fz-8-2', text: 'Sekretin', correct: false },
+        { id: 'fz-8-3', text: 'Xoletsistokinin', correct: false },
+        { id: 'fz-8-4', text: 'Somatostatin', correct: false },
+      ],
+    },
+    {
+      id: 'fz-9',
+      image: null,
+      prompt: 'Buyrak nefronlarida birlamchi siydik hosil bo‘lishi qaysi jarayonga asoslangan?',
+      options: [
+        { id: 'fz-9-1', text: 'Koptokchalarda qon plazmasining filtratsiyasiga', correct: true },
+        { id: 'fz-9-2', text: 'Naychalardagi faol reabsorbsiyaga', correct: false },
+        { id: 'fz-9-3', text: 'Naychalar sekretsiyasiga', correct: false },
+        { id: 'fz-9-4', text: 'Diffuzion osmosga', correct: false },
+      ],
+    },
+    {
+      id: 'fz-10',
+      image: null,
+      prompt: 'Qalqonsimon bez gormonlari (T3, T4) ning asosiy fiziologik ta’siri nimadan iborat?',
+      options: [
+        { id: 'fz-10-1', text: 'Asosiy moddalar almashinuvini va kislorod sarfini oshirish', correct: true },
+        { id: 'fz-10-2', text: 'Qonda qand miqdorini kamaytirish', correct: false },
+        { id: 'fz-10-3', text: 'Kalsiy miqdorini qonda keskin tushirish', correct: false },
+        { id: 'fz-10-4', text: 'Immun tizimini bostirish', correct: false },
+      ],
+    },
+  ],
+};
+
 export function getBanks(): Bank[] {
   if (typeof window === 'undefined') return [];
-  const raw = window.localStorage.getItem(BANKS);
+  let raw = window.localStorage.getItem(BANKS);
   if (banksSnap && banksSnap.raw === raw) return banksSnap.value;
   let parsed: Bank[] = [];
   try {
@@ -368,13 +499,23 @@ export function getBanks(): Bank[] {
   } catch {
     parsed = [];
   }
-  const value = (Array.isArray(parsed) ? parsed : [])
+  let value = (Array.isArray(parsed) ? parsed : [])
     .filter((bank): bank is Bank => Boolean(bank && typeof bank === 'object' && bank.id))
     .map((bank) => ({
       ...bank,
       name: bank.name || 'Yangi to‘plam',
       questions: Array.isArray(bank.questions) ? bank.questions : [],
     }));
+
+  if (value.length === 0) {
+    value = [DEFAULT_SAMPLE_BANK];
+    const serialized = JSON.stringify(value);
+    raw = serialized;
+    try {
+      window.localStorage.setItem(BANKS, serialized);
+    } catch {}
+  }
+
   banksSnap = { raw, value };
   return value;
 }
@@ -505,7 +646,9 @@ export function getRooms(): Room[] {
 }
 
 export function getRoom(code: string): Room | undefined {
-  return getRooms().find((room) => room.code.toLowerCase() === code.toLowerCase());
+  if (!code) return undefined;
+  const clean = code.toLowerCase();
+  return getRooms().find((room) => room?.code && room.code.toLowerCase() === clean);
 }
 
 export function syncRoomToServer(room: Room) {
@@ -646,17 +789,21 @@ export function answerRoom(meId: string, code: string, picks: number[]) {
   const existing = getRoom(code);
   if (!existing || existing.status !== 'live') return;
   const key = String(existing.index);
-  if (existing.answers?.[meId]?.[key]) return;
+  const answers = existing.answers ?? {};
+  if (answers[meId]?.[key]) return;
   const question = (existing.questions ?? [])[existing.index];
   if (!question) return;
   const correct = isCorrectPick(question, picks);
-  const firstCorrect = correct && !Object.values(existing.answers ?? {}).some((byQuestion) => (byQuestion?.[key]?.points ?? 0) >= 10);
+  const firstCorrect =
+    correct &&
+    !Object.values(answers).some((byQuestion) => (byQuestion?.[key]?.points ?? 0) >= 10);
   const points = correct ? (firstCorrect ? 25 : 10) : 0;
+  const userAnswers = answers[meId] ?? {};
   putRoom({
     ...existing,
     answers: {
-      ...existing.answers,
-      [meId]: { ...existing.answers[meId], [key]: { picks, points } },
+      ...answers,
+      [meId]: { ...userAnswers, [key]: { picks, points } },
     },
   });
 }
@@ -665,9 +812,13 @@ export function tryAdvance(code: string) {
   const existing = getRoom(code);
   if (!existing || existing.status !== 'live') return;
   const key = String(existing.index);
+  const answers = existing.answers ?? {};
+  const players = existing.players ?? [];
 
   // 1. Check if all players answered
-  const allAnswered = existing.players.length > 0 && existing.players.every((player) => existing.answers[player.id]?.[key]);
+  const allAnswered =
+    players.length > 0 &&
+    players.every((player) => Boolean(answers[player?.id]?.[key]));
 
   // 2. Check if question timer has expired (biror kishi qotib qolsa yoki vaqt tugasa)
   const isTimeExpired =
@@ -678,8 +829,8 @@ export function tryAdvance(code: string) {
   if (!allAnswered && !isTimeExpired) return;
 
   const nextIndex = existing.index + 1;
-  if (nextIndex >= existing.questions.length) {
-    putRoom({ ...existing, status: 'done', index: existing.questions.length, updatedAt: Date.now() });
+  if (nextIndex >= (existing.questions ?? []).length) {
+    putRoom({ ...existing, status: 'done', index: (existing.questions ?? []).length, updatedAt: Date.now() });
     return;
   }
   putRoom({ ...existing, index: nextIndex, questionStartedAt: Date.now(), updatedAt: Date.now() });
@@ -689,30 +840,34 @@ export function forceNext(meId: string, code: string) {
   const existing = getRoom(code);
   if (!existing || existing.status !== 'live') return;
   const nextIndex = existing.index + 1;
-  if (nextIndex >= existing.questions.length) {
-    putRoom({ ...existing, status: 'done', index: existing.questions.length, updatedAt: Date.now() });
+  if (nextIndex >= (existing.questions ?? []).length) {
+    putRoom({ ...existing, status: 'done', index: (existing.questions ?? []).length, updatedAt: Date.now() });
   } else {
     putRoom({ ...existing, index: nextIndex, questionStartedAt: Date.now(), updatedAt: Date.now() });
   }
 }
 
 export function playerScore(room: Room, userId: string): number {
-  const mine = room.answers[userId] ?? {};
-  return Object.values(mine).reduce((sum, answer) => sum + answer.points, 0);
+  if (!room || !userId) return 0;
+  const answers = room.answers ?? {};
+  const mine = answers[userId] ?? {};
+  return Object.values(mine).reduce((sum, answer) => sum + (answer?.points ?? 0), 0);
 }
 
 export function claimBattle(me: Me, room: Room) {
-  if (room.status !== 'done') return;
+  if (!room || room.status !== 'done' || !me) return;
   const map = getStatsMap();
   const current = map[me.id] ?? emptyStats(me);
   if (current.claimedRooms.includes(room.id)) return;
-  const ranked = [...room.players].sort((a, b) => playerScore(room, b.id) - playerScore(room, a.id));
+  const players = room.players ?? [];
+  const ranked = [...players].sort((a, b) => playerScore(room, b?.id || '') - playerScore(room, a?.id || ''));
   const top = playerScore(room, ranked[0]?.id ?? '');
-  const won = room.players.length > 1 && playerScore(room, me.id) === top && top > 0;
+  const won = players.length > 1 && playerScore(room, me.id) === top && top > 0;
   const gained = playerScore(room, me.id) + (won ? 20 : 0);
-  const mine = Object.values(room.answers[me.id] ?? {});
+  const answers = room.answers ?? {};
+  const mine = Object.values(answers[me.id] ?? {});
   const answered = mine.length;
-  const correct = mine.filter((answer) => answer.points > 0).length;
+  const correct = mine.filter((answer) => (answer?.points ?? 0) > 0).length;
   updateKey<Record<string, Stats>>(STATS, {}, (latest) => {
     const stats = latest[me.id] ?? current;
     if (stats.claimedRooms.includes(room.id)) return latest;
@@ -722,10 +877,10 @@ export function claimBattle(me: Me, room: Room) {
         ...stats,
         name: me.name,
         avatar: me.avatar,
-        xp: stats.xp + gained,
-        battlePlayed: stats.battlePlayed + 1,
-        battleWins: stats.battleWins + (won ? 1 : 0),
-        claimedRooms: [...stats.claimedRooms, room.id],
+        xp: (stats.xp ?? 0) + gained,
+        battlePlayed: (stats.battlePlayed ?? 0) + 1,
+        battleWins: (stats.battleWins ?? 0) + (won ? 1 : 0),
+        claimedRooms: [...(stats.claimedRooms ?? []), room.id],
         history: rememberDay(stats.history, correct, answered, gained),
       },
     };
@@ -786,6 +941,28 @@ export function sendInvite(from: Me, to: PresenceUser, room: Room) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'send', invite }),
     }).catch(() => {});
+
+    // If invited user is a bot, simulate accept & join
+    if (to.id.startsWith('user-seed-')) {
+      setTimeout(() => {
+        respondInvite(invite.id, 'accepted');
+        const currentRoom = getRoom(room.code);
+        if (currentRoom && (currentRoom.status === 'lobby' || currentRoom.status === 'countdown')) {
+          const players = currentRoom.players ?? [];
+          if (!players.some((p) => p.id === to.id)) {
+            const updated = {
+              ...currentRoom,
+              players: [...players, { id: to.id, name: to.name, avatar: to.avatar, ready: false }],
+              updatedAt: Date.now(),
+            };
+            putRoom(updated);
+            setTimeout(() => {
+              setPlayerReady(to.id, room.code);
+            }, 1200);
+          }
+        }
+      }, 1000);
+    }
   }
 }
 

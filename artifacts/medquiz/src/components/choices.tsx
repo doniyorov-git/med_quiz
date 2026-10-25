@@ -12,7 +12,8 @@ export function Choices({
   locked: boolean;
   onPick: (index: number) => void;
 }) {
-  const multi = question.options.filter((option) => option.correct).length > 1;
+  const options = Array.isArray(question?.options) ? question.options : [];
+  const multi = options.filter((option) => option?.correct).length > 1;
   return (
     <div className="mt-2.5 sm:mt-4 space-y-1.5 sm:space-y-2.5" role={multi ? 'group' : 'radiogroup'} aria-label="Javoblar">
       {multi && !locked && (
@@ -20,7 +21,7 @@ export function Choices({
           <Icon name="ri-lightbulb-line" className="text-amber-500 text-xs sm:text-sm" /> Bir nechta to‘g‘ri javob bor.
         </p>
       )}
-      {question.options.map((option, index) => {
+      {options.map((option, index) => {
         const selected = picks.includes(index);
         const showCorrect = locked && option.correct;
         const showWrong = locked && selected && !option.correct;

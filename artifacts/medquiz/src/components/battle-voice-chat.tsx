@@ -204,7 +204,7 @@ export function BattleVoiceChat({ roomCode, me }: { roomCode: string; me: Me | n
     }
 
     setJoined(true);
-    await webrtcJoinVoice(roomCode, myPeerId, me.name, me.avatar, isMuted);
+    await webrtcJoinVoice(roomCode, myPeerId, me?.name || 'Talaba', me?.avatar || null, isMuted);
   };
 
   // Toggle Mute
@@ -486,7 +486,7 @@ export function BattleVoiceChat({ roomCode, me }: { roomCode: string; me: Me | n
                         {me?.avatar ? (
                           <img src={me.avatar} alt="" className="h-full w-full object-cover" />
                         ) : (
-                          me?.name.slice(0, 1).toUpperCase()
+                          (me?.name || 'Siz').slice(0, 1).toUpperCase()
                         )}
                       </div>
                       <span className="truncate text-slate-200 font-medium">{me?.name || 'Siz'} (Siz)</span>
@@ -521,10 +521,10 @@ export function BattleVoiceChat({ roomCode, me }: { roomCode: string; me: Me | n
                           {peer.userAvatar ? (
                             <img src={peer.userAvatar} alt="" className="h-full w-full object-cover" />
                           ) : (
-                            peer.userName.slice(0, 1).toUpperCase()
+                            (peer.userName || 'T').slice(0, 1).toUpperCase()
                           )}
                         </div>
-                        <span className="truncate text-slate-200 font-medium">{peer.userName}</span>
+                        <span className="truncate text-slate-200 font-medium">{peer.userName || 'Talaba'}</span>
                       </div>
                       <span className="text-[10px] font-bold text-slate-400">
                         {peer.isMuted ? (
