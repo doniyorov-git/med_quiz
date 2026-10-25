@@ -1,21 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uz">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
-    <title>MedQuiz — Tibbiyot Imtihon Platformasi</title>
-    <meta name="description" content="MedQuiz — Tibbiyot Imtihon Platformasi — built on Replit. Update this description to reflect the app." />
-    <meta name="robots" content="index, follow" />
-    <meta property="og:title" content="MedQuiz — Tibbiyot Imtihon Platformasi" />
-    <meta property="og:description" content="MedQuiz — Tibbiyot Imtihon Platformasi — built on Replit. Update this description to reflect the app." />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="MedQuiz — Tibbiyot Imtihon Platformasi" />
-    <meta name="twitter:description" content="MedQuiz — Tibbiyot Imtihon Platformasi — built on Replit. Update this description to reflect the app." />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MedQuiz — Tibbiyot imtihonlari</title>
+    <meta name="description" content="MedQuiz — tibbiyot imtihon mashqi. O‘z savollaringizni yuklang." />
+    <meta name="theme-color" content="#020617" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.6.0/fonts/remixicon.css" rel="stylesheet" />
+    <script src="https://cdn.lordicon.com/lordicon.js"></script>
+    <script>
+      (function() {
+        try {
+          var t = localStorage.getItem('medquiz-v2-theme');
+          if (!t) {
+            t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'dark';
+          }
+          if (t === 'dark') {
+            document.documentElement.classList.add('dark');
+            document.documentElement.classList.remove('light');
+          } else {
+            document.documentElement.classList.add('light');
+            document.documentElement.classList.remove('dark');
+          }
+          document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

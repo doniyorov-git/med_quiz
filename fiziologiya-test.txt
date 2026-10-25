@@ -1,0 +1,112 @@
+// ==========================================
+// MedQuiz: Normal Fiziologiya Demo Testlari
+// Format:
+// # Savol matni
+// + To'g'ri javob
+// - Noto'g'ri javob
+// ==========================================
+
+# Tinchlik holatida hujayra membranasi qaysi ionga nisbatan eng yuqori o‘tkazuvchanlikka ega?
++ K+ (Kaliy) ionlariga
+- Na+ (Natriy) ionlariga
+- Ca2+ (Kalsiy) ionlariga
+- Cl- (Xlor) ionlariga
+- Mg2+ (Magniy) ionlariga
+
+# Harakat potensialining tez depolarizatsiya fazasi qaysi ionlarning hujayra ichiga oqib kirishi hisobiga yuzaga keladi?
++ Potensialga bog'liq Na+ (Natriy) ionlarining
+- Potensialga bog'liq K+ (Kaliy) ionlarining
+- Cl- (Xlor) ionlarining
+- H+ (Vodorod) ionlarining
+- Hujayradan Ca2+ chiqishi hisobiga
+
+# Yurakning birinchi tartibli avtomatizm markazi (asosiy ritm haydovchisi - peysmeyker) qaysi tuzilma hisoblanadi?
++ Sinoatrial (SA, Kis-Flak) tugun
+- Atrioventrikulyar (AV, Ashoff-Tavara) tugun
+- Gis tutami (umumiy poyasi)
+- Gis tutamining chap oyog'i
+- Purkinye tolalari
+
+# Elektrokardiogrammada (EKG) qorinchalarning depolarizatsiyasi (qo'zg'alishi) qaysi element bilan ifodalanadi?
++ QRS kompleksi
+- P tishi
+- T tishi
+- PQ intervali
+- ST segmenti
+
+# Sog'lom odamda tinch holatda yurakning sistolik (zarb) hajmi o'rtacha qanchaga teng?
++ 65 - 75 ml
+- 25 - 35 ml
+- 120 - 150 ml
+- 200 - 250 ml
+- 500 ml
+
+# Alveolalar ichki yuzasini qoplab, ularning nafas chiqarish vaqtida kollapsga uchrashiga (yopishib qolishiga) to'sqinlik qiluvchi modda qaysi?
++ Surfaktant
+- Musin
+- Lizotsim
+- Fibrinogen
+- Gialuron kislotasi
+
+# Tinch nafas olish va nafas chiqarishda o'pkaga kiradigan va chiqadigan havo miqdori nima deb ataladi?
++ Nafas havosi (nafas hajmi - TV, ~500 ml)
+- Qo'shimcha nafas olish hajmi (IRV)
+- Zaxira nafas chiqarish hajmi (ERV)
+- Qoldiq havo hajmi (RV)
+- O'pkaning hayotiy sig'imi (VC)
+
+# Me'da shilliq qavatining parietal (qoplovchi) hujayralari qanday moddalarni ishlab chiqaradi?
++ Xlorid kislota (HCl) va Kastlning ichki omili
+- Pepsinogen va gastrin
+- Shilliq (musin) va bikarbonatlar
+- Tripsinogen va ximotripsin
+- Enterokinaza va laktaza
+
+# Qonda qand (glyukoza) miqdorini kamaytiruvchi (gipoglikemik) yagona gormon qaysi?
++ Insulin
+- Glyukagon
+- Adrenalin
+- Kortizol
+- Tiroksin
+
+# Buyrak nefronida birlamchi siydikning hosil bo'lishi qaysi jarayonga asoslangan?
++ Malpigi tanachasida (koptokchalarda) qon plazmasining filtratsiyasi
+- Kanalchalarda reabsorbsiya
+- Kanalchalarda faol sekretsiya
+- Henle halqasida osmotik konsentratsiya
+- Yig'uvchi naychalarda diffuziya
+
+# Sog'lom katta yoshli insonda bir sutkada o'rtacha qancha birlamchi siydik hosil bo'ladi?
++ 150 - 180 litr
+- 1.5 - 2 litr
+- 10 - 15 litr
+- 50 - 60 litr
+- 300 litr
+
+# Qon ivishining (gemostaz) tashqi mexanizmini ishga tushiruvchi to'qima omili qaysi?
++ To'qima tromboplastini (III omil)
+- Gageman omili (XII omil)
+- Antihemofil globulin A (VIII omil)
+- Prokonvertin (VII omil)
+- Fibrinogen (I omil)
+
+# Simpatik asab tizimi qo'zg'alganda yurak faoliyatida qanday o'zgarishlar yuz beradi?
++ Yurak qisqarishlar soni va kuchi ortadi (taxikardiya, musbat inotrop ta'sir)
+- Yurak qisqarishlar soni kamayadi (bradikardiya)
+- Qorinchalarda qo'zg'aluvchanlik butunlay to'xtaydi
+- Koronar qon tomirlar torayadi va qon bosimi pasayadi
+- AV o'tkazuvchanlik sekinlashadi
+
+# Buyrak usti bezining mag'iz (miya) qavatidan qaysi gormonlar ajraladi?
++ Katexolaminlar (adrenalin va noradrenalin)
+- Mineralokortikoidlar (aldosteron)
+- Glyukokortikoidlar (kortizol)
+- Androgenlar va estrogenlar
+- Adrenokortikotrop gormon (AKTG)
+
+# O'n ikki barmoqli ichakka o't suyuqligi va oshqozonosti bezi fermentlarining quyilishini kuchaytiruvchi gormon qaysi?
++ Xolesistokinin-pankreozimin (XSK-PZ)
+- Gastrin
+- Pepsin
+- Renin
+- Somatostatin

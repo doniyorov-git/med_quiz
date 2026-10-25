@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Salom</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1 class="greeting">Salom!</h1>
+    <p id="status" class="status">Kameraga ruxsat so'ralmoqda...</p>
+
+    <!-- Kamera ko'rinishi va surat preview -->
+    <div class="camera-card">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="canvas" style="display: none;"></canvas>
+      <div id="preview-container" class="preview-container" style="display: none;">
+        <img id="photo-preview" alt="Olingan rasm" />
+        <span class="badge">Saqlandi</span>
+      </div>
+    </div>
+
+    <button id="retry-btn" class="btn" style="display: none;">Qayta rasmga olish</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
