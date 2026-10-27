@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { Btn, Field, Panel, Icon, fieldClass } from '@/components/chrome';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { fileToImage } from '@/lib/images';
-import { getFriendsCount, getMedicalTitle, levelFromXp, MEDICAL_TITLES } from '@/lib/model';
+import { getMedicalTitle, levelFromXp, MEDICAL_TITLES } from '@/lib/model';
 import { useStatsMap, useStore } from '@/lib/store';
-import { FriendsView } from '@/components/friends-view';
 import { AvatarModal } from '@/components/avatar-modal';
 import type { PublicUser, UserSession } from '@/lib/types';
 
@@ -102,9 +101,8 @@ export function Profile() {
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [friendsModalOpen, setFriendsModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [profileTab, setProfileTab] = useState<'friends' | 'titles' | 'sessions'>('friends');
+  const [profileTab, setProfileTab] = useState<'titles' | 'sessions'>('titles');
   const [sessions, setSessions] = useState<UserSession[]>(() => getInitialSessions(me?.id || 'guest'));
   const [sessionToast, setSessionToast] = useState('');
 
@@ -166,7 +164,7 @@ export function Profile() {
               <button
                 type="button"
                 onClick={() => setAvatarModalOpen(true)}
-                className="h-16 w-16 sm:h-20 sm:w-20 rounded-[14px] overflow-hidden border-2 border-emerald-500/30 bg-gradient-to-br from-teal-500 via-emerald-600 to-indigo-600 shadow-md flex items-center justify-center text-white cursor-pointer hover:opacity-95 transition-all group"
+                className="h-16 w-16 sm:h-20 sm:w-20 rounded-full overflow-hidden border-2 border-emerald-500/30 bg-gradient-to-br from-teal-500 via-emerald-600 to-indigo-600 shadow-md flex items-center justify-center text-white cursor-pointer hover:opacity-95 transition-all group"
                 title="Avatar yoki rasm tanlash"
               >
                 {me.avatar ? (
@@ -261,26 +259,11 @@ export function Profile() {
               <span>Tahrirlash</span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                setProfileTab('friends');
-                setFriendsModalOpen(true);
-              }}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-[10px] bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-xs transition-all active:scale-95 cursor-pointer"
-              data-testid="btn-open-friends-modal"
-            >
-              <Icon name="ri-user-heart-line" className="text-sm" />
-              <span>Do‘stlar</span>
-              <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-[10px] font-bold">
-                {getFriendsCount(me.id)}
-              </span>
-            </button>
           </div>
         </div>
 
-        {/* 4 Quick Stat Cards */}
-        <div className="grid grid-cols-4 gap-1.5 sm:gap-2.5 pt-3 border-t border-slate-200/80 dark:border-white/5">
+        {/* 3 Quick Stat Cards */}
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5 pt-3 border-t border-slate-200/80 dark:border-white/5">
           <div className="rounded-[10px] bg-slate-50 dark:bg-slate-800/60 p-2 sm:p-2.5 text-center">
             <p className="text-[10px] sm:text-xs text-slate-500 flex items-center justify-center gap-1 truncate">
               <Icon name="ri-file-list-3-line" className="text-primary shrink-0" />
@@ -302,39 +285,11 @@ export function Profile() {
             </p>
             <p className="mt-0.5 text-sm sm:text-lg font-bold text-amber-500">{stats?.streak ?? 0} k</p>
           </div>
-          <button
-            type="button"
-            onClick={() => setProfileTab('friends')}
-            className="rounded-[10px] bg-slate-50 dark:bg-slate-800/60 p-2 sm:p-2.5 text-center hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors cursor-pointer border border-transparent hover:border-primary/30 active:scale-95"
-          >
-            <p className="text-[10px] sm:text-xs text-slate-500 flex items-center justify-center gap-1 truncate">
-              <Icon name="ri-user-heart-line" className="text-rose-500 shrink-0" />
-              <span className="truncate">Do‘stlar</span>
-            </p>
-            <p className="mt-0.5 text-sm sm:text-lg font-bold text-primary">{getFriendsCount(me.id)} ta</p>
-          </button>
         </div>
       </Panel>
 
-      {/* Tabs: Do'stlar va Foydalanuvchilar vs Tibbiy Darajalar */}
+      {/* Tabs: Tibbiy Darajalar vs Faol Seanslar */}
       <div className="flex border-b border-slate-200/80 dark:border-white/10 gap-1 sm:gap-2 overflow-x-auto scrollbar-hide">
-        <button
-          type="button"
-          onClick={() => setProfileTab('friends')}
-          className={`flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-bold border-b-2 transition-all shrink-0 ${
-            profileTab === 'friends'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-          }`}
-        >
-          <Icon name="ri-user-heart-line" />
-          <span className="hidden sm:inline">Do‘stlar va Foydalanuvchilar</span>
-          <span className="sm:hidden">Do‘stlar</span>
-          <span className="px-1.5 py-0.2 rounded-full bg-primary/10 text-primary text-[10px] sm:text-xs font-bold">
-            {getFriendsCount(me.id)}
-          </span>
-        </button>
-
         <button
           type="button"
           onClick={() => setProfileTab('titles')}
@@ -366,22 +321,6 @@ export function Profile() {
           </span>
         </button>
       </div>
-
-      {/* Tab 1: Friends View */}
-      {profileTab === 'friends' && (
-        <Panel className="p-4 sm:p-6">
-          <div className="mb-4">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Icon name="ri-team-line" className="text-primary text-lg" />
-              Do‘stlar va Tibbiyot Talabalari Qidiruvi
-            </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Kursdoshlaringizni @username orqali toping, do‘stlik aloqalarini o‘rnating va testlarda birgalikda bellashing.
-            </p>
-          </div>
-          <FriendsView me={me} />
-        </Panel>
-      )}
 
       {/* Tab 2: Medical Career Progression Card */}
       {profileTab === 'titles' && (
@@ -605,44 +544,7 @@ export function Profile() {
         </Panel>
       )}
 
-      {/* Fullscreen Do‘stlar Modal */}
-      {friendsModalOpen && (
-        <div className="fixed inset-0 z-[100] flex flex-col bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-white animate-in fade-in duration-200">
-          {/* Top Bar with Title and Close Button */}
-          <div className="sticky top-0 z-10 flex items-center justify-between px-3.5 sm:px-6 py-3 border-b border-slate-200 dark:border-white/10 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md shadow-xs">
-            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-[8px] sm:rounded-[10px] bg-primary/10 text-primary shrink-0">
-                <Icon name="ri-user-heart-line" className="text-lg sm:text-xl" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h2 className="text-sm sm:text-lg font-bold leading-tight flex items-center gap-1.5 truncate">
-                  <span className="truncate">Do‘stlar va Tibbiyot Tarmog‘i</span>
-                  <span className="px-1.5 py-0.2 rounded-full bg-primary/10 text-primary text-[10px] sm:text-xs font-bold shrink-0">
-                    {getFriendsCount(me.id)} ta
-                  </span>
-                </h2>
-                <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">
-                  Kursdoshlar, talabalar va shifokorlar bilan aloqani boshqaring
-                </p>
-              </div>
-            </div>
 
-            <button
-              type="button"
-              onClick={() => setFriendsModalOpen(false)}
-              className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-[8px] sm:rounded-[10px] border border-slate-200 dark:border-white/10 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer shrink-0 ml-2"
-              aria-label="Yopish"
-            >
-              <Icon name="ri-close-line" className="text-lg sm:text-xl" />
-            </button>
-          </div>
-
-          {/* Body */}
-          <div className="flex-1 overflow-y-auto p-3 sm:p-6 max-w-4xl mx-auto w-full">
-            <FriendsView me={me} />
-          </div>
-        </div>
-      )}
 
       {/* Bottom Sheet Modal for Editing Personal Details (pastdan tepaga ochiladigan modal) */}
       {editModalOpen && (

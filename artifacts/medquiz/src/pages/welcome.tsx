@@ -163,7 +163,7 @@ export function Welcome() {
               <span className="text-gradient mt-2 block">aqlli test maydoni</span>
             </h2>
             <p className="mt-6 text-base leading-relaxed text-slate-600 dark:text-slate-400">
-              O‘z savollaringizni yuklang, guruh bo‘lib battle qiling, blogda maqolalar ulashing va bilimlaringizni sinovdan o‘tkazing.
+              O‘z savollaringizni yuklang, do‘stlaringiz bilan jonli battle qiling, reytingda peshqadam bo‘ling va bilimlaringizni sinovdan o‘tkazing.
             </p>
 
             <div className="mt-8 grid grid-cols-3 gap-3">
@@ -172,8 +172,8 @@ export function Welcome() {
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Real vaqtda</p>
               </div>
               <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-sm">
-                <p className="text-lg font-bold text-slate-900 dark:text-white">Blog & Story</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Tibbiy ijtimoiy tarmoq</p>
+                <p className="text-lg font-bold text-slate-900 dark:text-white">Do‘stlar</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Jonli musobaqa</p>
               </div>
               <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-sm">
                 <p className="text-lg font-bold text-slate-900 dark:text-white">OTM</p>

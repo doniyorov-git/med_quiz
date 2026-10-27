@@ -221,7 +221,7 @@ export function FriendsView({ me, onSelectUserForBattle }: FriendsViewProps) {
                   title="Ma‘lumotlarni ko‘rish"
                 >
                   <div className="relative shrink-0">
-                    <div className="h-11 w-11 rounded-[10px] overflow-hidden border border-primary/20 bg-gradient-to-br from-teal-500 via-primary to-indigo-600 flex items-center justify-center font-bold text-xs sm:text-sm text-white shadow-xs">
+                    <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full overflow-hidden border border-primary/20 bg-gradient-to-br from-teal-500 via-primary to-indigo-600 flex items-center justify-center font-bold text-xs sm:text-sm text-white shadow-xs">
                       {u.avatar ? (
                         <img src={u.avatar} alt="" className="h-full w-full object-cover" />
                       ) : (

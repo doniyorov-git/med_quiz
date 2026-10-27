@@ -1,0 +1,16 @@
+RewriteEngine On
+RewriteBase /quiz/
+
+# Force HTTPS
+RewriteCond %{HTTPS} off
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteRule ^(.*)$ https://%{HTTP_HOST}/quiz/$1 [R=301,L]
+
+# API proxy to backend
+RewriteRule ^api/(.*)$ http://130.61.247.126/quiz/api/$1 [P,L]
+
+# SPA fallback
+RewriteRule ^index\.html$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /quiz/index.html [L]

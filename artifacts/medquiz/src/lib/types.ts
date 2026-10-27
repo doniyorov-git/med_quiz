@@ -225,52 +225,6 @@ export type VoicePeer = {
   lastSeen: number;
 };
 
-export type BlogComment = {
-  id: string;
-  postId: string;
-  authorId: string;
-  authorName: string;
-  authorAvatar: string | null;
-  authorTitle?: string;
-  text: string;
-  likes: number;
-  likedBy: string[];
-  createdAt: number;
-};
-
-export type BlogPost = {
-  id: string;
-  authorId: string;
-  authorName: string;
-  authorAvatar: string | null;
-  authorTitle: string;
-  authorUniversity?: string;
-  title?: string;
-  content: string;
-  tags: string[];
-  image?: string | null;
-  likes: number;
-  likedBy: string[];
-  savedBy: string[];
-  shares: number;
-  comments: BlogComment[];
-  createdAt: number;
-};
-
-export type StoryItem = {
-  id: string;
-  authorId: string;
-  authorName: string;
-  authorAvatar: string | null;
-  title: string;
-  text: string;
-  image?: string | null;
-  gradient?: string;
-  viewsCount: number;
-  viewedBy: string[];
-  createdAt: number;
-};
-
 export type UserSession = {
   id: string;
   userId: string;

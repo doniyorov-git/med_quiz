@@ -4,7 +4,6 @@ import { StoreProvider, useStore } from '@/lib/store';
 import { Achievements } from '@/pages/achievements';
 import { Banks } from '@/pages/banks';
 import { BattleLobby, BattleRoom } from '@/pages/battle';
-import { BlogPage } from '@/pages/blog';
 import { Dashboard } from '@/pages/dashboard';
 import { Editor } from '@/pages/editor';
 import { FriendsPage } from '@/pages/friends';
@@ -27,7 +26,6 @@ function Pages() {
     <Switch>
       <Route path="/">{me ? <Redirect to="/dashboard" /> : <Welcome />}</Route>
       <Route path="/dashboard"><Guard><Dashboard /></Guard></Route>
-      <Route path="/blog"><Guard><BlogPage /></Guard></Route>
       <Route path="/banks/:id"><Guard><Editor /></Guard></Route>
       <Route path="/banks"><Guard><Banks /></Guard></Route>
       <Route path="/play/:id"><Guard><Play /></Guard></Route>

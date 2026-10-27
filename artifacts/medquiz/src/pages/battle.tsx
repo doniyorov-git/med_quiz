@@ -12,10 +12,14 @@ import {
   beginLive,
   claimBattle,
   createRoom,
+  fetchFriendships,
   fetchPublicUsers,
   fetchRoomFromServer,
   forceNext,
+  getFriendships,
+  getFriendsList,
   getMedicalTitle,
+  getPublicUsers,
   joinRoom,
   leaveRoom,
   playerScore,
@@ -28,7 +32,17 @@ import {
 } from '@/lib/model';
 import { cleanQuestion, isCorrectPick } from '@/lib/parser';
 import { useBanks, useInvites, useOnline, useRooms, useStatsMap, useStore } from '@/lib/store';
-import type { OrderMode, Room } from '@/lib/types';
+import type { FriendRequest, OrderMode, PublicUser, Room } from '@/lib/types';
+
+function formatLastSeen(seen?: number) {
+  if (!seen) return 'Oflayn · Faol emas';
+  const diff = Date.now() - seen;
+  if (diff < 60_000) return 'Hozir onlayn';
+  if (diff < 3600_000) return `Oflayn · ${Math.floor(diff / 60_000)} daqiqa oldin`;
+  if (diff < 86400_000) return `Oflayn · ${Math.floor(diff / 3600_000)} soat oldin`;
+  const days = Math.floor(diff / 86400_000);
+  return `Oflayn · ${days} kun oldin`;
+}
 
 export function BattleLobby() {
   const { me } = useStore();
@@ -53,11 +67,19 @@ export function BattleLobby() {
   const readyCount = (selectedBank?.questions ?? []).filter((question) => cleanQuestion(question)).length;
   const countMax = selectedBank ? Math.max(readyCount, 1) : 30;
 
+  const [publicUsers, setPublicUsers] = useState<PublicUser[]>(() => getPublicUsers());
+  const [friendships, setFriendships] = useState<FriendRequest[]>(() => getFriendships());
+  const [friendFilter, setFriendFilter] = useState<'all' | 'online' | 'offline'>('all');
+
   useEffect(() => {
-    fetchPublicUsers();
-    const interval = window.setInterval(() => {
-      fetchPublicUsers();
-    }, 2500);
+    async function sync() {
+      const freshUsers = await fetchPublicUsers();
+      if (freshUsers.length) setPublicUsers(freshUsers);
+      const freshFr = await fetchFriendships();
+      if (freshFr.length) setFriendships(freshFr);
+    }
+    sync();
+    const interval = window.setInterval(sync, 2500);
     return () => window.clearInterval(interval);
   }, []);
 
@@ -67,9 +89,42 @@ export function BattleLobby() {
     }
   }, [bankId, banks.length]);
 
+  const isUserOnline = (userId: string, seen?: number) => {
+    if (online.some((u) => u.id === userId)) return true;
+    if (seen && Date.now() - seen < 60000) return true;
+    return false;
+  };
+
   const mine = rooms.filter((room) => room && room.status !== 'done' && (room.players ?? []).some((player) => player?.id === me?.id));
-  const others = online.filter((user) => user && user.id !== me?.id);
   const active = mine[0];
+
+  const friends = me ? getFriendsList(me.id, publicUsers, friendships) : [];
+  friends.sort((a, b) => {
+    const aOn = isUserOnline(a.id, a.seen) ? 1 : 0;
+    const bOn = isUserOnline(b.id, b.seen) ? 1 : 0;
+    if (aOn !== bOn) return bOn - aOn;
+    return (b.seen || 0) - (a.seen || 0);
+  });
+
+  const onlineFriends = friends.filter((f) => isUserOnline(f.id, f.seen));
+  const offlineFriends = friends.filter((f) => !isUserOnline(f.id, f.seen));
+  type DisplayUser = {
+    id: string;
+    name: string;
+    avatar?: string | null;
+    seen?: number;
+    xp?: number;
+    university?: string;
+  };
+
+  let displayedList: DisplayUser[] = [];
+  if (friendFilter === 'all') {
+    displayedList = friends;
+  } else if (friendFilter === 'online') {
+    displayedList = onlineFriends;
+  } else if (friendFilter === 'offline') {
+    displayedList = offlineFriends;
+  }
 
   useEffect(() => {
     if (!sheet) {
@@ -204,48 +259,222 @@ export function BattleLobby() {
         </button>
       </div>
 
-      <Panel className="mt-4">
-        <h2 className="font-semibold">Hozir onlayn</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Boshqa talabalarni test musobaqasiga taklif qiling. Taklif yuborish uchun avval xona yarating.
-        </p>
-        {!others.length && <p className="mt-4 text-sm text-muted-foreground">Hozircha boshqa talaba onlayn emas.</p>}
-        <div className="mt-4 space-y-2">
-          {others.map((user) => {
-            const sent = invites.find(
-              (invite) => invite.toId === user.id && invite.fromId === me?.id && active && invite.roomCode === active.code
-            );
-            return (
-              <div key={user.id} className="flex items-center justify-between gap-3 rounded-[10px] border border-border px-3 py-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-8 w-8 rounded-[8px] overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold">
-                    {user.avatar ? <img src={user.avatar} alt="" className="h-full w-full object-cover" /> : (user.name || 'MQ').slice(0, 2).toUpperCase()}
+      <Panel className="mt-4 p-3 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-border">
+          <div>
+            <h2 className="font-semibold text-base flex items-center gap-2">
+              <Icon name="ri-user-heart-line" className="text-emerald-500" />
+              Kursdoshlar va Do‘stlar
+            </h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Do‘stlaringizni test musobaqasiga taklif qiling. Oflayn do‘stlaringiz ham ro‘yxatda aks etadi.
+            </p>
+          </div>
+          <Link
+            href="/friends"
+            className="text-xs font-semibold px-2.5 py-1.5 rounded-[8px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all flex items-center gap-1.5 shrink-0 self-start sm:self-auto"
+          >
+            <Icon name="ri-user-add-line" />
+            <span>Do‘st qo‘shish</span>
+          </Link>
+        </div>
+
+        {/* Filter Pills */}
+        <div className="flex items-center gap-1.5 mt-3 overflow-x-auto scrollbar-hide text-xs pb-1">
+          <button
+            type="button"
+            onClick={() => setFriendFilter('all')}
+            className={`px-3 py-1.5 rounded-full font-medium transition-colors shrink-0 ${
+              friendFilter === 'all'
+                ? 'bg-primary text-white font-semibold shadow-xs'
+                : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10'
+            }`}
+          >
+            Barchasi ({friends.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFriendFilter('online')}
+            className={`px-3 py-1.5 rounded-full font-medium transition-colors shrink-0 flex items-center gap-1.5 ${
+              friendFilter === 'online'
+                ? 'bg-emerald-600 text-white font-semibold shadow-xs'
+                : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10'
+            }`}
+          >
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            Onlayn ({onlineFriends.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFriendFilter('offline')}
+            className={`px-3 py-1.5 rounded-full font-medium transition-colors shrink-0 flex items-center gap-1.5 ${
+              friendFilter === 'offline'
+                ? 'bg-slate-700 text-white font-semibold shadow-xs'
+                : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10'
+            }`}
+          >
+            <span className="h-2 w-2 rounded-full bg-slate-400" />
+            Oflayn ({offlineFriends.length})
+          </button>
+        </div>
+
+        {/* Empty state when no friends */}
+        {displayedList.length === 0 && (
+          <div className="py-6 text-center">
+            {friends.length === 0 ? (
+              <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-slate-800/30 max-w-md mx-auto">
+                <Icon name="ri-user-search-line" className="text-3xl text-slate-400 mb-2 block mx-auto" />
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                  Sizda hali do‘stlar yo‘q
+                </p>
+                <p className="text-xs text-slate-500 mt-1 mb-3">
+                  Do‘stlaringizni @username orqali qidiring va birgalikda bellashing.
+                </p>
+                <Link
+                  href="/friends"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-all"
+                >
+                  <Icon name="ri-user-add-line" />
+                  Do‘stlar bo‘limiga o‘tish
+                </Link>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Ushbu filtr bo‘yicha hech qanday do‘st topilmadi.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Friends & Online List */}
+        {displayedList.length > 0 && (
+          <div className="mt-3.5 space-y-2">
+            {displayedList.map((user) => {
+              const isOnlineNow = isUserOnline(user.id, user.seen);
+              const sent = invites.find(
+                (invite) => invite.toId === user.id && invite.fromId === me?.id && active && invite.roomCode === active.code
+              );
+              const title = getMedicalTitle(user.xp ?? 0);
+              return (
+                <div
+                  key={user.id}
+                  className={`flex items-center justify-between gap-3 rounded-xl border p-3 transition-all ${
+                    isOnlineNow
+                      ? 'border-emerald-500/25 bg-emerald-500/[0.02] dark:bg-emerald-500/[0.04]'
+                      : 'border-slate-200/70 dark:border-white/5 bg-slate-50/40 dark:bg-slate-800/20'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="relative shrink-0">
+                      <div className="h-10 w-10 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold shadow-xs">
+                        {user.avatar ? (
+                          <img src={user.avatar} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          (user.name || 'MQ').slice(0, 2).toUpperCase()
+                        )}
+                      </div>
+                      {/* Status indicator dot */}
+                      {isOnlineNow ? (
+                        <span
+                          className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#111827] shadow-xs"
+                          title="Onlayn"
+                        />
+                      ) : (
+                        <span
+                          className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-slate-400 ring-2 ring-white dark:ring-[#111827]"
+                          title="Oflayn"
+                        />
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                          {user.name || 'Talaba'}
+                        </p>
+                        <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[9px] font-semibold border ${title.color}`}>
+                          <Icon name={title.icon} className="text-[10px]" />
+                          <span>{title.badge}</span>
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 mt-0.5 text-xs">
+                        {isOnlineNow ? (
+                          <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            Hozir onlayn
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-slate-400 dark:text-slate-500">
+                            <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                            {formatLastSeen(user.seen)}
+                          </span>
+                        )}
+
+                        {user.university && (
+                          <>
+                            <span className="text-slate-300 dark:text-slate-600">·</span>
+                            <span className="text-slate-500 dark:text-slate-400 truncate max-w-[140px]">
+                              {user.university}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium">{user.name || 'Talaba'}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {sent
-                        ? sent.status === 'pending'
-                          ? 'Taklif yuborildi'
-                          : sent.status === 'accepted'
-                          ? 'Qabul qildi'
-                          : 'Rad etdi'
-                        : 'Onlayn'}
-                    </p>
+
+                  <div className="shrink-0 flex items-center gap-2">
+                    {isOnlineNow ? (
+                      sent ? (
+                        <span
+                          className={`text-xs px-2.5 py-1 rounded-full font-semibold ${
+                            sent.status === 'pending'
+                              ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                              : sent.status === 'accepted'
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                              : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                          }`}
+                        >
+                          {sent.status === 'pending'
+                            ? 'Taklif yuborildi'
+                            : sent.status === 'accepted'
+                            ? 'Qabul qildi'
+                            : 'Rad etdi'}
+                        </span>
+                      ) : (
+                        <Btn
+                          kind="primary"
+                          className="text-xs px-3 py-1.5 h-auto rounded-[8px]"
+                          testId={`button-invite-${user.id}`}
+                          onClick={() => {
+                            if (!active) {
+                              setSheet('create');
+                              return;
+                            }
+                            if (me && active.status === 'lobby') {
+                              sendInvite(me, { id: user.id, name: user.name, avatar: user.avatar ?? null, seen: user.seen || Date.now() }, active);
+                            }
+                          }}
+                        >
+                          {active ? 'Taklif qilish' : 'Xonaga taklif'}
+                        </Btn>
+                      )
+                    ) : (
+                      <span
+                        className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-[8px] bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 font-medium cursor-not-allowed select-none border border-slate-200/50 dark:border-white/5"
+                        title="Foydalanuvchi hozir oflayn"
+                      >
+                        <Icon name="ri-time-line" className="text-xs" />
+                        <span>Oflayn</span>
+                      </span>
+                    )}
                   </div>
                 </div>
-                <Btn
-                  kind="line"
-                  disabled={!active || active.status !== 'lobby'}
-                  testId={`button-invite-${user.id}`}
-                  onClick={() => me && active && sendInvite(me, user, active)}
-                >
-                  Taklif qilish
-                </Btn>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
+
       </Panel>
 
       {/* Bottom Sheet Modal: Xona yaratish */}

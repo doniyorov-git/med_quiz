@@ -61,7 +61,7 @@ export const fieldClass = 'input-field';
 
 const sideNav = [
   { href: '/dashboard', label: 'Boshqaruv', icon: HiOutlineHome },
-  { href: '/blog', label: 'Blog & Lenta', icon: HiOutlineDocumentText },
+  { href: '/friends', label: 'Do‘stlar', icon: HiOutlineUserGroup },
   { href: '/banks', label: 'To‘plamlar', icon: HiOutlineCollection },
   { href: '/mistakes', label: 'Xatolarim', icon: HiOutlineExclamationCircle },
   { href: '/battle', label: 'Battle', icon: HiOutlineLightningBolt },
@@ -71,7 +71,7 @@ const sideNav = [
 
 const mobileNav = [
   { href: '/dashboard', label: 'Asosiy', icon: 'ri-home-5-line', active: 'ri-home-5-fill' },
-  { href: '/blog', label: 'Blog', icon: 'ri-article-line', active: 'ri-article-fill' },
+  { href: '/friends', label: 'Do‘stlar', icon: 'ri-group-line', active: 'ri-group-fill' },
   { href: '/battle', label: 'Battle', icon: 'ri-sword-line', active: 'ri-sword-fill' },
   { href: '/leaderboard', label: 'Reyting', icon: 'ri-trophy-line', active: 'ri-trophy-fill' },
   { href: '/profile', label: 'Profil', icon: 'ri-user-3-line', active: 'ri-user-3-fill' },
@@ -106,7 +106,7 @@ function SideDock({ xp, streak, quizzes }: { xp: number; streak: number; quizzes
 
 function isActive(location: string, href: string) {
   if (href === '/dashboard') return location === '/dashboard';
-  if (href === '/blog') return location.startsWith('/blog');
+  if (href === '/friends') return location.startsWith('/friends');
   if (href === '/banks') return location.startsWith('/banks') || location.startsWith('/play');
   if (href === '/mistakes') return location.startsWith('/mistakes');
   if (href === '/battle') return location.startsWith('/battle');
