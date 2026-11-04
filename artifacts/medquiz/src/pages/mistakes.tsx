@@ -340,9 +340,9 @@ export function MistakesPage() {
                     let badge = null;
 
                     if (isCorrect) {
-                      optionStyle = 'border-emerald-500 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-medium ring-1 ring-emerald-500/20';
+                      optionStyle = 'border-green-500 bg-green-500/10 text-green-800 dark:text-green-300 font-medium ring-1 ring-green-500/20';
                       badge = (
-                        <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
+                        <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-green-600 dark:text-green-400 shrink-0">
                           <Icon name="ri-check-line" className="text-sm" /> To‘g‘ri
                         </span>
                       );
@@ -363,7 +363,7 @@ export function MistakesPage() {
                         <div className="flex items-center gap-2.5 min-w-0 flex-1">
                           <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
                             isCorrect
-                              ? 'bg-emerald-500 text-white'
+                              ? 'bg-green-500 text-white'
                               : isPicked
                               ? 'bg-rose-500 text-white'
                               : 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-400'

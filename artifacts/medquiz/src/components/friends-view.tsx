@@ -138,7 +138,7 @@ export function FriendsView({ me, onSelectUserForBattle }: FriendsViewProps) {
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
-          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+          <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse shrink-0" />
           <span>Onlayn</span>
           <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">
             {onlineUsersCount}
@@ -221,7 +221,7 @@ export function FriendsView({ me, onSelectUserForBattle }: FriendsViewProps) {
                   title="Ma‘lumotlarni ko‘rish"
                 >
                   <div className="relative shrink-0">
-                    <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full overflow-hidden border border-primary/20 bg-gradient-to-br from-teal-500 via-primary to-indigo-600 flex items-center justify-center font-bold text-xs sm:text-sm text-white shadow-xs">
+                    <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-slate-700 flex items-center justify-center font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 shadow-xs">
                       {u.avatar ? (
                         <img src={u.avatar} alt="" className="h-full w-full object-cover" />
                       ) : (
@@ -229,7 +229,7 @@ export function FriendsView({ me, onSelectUserForBattle }: FriendsViewProps) {
                       )}
                     </div>
                     {isOnline && (
-                      <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-[#0e1422] bg-emerald-500" />
+                      <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-[#0e1422] bg-green-500" />
                     )}
                   </div>
 

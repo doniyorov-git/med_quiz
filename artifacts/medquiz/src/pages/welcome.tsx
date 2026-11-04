@@ -14,6 +14,7 @@ import {
 } from '@/lib/education-data';
 import { loginWithGoogle } from '@/lib/firebase';
 import { useStore } from '@/lib/store';
+import { Trophy } from '@/components/result-card';
 
 function GoogleIcon({ className = 'w-5 h-5' }: { className?: string }) {
   return (
@@ -35,6 +36,40 @@ function GoogleIcon({ className = 'w-5 h-5' }: { className?: string }) {
         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
       />
     </svg>
+  );
+}
+
+function HeroCollage({ className = '' }: { className?: string }) {
+  return (
+    <div className={`grid h-[280px] grid-cols-[1.05fr_1fr] grid-rows-2 gap-3 sm:h-[320px] ${className}`}>
+      <div className="pop-in relative row-span-2 overflow-hidden rounded-[28px] bg-gradient-to-b from-cyan-400 via-sky-500 to-blue-600 p-4 text-white shadow-lg shadow-sky-500/30">
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/25 text-lg backdrop-blur-sm">
+          <i className="ri-gamepad-fill leading-none" aria-hidden="true" />
+        </span>
+        <p className="mt-6 font-display text-[34px] font-black leading-[1.02] tracking-tight">
+          O‘YNA
+          <br />
+          TOP
+          <br />
+          YUT
+        </p>
+        <i className="ri-stethoscope-fill pointer-events-none absolute -bottom-3 -right-3 text-[110px] leading-none text-white/25" aria-hidden="true" />
+        <span className="absolute bottom-3 left-3 rounded-full bg-slate-900 px-3 py-1.5 text-[11px] font-bold text-white shadow-md">
+          <i className="ri-star-fill mr-1 leading-none text-amber-400" aria-hidden="true" />
+          Qiziqarli testlar!
+        </span>
+      </div>
+      <div className="pop-in relative overflow-hidden rounded-[28px] bg-gradient-to-br from-violet-500 to-purple-600 p-3.5 text-white shadow-lg shadow-purple-500/30" style={{ animationDelay: '80ms' }}>
+        <i className="ri-sword-fill pointer-events-none absolute -right-2 -top-2 text-[84px] leading-none text-white/20" aria-hidden="true" />
+        <p className="absolute bottom-3 left-3.5 right-3 text-xs font-bold leading-snug text-white/95">
+          Do‘stlaringizni jonli bellashuvga chorlang
+        </p>
+      </div>
+      <div className="pop-in relative flex items-center justify-center overflow-hidden rounded-[28px] bg-gradient-to-br from-amber-300 via-orange-400 to-orange-500 shadow-lg shadow-orange-500/30" style={{ animationDelay: '160ms' }}>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.45),transparent_55%)]" />
+        <Trophy size={112} className="trophy-bob relative drop-shadow-[0_10px_12px_rgba(124,55,15,0.35)]" />
+      </div>
+    </div>
   );
 }
 
@@ -166,20 +201,7 @@ export function Welcome() {
               O‘z savollaringizni yuklang, do‘stlaringiz bilan jonli battle qiling, reytingda peshqadam bo‘ling va bilimlaringizni sinovdan o‘tkazing.
             </p>
 
-            <div className="mt-8 grid grid-cols-3 gap-3">
-              <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-sm">
-                <p className="text-lg font-bold text-slate-900 dark:text-white">100%</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Real vaqtda</p>
-              </div>
-              <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-sm">
-                <p className="text-lg font-bold text-slate-900 dark:text-white">Do‘stlar</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Jonli musobaqa</p>
-              </div>
-              <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-sm">
-                <p className="text-lg font-bold text-slate-900 dark:text-white">OTM</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Saralangan bank</p>
-              </div>
-            </div>
+            <HeroCollage className="mt-8 max-w-md" />
           </div>
 
           <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -191,14 +213,17 @@ export function Welcome() {
       {/* Right side form card */}
       <div className="relative flex flex-1 items-center justify-center p-4 sm:p-6 lg:p-8">
         <div className="glass-card w-full max-w-lg p-6 sm:p-8 shadow-2xl border border-slate-200/80 dark:border-white/10">
-          {/* Mobile brand header */}
-          <div className="mb-6 flex items-center justify-center lg:hidden">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-med-500 to-med-600 text-white shadow-md">
-                <span className="font-display text-xl font-bold">M</span>
-              </div>
-              <span className="font-display text-lg font-bold text-slate-900 dark:text-white">MedQuiz</span>
-            </div>
+          {/* Mobile hero */}
+          <div className="mb-6 lg:hidden">
+            <HeroCollage />
+            <h2 className="mt-5 text-center font-display text-2xl font-extrabold leading-tight tracking-tight text-slate-900 dark:text-white">
+              Bilim va ko‘nikmalarni
+              <br />
+              o‘ynab oshiring
+            </h2>
+            <p className="mx-auto mt-1.5 max-w-xs text-center text-xs text-slate-500 dark:text-slate-400">
+              Tibbiyot testlari, do‘stlar bilan battle va reyting — hammasi bir joyda.
+            </p>
           </div>
 
           {/* Previous account switch (if exists) */}

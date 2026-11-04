@@ -376,7 +376,7 @@ export function BattleLobby() {
                       {/* Status indicator dot */}
                       {isOnlineNow ? (
                         <span
-                          className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#111827] shadow-xs"
+                          className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 ring-2 ring-white dark:ring-[#111827] shadow-xs"
                           title="Onlayn"
                         />
                       ) : (

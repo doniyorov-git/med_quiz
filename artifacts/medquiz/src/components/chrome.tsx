@@ -16,7 +16,6 @@ import {
   HiOutlineLogout,
   HiOutlineMenu,
   HiOutlineSearch,
-  HiOutlineSparkles,
   HiOutlineStar,
   HiOutlineUser,
   HiOutlineX,
@@ -26,7 +25,6 @@ import { HiOutlineBell } from 'react-icons/hi';
 import { useBanks, useInvites, useOnline, useStatsMap, useStore } from '@/lib/store';
 import { getMedicalTitle, joinRoom, respondInvite } from '@/lib/model';
 import { ThemeSwitch } from '@/components/theme-toggle';
-import { CompanionMini } from '@/components/companion';
 
 import { HiOutlineUserGroup, HiUserGroup } from 'react-icons/hi';
 
@@ -63,7 +61,6 @@ export const fieldClass = 'input-field';
 
 const sideNav = [
   { href: '/dashboard', label: 'Boshqaruv', icon: HiOutlineHome },
-  { href: '/ai', label: 'AI yordamchi', icon: HiOutlineSparkles },
   { href: '/friends', label: 'Do‘stlar', icon: HiOutlineUserGroup },
   { href: '/banks', label: 'To‘plamlar', icon: HiOutlineCollection },
   { href: '/mistakes', label: 'Xatolarim', icon: HiOutlineExclamationCircle },
@@ -74,9 +71,9 @@ const sideNav = [
 
 const mobileNav = [
   { href: '/dashboard', label: 'Asosiy', icon: 'ri-home-5-line', active: 'ri-home-5-fill' },
-  { href: '/battle', label: 'Battle', icon: 'ri-sword-line', active: 'ri-sword-fill' },
-  { href: '/ai', label: 'Pufi', icon: 'ri-sparkling-line', active: 'ri-sparkling-fill', center: true },
   { href: '/friends', label: 'Do‘stlar', icon: 'ri-group-line', active: 'ri-group-fill' },
+  { href: '/battle', label: 'Battle', icon: 'ri-sword-line', active: 'ri-sword-fill' },
+  { href: '/leaderboard', label: 'Reyting', icon: 'ri-trophy-line', active: 'ri-trophy-fill' },
   { href: '/profile', label: 'Profil', icon: 'ri-user-3-line', active: 'ri-user-3-fill' },
 ];
 
@@ -113,7 +110,6 @@ function isActive(location: string, href: string) {
   if (href === '/banks') return location.startsWith('/banks') || location.startsWith('/play');
   if (href === '/mistakes') return location.startsWith('/mistakes');
   if (href === '/battle') return location.startsWith('/battle');
-  if (href === '/ai') return location.startsWith('/ai');
   return location === href || location.startsWith(`${href}/`);
 }
 
@@ -284,18 +280,6 @@ export function Shell({ children }: { children: ReactNode }) {
           {mobileNav.map((item) => {
             const active = isActive(location, item.href);
             const iconName = active ? item.active : item.icon;
-            if (item.center) {
-              return (
-                <Link key={item.href} href={item.href} className="relative flex h-full min-w-0 flex-1 flex-col items-center justify-end pb-1.5 text-center" aria-label="AI yordamchi Pufi">
-                  <span
-                    className={`absolute -top-5 flex h-14 w-14 items-center justify-center rounded-full border-4 border-white bg-gradient-to-br from-teal-100 via-white to-pink-100 shadow-lg shadow-emerald-500/25 transition-transform active:scale-90 dark:border-[#090d16] dark:from-teal-900/60 dark:via-slate-800 dark:to-pink-900/50 ${active ? 'ring-2 ring-emerald-500/60' : ''}`}
-                  >
-                    <CompanionMini size={40} />
-                  </span>
-                  <span className={`text-[11px] font-semibold leading-none ${active ? 'text-med-600 dark:text-med-400' : 'text-slate-500 dark:text-slate-400'}`}>{item.label}</span>
-                </Link>
-              );
-            }
             return (
               <Link
                 key={item.href}
@@ -554,7 +538,7 @@ export function Avatar({ name, image, large = false, rounded = 'rounded-[10px]' 
   const size = large ? 'h-16 w-16 text-xl' : 'h-10 w-10 text-sm';
   if (image) return <img src={image} alt="" className={`${size} ${rounded} object-cover ring-2 ring-primary/30 shadow-xs`} />;
   const letter = (name || 'M').trim()[0]?.toUpperCase() || 'M';
-  return <span className={`${size} inline-flex items-center justify-center ${rounded} bg-gradient-to-br from-teal-500 via-primary to-indigo-600 font-display font-bold text-white shadow-xs`}>{letter}</span>;
+  return <span className={`${size} inline-flex items-center justify-center ${rounded} bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-white/10 font-display font-bold text-slate-700 dark:text-slate-200 shadow-xs`}>{letter}</span>;
 }
 
 export function Panel({ children, className = '' }: { children: ReactNode; className?: string }) {

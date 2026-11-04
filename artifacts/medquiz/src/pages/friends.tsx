@@ -29,13 +29,13 @@ export function FriendsPage() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="bg-white/15 backdrop-blur-md rounded-xl px-3 py-2 sm:px-4 sm:py-3 border border-white/20 text-center min-w-[76px] sm:min-w-[90px]">
-              <p className="text-[11px] text-white/80 font-medium">Do‘stlaringiz</p>
-              <p className="text-xl font-bold mt-0.5">{getFriendsCount(me.id)} ta</p>
+            <div className="bg-white/15 backdrop-blur-md rounded-2xl px-5 py-3.5 sm:px-7 sm:py-4 border border-white/20 text-center min-w-[110px] sm:min-w-[130px] shadow-sm">
+              <p className="text-xs sm:text-sm text-white/90 font-medium">Do‘stlaringiz</p>
+              <p className="text-2xl sm:text-3xl font-extrabold mt-0.5">{getFriendsCount(me.id)} ta</p>
             </div>
             <Link
               href="/profile"
-              className="inline-flex items-center gap-1.5 px-3 py-2.5 sm:px-4 sm:py-3 rounded-xl bg-white text-emerald-800 hover:bg-white/90 text-xs font-bold transition-all shadow-md active:scale-95"
+              className="inline-flex items-center gap-1.5 px-3.5 py-3 sm:px-5 sm:py-4 rounded-xl bg-white text-emerald-800 hover:bg-white/90 text-xs sm:text-sm font-bold transition-all shadow-md active:scale-95"
             >
               <Icon name="ri-user-settings-line" className="text-base text-emerald-600" />
               <span>Profilimga o‘tish</span>

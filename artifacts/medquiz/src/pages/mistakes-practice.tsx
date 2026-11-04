@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'wouter';
 import { Btn, Icon, Panel } from '@/components/chrome';
 import { Choices } from '@/components/choices';
+import { ResultCard, bigBtn, bigBtnLine } from '@/components/result-card';
 import { recordMistake, removeMistake } from '@/lib/model';
 import { isCorrectPick, shuffle } from '@/lib/parser';
 import { useBanks, useMistakes } from '@/lib/store';
@@ -103,8 +104,8 @@ export function MistakesPractice() {
                 <p className="text-2xl font-bold tabular-nums text-rose-600 dark:text-rose-400">{pool.length}</p>
                 <p className="text-xs text-slate-500">mashq uchun savol</p>
               </div>
-              <div className="rounded-[12px] bg-emerald-50 p-3 dark:bg-emerald-500/10">
-                <p className="text-2xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{Math.min(count, pool.length)}</p>
+              <div className="rounded-[12px] bg-green-50 p-3 dark:bg-green-500/10">
+                <p className="text-2xl font-bold tabular-nums text-green-600 dark:text-green-400">{Math.min(count, pool.length)}</p>
                 <p className="text-xs text-slate-500">shu testda</p>
               </div>
             </div>
@@ -158,64 +159,56 @@ export function MistakesPractice() {
     const percent = total ? Math.round((correct / total) * 100) : 0;
     const wrong = run.results.filter((r) => !r.ok);
     return (
-      <div className="mx-auto max-w-2xl space-y-4">
-        <p className="text-xs font-bold uppercase tracking-wider text-med-600 dark:text-med-400">Yakunlandi</p>
-        <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">{scopeName}</h1>
-        <div className="grid grid-cols-3 gap-3">
-          <Panel className="p-4">
-            <p className="text-2xl font-bold tabular-nums text-slate-900 dark:text-white">
-              {correct}/{total}
-            </p>
-            <p className="text-xs text-slate-500">to‘g‘ri</p>
-          </Panel>
-          <Panel className="p-4">
-            <p className="text-2xl font-bold tabular-nums text-med-600 dark:text-med-400">{percent}%</p>
-            <p className="text-xs text-slate-500">aniqlik</p>
-          </Panel>
-          <Panel className="p-4">
-            <p className="text-2xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{correct}</p>
-            <p className="text-xs text-slate-500">o‘zlashtirildi</p>
-          </Panel>
-        </div>
-
-        {wrong.length > 0 && (
-          <Panel className="space-y-2 p-4">
-            <p className="text-sm font-bold text-rose-600 dark:text-rose-400">Yana xato qilganlaringiz ({wrong.length})</p>
-            {wrong.map((r) => (
-              <div key={r.item.id} className="rounded-[10px] border border-slate-200/80 p-3 text-sm dark:border-white/10">
-                <p className="font-medium text-slate-900 dark:text-white">{r.item.prompt}</p>
-                <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">
-                  <Icon name="ri-check-line" /> {r.item.options.filter((o) => o.correct).map((o) => o.text).join('; ')}
-                </p>
-              </div>
-            ))}
-          </Panel>
-        )}
-
-        <div className="flex flex-wrap gap-2.5 pt-1">
-          {wrong.length > 0 && (
-            <Btn
+      <div className="px-1">
+        <ResultCard
+          percent={percent}
+          correct={correct}
+          total={total}
+          primary={
+            wrong.length > 0 ? (
+              <button
+                type="button"
+                className={bigBtn}
+                onClick={() => {
+                  setDone(false);
+                  setRun({ items: wrong.map((r) => r.item), index: 0, picks: [], locked: false, results: [] });
+                }}
+              >
+                <Icon name="ri-refresh-line" /> Qolgan {wrong.length} tasini qayta yechish
+              </button>
+            ) : (
+              <Link href="/mistakes" className={bigBtn}>
+                <Icon name="ri-medal-line" /> Hammasi o‘zlashtirildi!
+              </Link>
+            )
+          }
+          secondary={
+            <button
+              type="button"
+              className={bigBtnLine}
               onClick={() => {
+                setRun(null);
                 setDone(false);
-                setRun({ items: wrong.map((r) => r.item), index: 0, picks: [], locked: false, results: [] });
               }}
             >
-              <Icon name="ri-refresh-line" /> Qolganlarini qayta yechish
-            </Btn>
+              Qayta sozlash
+            </button>
+          }
+        >
+          {wrong.length > 0 && (
+            <div className="space-y-2">
+              <p className="px-1 text-xs font-bold uppercase tracking-wider text-rose-500">Yana xato qilganlaringiz</p>
+              {wrong.map((r) => (
+                <div key={r.item.id} className="rounded-[18px] border border-slate-200/80 bg-white p-3 text-sm shadow-xs dark:border-white/10 dark:bg-[#111827]">
+                  <p className="font-medium text-slate-900 dark:text-white">{r.item.prompt}</p>
+                  <p className="mt-1 text-xs text-green-600 dark:text-green-400">
+                    <Icon name="ri-check-line" /> {r.item.options.filter((o) => o.correct).map((o) => o.text).join('; ')}
+                  </p>
+                </div>
+              ))}
+            </div>
           )}
-          <Btn
-            kind="line"
-            onClick={() => {
-              setRun(null);
-              setDone(false);
-            }}
-          >
-            Qayta sozlash
-          </Btn>
-          <Link href="/mistakes" className="btn-secondary !rounded-[10px]">
-            Xatolarim
-          </Link>
-        </div>
+        </ResultCard>
       </div>
     );
   }
@@ -284,7 +277,7 @@ export function MistakesPractice() {
           <p
             className={`mt-3 rounded-[10px] px-3 py-2 text-xs font-semibold ${
               isCorrectPick(question, run.picks)
-                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
+                ? 'bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-300'
                 : 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300'
             }`}
           >

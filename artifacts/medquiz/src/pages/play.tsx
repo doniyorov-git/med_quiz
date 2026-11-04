@@ -3,6 +3,7 @@ import { Link, useParams } from 'wouter';
 import { Btn, Icon, Panel } from '@/components/chrome';
 import { Choices, Ring } from '@/components/choices';
 import { Dropdown } from '@/components/dropdown';
+import { ResultCard, bigBtn, bigBtnLine } from '@/components/result-card';
 import { recordDailyWorkoutProgress, recordSolo, recordMistake, toggleSaveQuestion, getMistakes } from '@/lib/model';
 import { cleanQuestion, isCorrectPick, shuffle } from '@/lib/parser';
 import { useBanks, useStore } from '@/lib/store';
@@ -160,64 +161,51 @@ export function Play() {
   if (done) {
     const percent = run.questions.length ? Math.round((run.correct / run.questions.length) * 100) : 0;
     return (
-      <div className="mx-auto max-w-2xl space-y-4">
-        <p className="text-xs font-bold uppercase tracking-wider text-med-600 dark:text-med-400">Yakunlandi</p>
-        <h1 className="font-display text-3xl font-bold text-slate-900 dark:text-white">{bank.name}</h1>
-        <div className="grid grid-cols-3 gap-3">
-          <Panel>
-            <p className="text-2xl font-bold tabular-nums text-slate-900 dark:text-white">
-              {run.correct}/{run.questions.length}
-            </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">to‘g‘ri</p>
-          </Panel>
-          <Panel>
-            <p className="text-2xl font-bold tabular-nums text-med-600 dark:text-med-400">{percent}%</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">aniqlik</p>
-          </Panel>
-          <Panel>
-            <p className="text-2xl font-bold tabular-nums text-amber-600 dark:text-amber-400">+{run.xp}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">XP</p>
-          </Panel>
-        </div>
-        <div className="space-y-2 max-h-80 overflow-y-auto">
-          {run.review.map((item, index) => (
-            <div
-              key={`${item.prompt}-${index}`}
-              className="rounded-[10px] border border-slate-200/80 bg-white/60 dark:border-white/10 dark:bg-[#111827] p-3 text-sm"
+      <div className="px-1">
+        <ResultCard
+          percent={percent}
+          correct={run.correct}
+          total={run.questions.length}
+          xp={run.xp}
+          primary={
+            <button
+              type="button"
+              className={bigBtn}
+              onClick={() => {
+                setRun(null);
+                setDone(false);
+              }}
             >
-              <p
-                className={
-                  item.ok
-                    ? 'text-emerald-700 dark:text-emerald-300 font-medium flex items-center gap-1.5'
-                    : 'text-rose-600 dark:text-rose-400 font-medium flex items-center gap-1.5'
-                }
+              <Icon name="ri-refresh-line" /> Yana urinish
+            </button>
+          }
+          secondary={
+            <Link href="/banks" className={bigBtnLine}>
+              To‘plamlarga qaytish
+            </Link>
+          }
+        >
+          <p className="mb-2 px-1 text-xs font-bold uppercase tracking-wider text-slate-400">{bank.name} · javoblar tahlili</p>
+          <div className="space-y-2">
+            {run.review.map((item, index) => (
+              <div
+                key={`${item.prompt}-${index}`}
+                className="rounded-[18px] border border-slate-200/80 bg-white p-3 text-sm shadow-xs dark:border-white/10 dark:bg-[#111827]"
               >
-                {item.ok ? (
-                  <Icon name="ri-check-line" className="text-base" />
-                ) : (
-                  <Icon name="ri-close-line" className="text-base" />
-                )}
-                <span>{item.ok ? 'To‘g‘ri' : 'Noto‘g‘ri'}</span>
-                <span className="opacity-40">·</span>
-                <span className="line-clamp-2">{item.prompt}</span>
-              </p>
-            </div>
-          ))}
-        </div>
-        <div className="flex gap-2.5 pt-2">
-          <Btn
-            kind="line"
-            onClick={() => {
-              setRun(null);
-              setDone(false);
-            }}
-          >
-            Qayta sozlash
-          </Btn>
-          <Link href="/banks" className="btn-secondary !rounded-[10px]">
-            To‘plamlar
-          </Link>
-        </div>
+                <p
+                  className={
+                    item.ok
+                      ? 'flex items-start gap-1.5 font-medium text-green-700 dark:text-green-300'
+                      : 'flex items-start gap-1.5 font-medium text-rose-600 dark:text-rose-400'
+                  }
+                >
+                  <Icon name={item.ok ? 'ri-checkbox-circle-fill' : 'ri-close-circle-fill'} className="mt-0.5 text-base" />
+                  <span className="line-clamp-2">{item.prompt}</span>
+                </p>
+              </div>
+            ))}
+          </div>
+        </ResultCard>
       </div>
     );
   }

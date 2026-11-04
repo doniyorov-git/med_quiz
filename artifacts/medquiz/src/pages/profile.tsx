@@ -158,11 +158,8 @@ export function Profile() {
       {/* Profile Header Card — light-first design with banner */}
       <Panel className="overflow-hidden !p-0 shadow-sm">
         {/* Banner */}
-        <div className="relative h-24 overflow-hidden bg-gradient-to-r from-emerald-400 via-teal-300 to-sky-300 sm:h-32 dark:from-emerald-800 dark:via-teal-800 dark:to-sky-900">
-          <div className="pointer-events-none absolute -left-8 -top-12 h-40 w-40 rounded-full bg-white/30 blur-2xl" />
-          <div className="pointer-events-none absolute right-6 top-2 h-28 w-28 rounded-full bg-pink-200/50 blur-2xl dark:bg-pink-400/10" />
-          <div className="pointer-events-none absolute inset-0 opacity-[0.14]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, #fff 1px, transparent 0)', backgroundSize: '18px 18px' }} />
-          <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-bold text-emerald-700 shadow-xs backdrop-blur-sm dark:bg-black/30 dark:text-emerald-300">
+        <div className="relative h-24 overflow-hidden bg-slate-100 dark:bg-slate-800 border-b border-slate-200/80 dark:border-white/10 sm:h-32">
+          <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-slate-700 shadow-xs border border-slate-200/60 dark:bg-black/40 dark:text-slate-200 dark:border-white/10">
             <Icon name="ri-fire-fill" className="text-amber-500" /> {stats?.streak ?? 0} kun
           </span>
         </div>
@@ -175,15 +172,15 @@ export function Profile() {
                 <button
                   type="button"
                   onClick={() => setAvatarModalOpen(true)}
-                  className="group flex h-20 w-20 cursor-pointer items-center justify-center overflow-hidden rounded-full border-4 border-white bg-gradient-to-br from-teal-500 via-emerald-600 to-indigo-600 text-white shadow-lg transition-all hover:opacity-95 sm:h-24 sm:w-24 dark:border-[#111827]"
+                  className="group flex h-20 w-20 cursor-pointer items-center justify-center overflow-hidden rounded-full border-4 border-white bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-md transition-all hover:opacity-95 sm:h-24 sm:w-24 dark:border-[#111827]"
                   title="Avatar yoki rasm tanlash"
                 >
                   {me.avatar ? (
                     <img src={me.avatar} alt={me.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
                   ) : (
                     <div className="flex flex-col items-center justify-center">
-                      <Icon name="ri-user-3-fill" className="text-3xl text-white/95" />
-                      <span className="text-[10px] font-bold tracking-wider text-white/90">{me.name.slice(0, 2).toUpperCase() || 'MQ'}</span>
+                      <Icon name="ri-user-3-fill" className="text-3xl text-slate-600 dark:text-slate-300" />
+                      <span className="text-[10px] font-bold tracking-wider text-slate-600 dark:text-slate-300">{me.name.slice(0, 2).toUpperCase() || 'MQ'}</span>
                     </div>
                   )}
                 </button>
@@ -192,7 +189,7 @@ export function Profile() {
                   onClick={() => setAvatarModalOpen(true)}
                   title="Rasm / 3D avatar tanlash"
                   aria-label="Rasm / 3D avatar tanlash"
-                  className="absolute -bottom-0.5 -right-0.5 z-10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-emerald-600 text-white shadow-md ring-2 ring-white transition-all hover:scale-110 hover:bg-emerald-700 active:scale-95 dark:ring-[#111827]"
+                  className="absolute -bottom-0.5 -right-0.5 z-10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-slate-800 text-white shadow-md ring-2 ring-white transition-all hover:scale-110 hover:bg-slate-900 active:scale-95 dark:bg-slate-600 dark:hover:bg-slate-500 dark:ring-[#111827]"
                 >
                   <Icon name="ri-camera-fill" className="text-sm text-white" />
                 </button>

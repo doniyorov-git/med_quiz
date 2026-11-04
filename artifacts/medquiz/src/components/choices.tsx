@@ -39,7 +39,7 @@ export function Choices({
           >
             <span className={`flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-[8px] font-display text-xs sm:text-sm font-bold shadow-xs transition-colors ${
               showCorrect
-                ? 'bg-emerald-600 text-white'
+                ? 'bg-green-600 text-white'
                 : showWrong
                 ? 'bg-rose-600 text-white'
                 : selected

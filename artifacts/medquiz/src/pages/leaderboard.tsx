@@ -1,222 +1,162 @@
 import { useState } from 'react';
-import { Icon, Panel } from '@/components/chrome';
+import { Icon } from '@/components/chrome';
 import { getLeaderboardXp, getMedicalTitle, levelFromXp } from '@/lib/model';
 import { useStatsMap, useStore } from '@/lib/store';
 
 type Period = 'week' | 'month' | 'all';
+
+const PERIODS: { id: Period; label: string }[] = [
+  { id: 'week', label: 'Hafta' },
+  { id: 'month', label: 'Oy' },
+  { id: 'all', label: 'Butun davr' },
+];
+
+type Row = {
+  userId: string;
+  name: string;
+  avatar?: string | null;
+  xp: number;
+  periodXp: number;
+  quizzes?: number;
+  streak?: number;
+};
+
+function Face({ row, size, ring }: { row: Row; size: number; ring: string }) {
+  return (
+    <div
+      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-orange-200 to-amber-100 font-extrabold text-orange-700 shadow-md ring-4 ${ring}`}
+      style={{ width: size, height: size, fontSize: size * 0.34 }}
+    >
+      {row.avatar ? <img src={row.avatar} alt="" className="h-full w-full object-cover" /> : (row.name || 'M').slice(0, 2).toUpperCase()}
+    </div>
+  );
+}
+
+function PodiumSlot({ row, place }: { row?: Row; place: 1 | 2 | 3 }) {
+  const cfg = {
+    1: { h: 'h-36 sm:h-44', col: 'from-orange-400 to-orange-500', face: 76, ring: 'ring-orange-300', num: 'text-white/90', xp: 'text-orange-600' },
+    2: { h: 'h-24 sm:h-32', col: 'from-sky-300 to-indigo-300', face: 58, ring: 'ring-sky-200', num: 'text-white/90', xp: 'text-sky-600' },
+    3: { h: 'h-20 sm:h-24', col: 'from-amber-300 to-yellow-300', face: 58, ring: 'ring-yellow-200', num: 'text-white/90', xp: 'text-amber-600' },
+  }[place];
+  if (!row) return <div className={place === 1 ? 'order-2' : place === 2 ? 'order-1' : 'order-3'} />;
+  return (
+    <div className={`flex min-w-0 flex-col items-center ${place === 1 ? 'order-2' : place === 2 ? 'order-1' : 'order-3'}`}>
+      <div className="relative">
+        {place === 1 && <Icon name="ri-vip-crown-2-fill" className="absolute -top-6 left-1/2 -translate-x-1/2 text-3xl text-amber-400 drop-shadow" />}
+        <Face row={row} size={cfg.face} ring={cfg.ring} />
+      </div>
+      <p className="mt-2 max-w-full truncate px-1 text-xs font-extrabold text-slate-900 sm:text-sm dark:text-white">{row.name}</p>
+      <span className={`mt-0.5 rounded-full bg-white px-2 py-0.5 text-[10px] font-bold shadow-sm sm:text-xs dark:bg-white/10 ${cfg.xp}`}>
+        {(row.periodXp ?? 0).toLocaleString('uz-UZ')} XP
+      </span>
+      <div className={`mt-2 flex w-full items-start justify-center rounded-t-[22px] bg-gradient-to-b ${cfg.col} pt-2 shadow-inner ${cfg.h}`}>
+        <span className={`font-display text-4xl font-black sm:text-5xl ${cfg.num}`}>{place}</span>
+      </div>
+    </div>
+  );
+}
 
 export function Leaderboard() {
   const { me } = useStore();
   const map = useStatsMap();
   const [period, setPeriod] = useState<Period>('week');
 
-  const rows = Object.values(map)
-    .map((stat) => ({
-      ...stat,
-      periodXp: getLeaderboardXp(stat, period),
-    }))
+  const rows: Row[] = Object.values(map)
+    .map((stat) => ({ ...stat, periodXp: getLeaderboardXp(stat, period) }) as Row)
     .filter((stat) => stat.periodXp > 0 || period === 'all')
     .sort((a, b) => b.periodXp - a.periodXp);
 
-  const top1 = rows[0];
-  const top2 = rows[1];
-  const top3 = rows[2];
+  const rest = rows.slice(3);
+  const myIndex = rows.findIndex((r) => r.userId === me?.id);
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Header & Tabs */}
-      <Panel className="p-3 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-slate-200/80 dark:border-white/10 pb-4 sm:pb-5">
-          <div>
-            <h1 className="font-display text-xl sm:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
-              <Icon name="ri-trophy-line" className="text-amber-500 text-xl sm:text-2xl" />
-              Tibbiyot Yetakchilari
-            </h1>
-          </div>
-
-          {/* Period Tabs: Hafta top / Oy top / Butun davr top */}
-          <div className="inline-flex shrink-0 items-center rounded-[10px] bg-slate-100 dark:bg-[#111827] p-1 border border-slate-200/80 dark:border-white/10 overflow-x-auto max-w-full">
-            <button
-              type="button"
-              className={`rounded-[8px] px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
-                period === 'week'
-                  ? 'bg-white dark:bg-emerald-600 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-              onClick={() => setPeriod('week')}
-            >
-              Hafta top
-            </button>
-            <button
-              type="button"
-              className={`rounded-[8px] px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
-                period === 'month'
-                  ? 'bg-white dark:bg-emerald-600 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-              onClick={() => setPeriod('month')}
-            >
-              Oy top
-            </button>
-            <button
-              type="button"
-              className={`rounded-[8px] px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
-                period === 'all'
-                  ? 'bg-white dark:bg-emerald-600 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-              onClick={() => setPeriod('all')}
-            >
-              Butun davr top
-            </button>
-          </div>
+    <div className="mx-auto max-w-2xl space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">Reyting</h1>
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Tibbiyot yetakchilari</p>
         </div>
+        {myIndex >= 0 && (
+          <span className="rounded-full bg-orange-50 px-3 py-1.5 text-xs font-extrabold text-orange-600 ring-1 ring-orange-100 dark:bg-orange-500/10 dark:text-orange-300 dark:ring-orange-500/20">
+            Sizning o‘rningiz: #{myIndex + 1}
+          </span>
+        )}
+      </div>
 
-        {/* Top 3 Podium (when at least 1 user exists) */}
-        {rows.length > 0 && (
-          <div className="pt-4 sm:pt-6 pb-2">
-            <div className="grid grid-cols-3 gap-1.5 sm:gap-4 items-end">
-              {/* 2nd Place */}
-              {top2 ? (
-                <div className="order-1 rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-2 sm:p-4 text-center flex flex-col items-center min-w-0">
-                  <Icon name="ri-medal-fill" className="text-lg sm:text-2xl mb-0.5 sm:mb-1 text-slate-400" />
-                  <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-full overflow-hidden border border-slate-300 dark:border-white/20 bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-xs sm:text-base text-slate-600 dark:text-slate-300 shadow-xs shrink-0">
-                    {top2.avatar ? <img src={top2.avatar} alt="" className="h-full w-full object-cover" /> : top2.name.slice(0, 2).toUpperCase()}
-                  </div>
-                  <p className="mt-1.5 text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate max-w-full w-full">{top2.name}</p>
-                  <span className={`mt-1 inline-flex items-center gap-0.5 sm:gap-1 px-1.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold border ${getMedicalTitle(top2.xp).color} truncate max-w-full`}>
-                    <Icon name={getMedicalTitle(top2.xp).icon} className="text-[10px] sm:text-xs shrink-0" />
-                    <span className="truncate">{getMedicalTitle(top2.xp).badge}</span>
-                  </span>
-                  <p className="mt-1 sm:mt-1.5 font-mono text-[11px] sm:text-sm font-bold text-primary truncate">+{(top2.periodXp ?? 0).toLocaleString()} XP</p>
-                </div>
-              ) : (
-                <div className="order-1" />
-              )}
+      {/* Period pills */}
+      <div className="grid grid-cols-3 gap-1 rounded-full bg-white p-1 shadow-sm ring-1 ring-orange-100/70 dark:bg-white/5 dark:ring-white/10">
+        {PERIODS.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => setPeriod(p.id)}
+            className={`rounded-full px-3 py-2 text-xs font-bold transition-all ${
+              period === p.id ? 'bg-orange-500 text-white shadow-md shadow-orange-500/30' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
 
-              {/* 1st Place (Winner, elevated) */}
-              {top1 && (
-                <div className="order-2 rounded-xl sm:rounded-2xl border-2 border-amber-500/40 bg-gradient-to-b from-amber-500/10 to-transparent dark:bg-slate-800/80 p-2.5 sm:p-5 text-center flex flex-col items-center shadow-md sm:shadow-lg relative min-w-0 pb-3 sm:pb-6">
-                  <span className="absolute -top-2.5 sm:-top-3 bg-amber-500 text-white text-[9px] sm:text-[11px] font-bold px-2 sm:px-2.5 py-0.5 rounded-full shadow-xs flex items-center gap-0.5 sm:gap-1 whitespace-nowrap">
-                    <Icon name="ri-vip-crown-fill" /> 1-O‘RIN
-                  </span>
-                  <Icon name="ri-trophy-fill" className="text-xl sm:text-3xl mb-0.5 sm:mb-1 text-amber-400" />
-                  <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-full overflow-hidden border-2 border-amber-500/50 bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-sm sm:text-lg text-slate-600 dark:text-slate-300 ring-2 sm:ring-4 ring-amber-500/15 shadow-xs shrink-0">
-                    {top1.avatar ? <img src={top1.avatar} alt="" className="h-full w-full object-cover" /> : (top1.name || 'M').slice(0, 2).toUpperCase()}
-                  </div>
-                  <p className="mt-1.5 text-xs sm:text-base font-bold text-slate-900 dark:text-white truncate max-w-full w-full">{top1.name}</p>
-                  <span className={`mt-1 inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2.5 py-0.5 rounded-full text-[9px] sm:text-[11px] font-semibold border ${getMedicalTitle(top1.xp ?? 0).color} truncate max-w-full`}>
-                    <Icon name={getMedicalTitle(top1.xp ?? 0).icon} className="text-[10px] sm:text-xs shrink-0" />
-                    <span className="truncate">{getMedicalTitle(top1.xp ?? 0).badge}</span>
-                  </span>
-                  <p className="mt-1 sm:mt-1.5 font-mono text-xs sm:text-base font-black text-amber-500 truncate">+{(top1.periodXp ?? 0).toLocaleString()} XP</p>
-                </div>
-              )}
-
-              {/* 3rd Place */}
-              {top3 ? (
-                <div className="order-3 rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-white/10 bg-slate-50/70 dark:bg-slate-800/40 p-2 sm:p-4 text-center flex flex-col items-center min-w-0">
-                  <Icon name="ri-medal-fill" className="text-lg sm:text-2xl mb-0.5 sm:mb-1 text-amber-600 dark:text-amber-500" />
-                  <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-full overflow-hidden border border-slate-300 dark:border-white/20 bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-xs sm:text-base text-slate-600 dark:text-slate-300 shadow-xs shrink-0">
-                    {top3.avatar ? <img src={top3.avatar} alt="" className="h-full w-full object-cover" /> : (top3.name || 'M').slice(0, 2).toUpperCase()}
-                  </div>
-                  <p className="mt-1.5 text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate max-w-full w-full">{top3.name}</p>
-                  <span className={`mt-1 inline-flex items-center gap-0.5 sm:gap-1 px-1.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold border ${getMedicalTitle(top3.xp ?? 0).color} truncate max-w-full`}>
-                    <Icon name={getMedicalTitle(top3.xp ?? 0).icon} className="text-[10px] sm:text-xs shrink-0" />
-                    <span className="truncate">{getMedicalTitle(top3.xp ?? 0).badge}</span>
-                  </span>
-                  <p className="mt-1 sm:mt-1.5 font-mono text-[11px] sm:text-sm font-bold text-primary truncate">+{(top3.periodXp ?? 0).toLocaleString()} XP</p>
-                </div>
-              ) : (
-                <div className="order-3" />
-              )}
-            </div>
+      {/* Podium */}
+      <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-b from-orange-50 via-amber-50/60 to-white px-4 pb-0 pt-10 ring-1 ring-orange-100/70 dark:from-orange-500/10 dark:via-transparent dark:to-transparent dark:ring-white/10">
+        <div className="pointer-events-none absolute -left-10 top-0 h-40 w-40 rounded-full bg-sky-200/40 blur-3xl dark:bg-sky-500/10" />
+        <div className="pointer-events-none absolute -right-10 top-10 h-40 w-40 rounded-full bg-orange-200/50 blur-3xl dark:bg-orange-500/10" />
+        {rows.length === 0 ? (
+          <p className="relative py-12 text-center text-sm text-slate-500">Ushbu davrda hali faollik qayd etilmagan.</p>
+        ) : (
+          <div className="relative grid grid-cols-3 items-end gap-2 sm:gap-4">
+            <PodiumSlot row={rows[1]} place={2} />
+            <PodiumSlot row={rows[0]} place={1} />
+            <PodiumSlot row={rows[2]} place={3} />
           </div>
         )}
+      </div>
 
-        {/* Full List */}
-        <div className="mt-4 sm:mt-6">
-          <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
-            Barcha ishtirokchilar
-          </h3>
-
-          {!rows.length ? (
-            <p className="py-8 text-center text-sm text-slate-500">Ushbu davrda hali faollik qayd etilmagan.</p>
-          ) : (
-            <div className="space-y-2">
-              {rows.map((row, index) => {
-                const isMe = row.userId === me?.id;
-                const title = getMedicalTitle(row.xp);
-                return (
-                  <div
-                    key={row.userId}
-                    className={`flex items-center gap-2 sm:gap-3.5 p-2 sm:p-3 rounded-xl sm:rounded-[10px] border transition-all ${
-                      isMe
-                        ? 'bg-primary/10 border-primary/40 text-slate-900 dark:text-white shadow-xs'
-                        : 'border-slate-200/70 dark:border-white/5 bg-white/50 dark:bg-slate-800/30'
-                    }`}
-                    data-testid={`row-rank-${index + 1}`}
-                  >
-                    <div className="w-5 sm:w-7 text-center font-mono text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 shrink-0 flex items-center justify-center">
-                      {index === 0 ? (
-                        <Icon name="ri-trophy-fill" className="text-amber-400 text-base" />
-                      ) : index === 1 ? (
-                        <Icon name="ri-medal-fill" className="text-slate-400 text-base" />
-                      ) : index === 2 ? (
-                        <Icon name="ri-medal-fill" className="text-amber-600 dark:text-amber-500 text-base" />
-                      ) : (
-                        <span>{index + 1}</span>
-                      )}
-                    </div>
-
-                    <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-slate-700 flex items-center justify-center font-bold text-[10px] sm:text-xs shrink-0 shadow-xs">
-                      {row.avatar ? (
-                        <img src={row.avatar} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        row.name.slice(0, 2).toUpperCase()
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className={`text-sm truncate ${isMe ? 'font-bold text-primary' : 'font-medium text-slate-800 dark:text-slate-200'}`}>
-                          {row.name}
-                        </p>
-                        {isMe && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-[6px] bg-primary text-white">
-                            Siz
-                          </span>
-                        )}
-                        <span className={`hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-[6px] text-[10px] font-semibold border ${title.color}`}>
-                          <Icon name={title.icon} className="text-xs" />
-                          {title.badge}
-                        </span>
-                      </div>
-                      <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 sm:gap-1.5 mt-0.5 whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1">
-                          <Icon name="ri-file-list-3-line" /> {row.quizzes ?? 0} ta test
-                        </span>
-                        <span>·</span>
-                        <span className="inline-flex items-center gap-1">
-                          <Icon name="ri-fire-fill" className="text-amber-500" /> {row.streak ?? 0} kun streak
-                        </span>
-                      </p>
-                    </div>
-
-                    <span className="hidden sm:inline-flex text-xs px-2 py-0.5 rounded-[8px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-medium shrink-0">
-                      Lv {levelFromXp(row.xp)}
-                    </span>
-
-                    <span className="w-[58px] sm:w-24 text-right text-[10px] sm:text-sm font-bold font-mono text-slate-900 dark:text-white tabular-nums shrink-0">
-                      {(row.periodXp ?? 0).toLocaleString('uz-UZ')} XP
-                    </span>
+      {/* List sheet */}
+      {rows.length > 0 && (
+        <div className="-mt-2 rounded-[28px] bg-white p-3 shadow-[0_18px_40px_-24px_rgba(120,80,30,0.35)] ring-1 ring-orange-100/70 sm:p-4 dark:bg-[#111827] dark:ring-white/10">
+          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-slate-200 dark:bg-white/15" />
+          <div className="space-y-2">
+            {(rest.length ? rest : []).map((row, i) => {
+              const index = i + 3;
+              const isMe = row.userId === me?.id;
+              const title = getMedicalTitle(row.xp ?? 0);
+              return (
+                <div
+                  key={row.userId}
+                  data-testid={`row-rank-${index + 1}`}
+                  className={`flex items-center gap-3 rounded-[20px] p-2.5 pr-3.5 transition ${
+                    isMe ? 'bg-orange-50 ring-2 ring-orange-300 dark:bg-orange-500/10 dark:ring-orange-500/40' : 'bg-slate-50/80 dark:bg-white/5'
+                  }`}
+                >
+                  <span className="w-5 shrink-0 text-center text-xs font-extrabold text-slate-400">{index + 1}</span>
+                  <Face row={row} size={42} ring="ring-white dark:ring-[#111827]" />
+                  <div className="min-w-0 flex-1">
+                    <p className="flex items-center gap-1.5 truncate text-sm font-extrabold text-slate-900 dark:text-white">
+                      <span className="truncate">{row.name}</span>
+                      {isMe && <span className="rounded-full bg-orange-500 px-1.5 py-0.5 text-[9px] font-bold text-white">Siz</span>}
+                    </p>
+                    <p className="flex items-center gap-2 truncate text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                      <span className="truncate">{title.badge}</span>
+                      <span className="shrink-0">· Lv {levelFromXp(row.xp ?? 0)}</span>
+                      <span className="shrink-0">
+                        · <Icon name="ri-fire-fill" className="text-orange-500" /> {row.streak ?? 0}
+                      </span>
+                    </p>
                   </div>
-                );
-              })}
-            </div>
-          )}
+                  <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-extrabold tabular-nums text-orange-600 shadow-sm dark:bg-white/10 dark:text-orange-300">
+                    {(row.periodXp ?? 0).toLocaleString('uz-UZ')}
+                  </span>
+                </div>
+              );
+            })}
+            {!rest.length && <p className="py-3 text-center text-xs text-slate-400">Boshqa ishtirokchilar hali yo‘q</p>}
+          </div>
         </div>
-      </Panel>
+      )}
     </div>
   );
 }
