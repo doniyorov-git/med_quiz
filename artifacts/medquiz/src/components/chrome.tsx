@@ -16,6 +16,7 @@ import {
   HiOutlineLogout,
   HiOutlineMenu,
   HiOutlineSearch,
+  HiOutlineSparkles,
   HiOutlineStar,
   HiOutlineUser,
   HiOutlineX,
@@ -25,6 +26,7 @@ import { HiOutlineBell } from 'react-icons/hi';
 import { useBanks, useInvites, useOnline, useStatsMap, useStore } from '@/lib/store';
 import { getMedicalTitle, joinRoom, respondInvite } from '@/lib/model';
 import { ThemeSwitch } from '@/components/theme-toggle';
+import { CompanionMini } from '@/components/companion';
 
 import { HiOutlineUserGroup, HiUserGroup } from 'react-icons/hi';
 
@@ -61,6 +63,7 @@ export const fieldClass = 'input-field';
 
 const sideNav = [
   { href: '/dashboard', label: 'Boshqaruv', icon: HiOutlineHome },
+  { href: '/ai', label: 'AI yordamchi', icon: HiOutlineSparkles },
   { href: '/friends', label: 'Do‘stlar', icon: HiOutlineUserGroup },
   { href: '/banks', label: 'To‘plamlar', icon: HiOutlineCollection },
   { href: '/mistakes', label: 'Xatolarim', icon: HiOutlineExclamationCircle },
@@ -71,9 +74,9 @@ const sideNav = [
 
 const mobileNav = [
   { href: '/dashboard', label: 'Asosiy', icon: 'ri-home-5-line', active: 'ri-home-5-fill' },
-  { href: '/friends', label: 'Do‘stlar', icon: 'ri-group-line', active: 'ri-group-fill' },
   { href: '/battle', label: 'Battle', icon: 'ri-sword-line', active: 'ri-sword-fill' },
-  { href: '/leaderboard', label: 'Reyting', icon: 'ri-trophy-line', active: 'ri-trophy-fill' },
+  { href: '/ai', label: 'Pufi', icon: 'ri-sparkling-line', active: 'ri-sparkling-fill', center: true },
+  { href: '/friends', label: 'Do‘stlar', icon: 'ri-group-line', active: 'ri-group-fill' },
   { href: '/profile', label: 'Profil', icon: 'ri-user-3-line', active: 'ri-user-3-fill' },
 ];
 
@@ -110,6 +113,7 @@ function isActive(location: string, href: string) {
   if (href === '/banks') return location.startsWith('/banks') || location.startsWith('/play');
   if (href === '/mistakes') return location.startsWith('/mistakes');
   if (href === '/battle') return location.startsWith('/battle');
+  if (href === '/ai') return location.startsWith('/ai');
   return location === href || location.startsWith(`${href}/`);
 }
 
@@ -274,26 +278,38 @@ export function Shell({ children }: { children: ReactNode }) {
       {searchOpen && <SearchSheet query={query} setQuery={setQuery} onClose={() => setSearchOpen(false)} />}
       <GlobalInvitePopup />
 
-      <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden">
-        <div className="absolute inset-0 border-t border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-[#090d16]/95 backdrop-blur-xl shadow-lg" />
+      <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden" aria-label="Pastki menyu">
+        <div className="absolute inset-0 border-t border-slate-200/80 bg-white/95 shadow-[0_-6px_24px_rgba(15,23,42,0.06)] backdrop-blur-xl dark:border-white/10 dark:bg-[#090d16]/95" />
         <div className="relative flex h-16 items-center px-1 pb-safe">
           {mobileNav.map((item) => {
             const active = isActive(location, item.href);
             const iconName = active ? item.active : item.icon;
+            if (item.center) {
+              return (
+                <Link key={item.href} href={item.href} className="relative flex h-full min-w-0 flex-1 flex-col items-center justify-end pb-1.5 text-center" aria-label="AI yordamchi Pufi">
+                  <span
+                    className={`absolute -top-5 flex h-14 w-14 items-center justify-center rounded-full border-4 border-white bg-gradient-to-br from-teal-100 via-white to-pink-100 shadow-lg shadow-emerald-500/25 transition-transform active:scale-90 dark:border-[#090d16] dark:from-teal-900/60 dark:via-slate-800 dark:to-pink-900/50 ${active ? 'ring-2 ring-emerald-500/60' : ''}`}
+                  >
+                    <CompanionMini size={40} />
+                  </span>
+                  <span className={`text-[11px] font-semibold leading-none ${active ? 'text-med-600 dark:text-med-400' : 'text-slate-500 dark:text-slate-400'}`}>{item.label}</span>
+                </Link>
+              );
+            }
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className="relative flex-1 min-w-0 h-full flex flex-col items-center justify-center text-center px-0.5"
+                className="relative flex h-full min-w-0 flex-1 flex-col items-center justify-center px-0.5 text-center"
               >
                 {active && <span className="absolute -top-0.5 h-1 w-8 rounded-[10px] bg-med-500" />}
                 <Icon
                   name={iconName}
-                  className={`text-xl transition-transform ${active ? 'text-med-600 dark:text-med-400 scale-105' : 'text-slate-500 dark:text-slate-400'}`}
+                  className={`text-xl transition-transform ${active ? 'scale-105 text-med-600 dark:text-med-400' : 'text-slate-500 dark:text-slate-400'}`}
                 />
                 <span
-                  className={`mt-1 text-[11px] font-medium leading-none truncate max-w-full ${
-                    active ? 'text-med-600 dark:text-med-400 font-semibold' : 'text-slate-500 dark:text-slate-400'
+                  className={`mt-1 max-w-full truncate text-[11px] font-medium leading-none ${
+                    active ? 'font-semibold text-med-600 dark:text-med-400' : 'text-slate-500 dark:text-slate-400'
                   }`}
                 >
                   {item.label}

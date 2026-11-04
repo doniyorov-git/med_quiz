@@ -129,10 +129,10 @@ export function BattleReactions({ roomCode, me }: { roomCode: string; me: Me | n
       </div>
 
       {/* Side Reaction Dock: Yon tomonda joylashgan va bosilsa yoyiladigan menyu */}
-      <div className="fixed right-3 sm:right-6 bottom-24 sm:bottom-10 z-40 flex flex-col items-end">
+      <div className="fixed left-1/2 z-40 ml-10 flex flex-col items-start bottom-[calc(5.2rem+env(safe-area-inset-bottom))] sm:left-auto sm:right-6 sm:ml-0 sm:bottom-10 sm:items-end">
         {/* Expanded Palette (Yoyilgan holati) */}
         {expanded && (
-          <div className="mb-2.5 w-64 rounded-[10px] border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-[#111827]/95 p-3 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-right-3 duration-200">
+          <div className="fixed inset-x-3 bottom-[calc(8.9rem+env(safe-area-inset-bottom))] z-50 rounded-[14px] sm:static sm:mb-2.5 sm:w-64 sm:rounded-[10px] border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-[#111827]/95 p-3 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-right-3 duration-200">
             <div className="flex items-center justify-between border-b border-slate-200/70 dark:border-white/10 pb-2 mb-2">
               <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                 <Icon name="ri-fire-fill" className="text-amber-500" />

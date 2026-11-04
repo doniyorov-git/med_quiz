@@ -403,3 +403,48 @@
   animation: rise-drift 2.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
+
+/* ===== Companion (Pufi) ===== */
+@keyframes companion-bob {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -6px; }
+}
+@keyframes companion-sway {
+  0%, 100% { rotate: -2deg; }
+  50% { rotate: 2deg; }
+}
+@keyframes companion-beat {
+  0%, 100% { transform: scale(1); opacity: 0.92; }
+  50% { transform: scale(1.07); opacity: 1; }
+}
+@keyframes companion-flash {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.28); filter: brightness(1.35); }
+  100% { transform: scale(1); }
+}
+@keyframes companion-spin { to { transform: rotate(360deg); } }
+@keyframes companion-talk {
+  0%, 100% { transform: scaleY(0.55); }
+  50% { transform: scaleY(1.15); }
+}
+@keyframes companion-float {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.6); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx, 0px), -120px) scale(1.2); }
+}
+@keyframes companion-pop {
+  from { opacity: 0; transform: translate(-50%, -80%) scale(0.85); }
+  to { opacity: 1; transform: translate(-50%, -88%) scale(1); }
+}
+.companion-idle { animation: companion-bob 3.4s ease-in-out infinite; }
+.companion-think { animation: companion-sway 1.6s ease-in-out infinite; }
+.companion-beat { animation: companion-beat 1.8s ease-in-out infinite; transform-origin: center; }
+.companion-beat-fast { animation: companion-beat 0.7s ease-in-out infinite; transform-origin: center; }
+.companion-flash { animation: companion-flash 0.6s ease-out; transform-origin: center; }
+.companion-spin { animation: companion-spin 0.7s linear infinite; }
+.companion-talk { animation: companion-talk 0.28s ease-in-out infinite; transform-origin: 20px 4px; }
+.companion-float { animation: companion-float 1.3s ease-out forwards; }
+.companion-bubble { animation: companion-pop 0.18s ease-out forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .companion-idle, .companion-think, .companion-beat, .companion-beat-fast { animation: none; }
+}

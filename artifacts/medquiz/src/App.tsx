@@ -9,6 +9,8 @@ import { Editor } from '@/pages/editor';
 import { FriendsPage } from '@/pages/friends';
 import { Leaderboard } from '@/pages/leaderboard';
 import { MistakesPage } from '@/pages/mistakes';
+import { MistakesPractice } from '@/pages/mistakes-practice';
+import { AiChat } from '@/pages/ai-chat';
 import { Play } from '@/pages/play';
 import { Profile } from '@/pages/profile';
 import { Welcome } from '@/pages/welcome';
@@ -32,7 +34,9 @@ function Pages() {
       <Route path="/battle/:code"><Guard><BattleRoom /></Guard></Route>
       <Route path="/battle"><Guard><BattleLobby /></Guard></Route>
       <Route path="/friends"><Guard><FriendsPage /></Guard></Route>
+      <Route path="/mistakes/practice"><Guard><MistakesPractice /></Guard></Route>
       <Route path="/mistakes"><Guard><MistakesPage /></Guard></Route>
+      <Route path="/ai"><Guard><AiChat /></Guard></Route>
       <Route path="/leaderboard"><Guard><Leaderboard /></Guard></Route>
       <Route path="/profile"><Guard><Profile /></Guard></Route>
       <Route path="/achievements"><Guard><Achievements /></Guard></Route>

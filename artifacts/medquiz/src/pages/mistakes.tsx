@@ -77,17 +77,14 @@ export function MistakesPage() {
 
   const savedCount = useMemo(() => mistakes.filter((m) => m.saved).length, [mistakes]);
 
-  // Practice mistakes for current tab
+  // Practice ONLY the mistakes of the current tab (not the whole bank)
   const handlePractice = () => {
     if (!filteredMistakes.length) return;
-    const currentBankId = selectedTab !== 'all' && selectedTab !== 'saved' ? selectedTab : banks[0]?.id;
-    if (currentBankId) {
-      setLocation(`/play/${currentBankId}`);
-    }
+    setLocation(`/mistakes/practice?scope=${encodeURIComponent(selectedTab)}`);
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-4 sm:space-y-6 max-w-5xl mx-auto">
       {/* Header */}
       <Panel className="p-4 sm:p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -110,7 +107,7 @@ export function MistakesPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
             {filteredMistakes.length > 0 && selectedTab !== 'all' && selectedTab !== 'saved' && (
               <button
                 type="button"
@@ -124,17 +121,15 @@ export function MistakesPage() {
                 Fanni tozalash
               </button>
             )}
-            {banks.length > 0 && (
-              <button
-                type="button"
-                onClick={handlePractice}
-                disabled={!filteredMistakes.length}
-                className="btn-primary !rounded-[10px] !px-4 !py-2 text-xs sm:text-sm font-semibold shadow-sm cursor-pointer disabled:opacity-40"
-              >
-                <Icon name="ri-play-circle-line" className="text-base" />
-                <span>Testni mashq qilish</span>
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handlePractice}
+              disabled={!filteredMistakes.length}
+              className="btn-primary !rounded-[12px] !px-4 !py-2.5 text-sm font-bold shadow-md shadow-emerald-600/20 cursor-pointer disabled:opacity-40 w-full sm:w-auto"
+            >
+              <Icon name="ri-refresh-line" className="text-base" />
+              <span>Xatolardan test{filteredMistakes.length ? ` (${filteredMistakes.length} ta)` : ''}</span>
+            </button>
           </div>
         </div>
 
@@ -276,7 +271,7 @@ export function MistakesPage() {
             const isSaved = Boolean(item.saved);
 
             return (
-              <Panel key={item.id} className="p-4 sm:p-6 transition-all hover:border-slate-300 dark:hover:border-white/20">
+              <Panel key={item.id} className="p-3.5 sm:p-6 transition-all hover:border-slate-300 dark:hover:border-white/20">
                 {/* Item Top Row */}
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -347,15 +342,15 @@ export function MistakesPage() {
                     if (isCorrect) {
                       optionStyle = 'border-emerald-500 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-medium ring-1 ring-emerald-500/20';
                       badge = (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
-                          <Icon name="ri-check-line" className="text-sm" /> To‘g‘ri javob
+                        <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
+                          <Icon name="ri-check-line" className="text-sm" /> To‘g‘ri
                         </span>
                       );
                     } else if (isPicked) {
                       optionStyle = 'border-rose-500 bg-rose-500/10 text-rose-800 dark:text-rose-300 font-medium ring-1 ring-rose-500/20';
                       badge = (
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 dark:text-rose-400 shrink-0">
-                          <Icon name="ri-close-line" className="text-sm" /> Siz belgilagan xato javob
+                          <Icon name="ri-close-line" className="text-sm" /> Sizniki
                         </span>
                       );
                     }

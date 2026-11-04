@@ -51,10 +51,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = readFresh<Theme>('medquiz-v2-theme', '' as Theme);
     if (saved === 'dark' || saved === 'light') return saved;
-    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
-    return 'dark';
+    return 'light'; // default: oq rejim (foydalanuvchi o‘zi tungi rejimni tanlashi mumkin)
   });
 
   useEffect(() => {

@@ -351,7 +351,7 @@ export function BattleVoiceChat({ roomCode, me }: { roomCode: string; me: Me | n
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="fixed right-3 sm:right-6 bottom-38 sm:bottom-24 z-40 flex flex-col items-end">
+    <div className="fixed left-1/2 z-40 flex -translate-x-1/2 flex-col items-center bottom-[calc(4.9rem+env(safe-area-inset-bottom))] sm:left-auto sm:right-6 sm:bottom-24 sm:translate-x-0 sm:items-end">
       {/* Expanded Voice Controls Card (Bosilganda yoyiladigan oyna) */}
       {expanded && (
         <div className="mb-2 w-72 sm:w-80 rounded-2xl border border-slate-700/70 bg-slate-900/95 text-white p-3.5 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-right-4 duration-200">
@@ -576,7 +576,7 @@ export function BattleVoiceChat({ roomCode, me }: { roomCode: string; me: Me | n
             setExpanded(!expanded);
           }
         }}
-        className={`relative flex h-12 w-12 items-center justify-center rounded-[10px] shadow-2xl transition-all duration-200 active:scale-95 border ${
+        className={`relative flex h-14 w-14 items-center justify-center rounded-full shadow-2xl transition-all duration-200 active:scale-95 border-2 sm:h-12 sm:w-12 sm:rounded-[10px] sm:border ${
           expanded
             ? 'bg-slate-900 text-white border-white/20 rotate-0 shadow-slate-900/50'
             : joined

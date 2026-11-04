@@ -815,7 +815,7 @@ export function BattleRoom() {
   };
 
   return (
-    <div className="relative">
+    <div className="relative pb-24 sm:pb-0">
       {/* 1. Fullscreen Countdown Timer (Butun ekranda chiqadigan timer) */}
       {room.status === 'countdown' && room.countdownAt && (
         <FullscreenCountdown started={room.countdownAt} room={room} />
@@ -828,7 +828,7 @@ export function BattleRoom() {
       <BattleVoiceChat roomCode={room.code} me={me} />
 
       {/* 3. Floating Group Chat Trigger Button (on the side) */}
-      <div className="fixed right-3 sm:right-6 bottom-52 sm:bottom-38 z-40">
+      <div className="fixed left-1/2 z-40 -ml-[5.5rem] bottom-[calc(5.2rem+env(safe-area-inset-bottom))] sm:left-auto sm:right-6 sm:ml-0 sm:bottom-38">
         <button
           type="button"
           onClick={() => setChatOpen(true)}
