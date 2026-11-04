@@ -24,7 +24,7 @@ type Row = {
 function Face({ row, size, ring }: { row: Row; size: number; ring: string }) {
   return (
     <div
-      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-orange-200 to-amber-100 font-extrabold text-orange-700 shadow-md ring-4 ${ring}`}
+      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700 font-extrabold text-slate-700 dark:text-slate-200 shadow-md ring-4 ${ring}`}
       style={{ width: size, height: size, fontSize: size * 0.34 }}
     >
       {row.avatar ? <img src={row.avatar} alt="" className="h-full w-full object-cover" /> : (row.name || 'M').slice(0, 2).toUpperCase()}
@@ -34,9 +34,9 @@ function Face({ row, size, ring }: { row: Row; size: number; ring: string }) {
 
 function PodiumSlot({ row, place }: { row?: Row; place: 1 | 2 | 3 }) {
   const cfg = {
-    1: { h: 'h-36 sm:h-44', col: 'from-orange-400 to-orange-500', face: 76, ring: 'ring-orange-300', num: 'text-white/90', xp: 'text-orange-600' },
-    2: { h: 'h-24 sm:h-32', col: 'from-sky-300 to-indigo-300', face: 58, ring: 'ring-sky-200', num: 'text-white/90', xp: 'text-sky-600' },
-    3: { h: 'h-20 sm:h-24', col: 'from-amber-300 to-yellow-300', face: 58, ring: 'ring-yellow-200', num: 'text-white/90', xp: 'text-amber-600' },
+    1: { h: 'h-36 sm:h-44', col: 'from-amber-400 to-amber-500', face: 76, ring: 'ring-amber-300', num: 'text-white/90', xp: 'text-amber-600' },
+    2: { h: 'h-24 sm:h-32', col: 'from-slate-300 to-slate-400', face: 58, ring: 'ring-slate-300', num: 'text-white/90', xp: 'text-slate-600' },
+    3: { h: 'h-20 sm:h-24', col: 'from-amber-600 to-amber-700', face: 58, ring: 'ring-amber-500', num: 'text-white/90', xp: 'text-amber-700' },
   }[place];
   if (!row) return <div className={place === 1 ? 'order-2' : place === 2 ? 'order-1' : 'order-3'} />;
   return (
@@ -78,21 +78,21 @@ export function Leaderboard() {
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Tibbiyot yetakchilari</p>
         </div>
         {myIndex >= 0 && (
-          <span className="rounded-full bg-orange-50 px-3 py-1.5 text-xs font-extrabold text-orange-600 ring-1 ring-orange-100 dark:bg-orange-500/10 dark:text-orange-300 dark:ring-orange-500/20">
+          <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-extrabold text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20">
             Sizning o‘rningiz: #{myIndex + 1}
           </span>
         )}
       </div>
 
       {/* Period pills */}
-      <div className="grid grid-cols-3 gap-1 rounded-full bg-white p-1 shadow-sm ring-1 ring-orange-100/70 dark:bg-white/5 dark:ring-white/10">
+      <div className="grid grid-cols-3 gap-1 rounded-full bg-white p-1 shadow-sm ring-1 ring-slate-200/80 dark:bg-white/5 dark:ring-white/10">
         {PERIODS.map((p) => (
           <button
             key={p.id}
             type="button"
             onClick={() => setPeriod(p.id)}
             className={`rounded-full px-3 py-2 text-xs font-bold transition-all ${
-              period === p.id ? 'bg-orange-500 text-white shadow-md shadow-orange-500/30' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+              period === p.id ? 'bg-primary text-white shadow-md shadow-primary/30' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
             }`}
           >
             {p.label}
@@ -101,9 +101,9 @@ export function Leaderboard() {
       </div>
 
       {/* Podium */}
-      <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-b from-orange-50 via-amber-50/60 to-white px-4 pb-0 pt-10 ring-1 ring-orange-100/70 dark:from-orange-500/10 dark:via-transparent dark:to-transparent dark:ring-white/10">
-        <div className="pointer-events-none absolute -left-10 top-0 h-40 w-40 rounded-full bg-sky-200/40 blur-3xl dark:bg-sky-500/10" />
-        <div className="pointer-events-none absolute -right-10 top-10 h-40 w-40 rounded-full bg-orange-200/50 blur-3xl dark:bg-orange-500/10" />
+      <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-b from-emerald-50/50 via-slate-50/60 to-white px-4 pb-0 pt-10 ring-1 ring-slate-200/80 dark:from-emerald-950/20 dark:via-transparent dark:to-transparent dark:ring-white/10">
+        <div className="pointer-events-none absolute -left-10 top-0 h-40 w-40 rounded-full bg-emerald-200/30 blur-3xl dark:bg-emerald-500/10" />
+        <div className="pointer-events-none absolute -right-10 top-10 h-40 w-40 rounded-full bg-amber-200/40 blur-3xl dark:bg-amber-500/10" />
         {rows.length === 0 ? (
           <p className="relative py-12 text-center text-sm text-slate-500">Ushbu davrda hali faollik qayd etilmagan.</p>
         ) : (
@@ -137,18 +137,18 @@ export function Leaderboard() {
                   <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-1.5 truncate text-sm font-extrabold text-slate-900 dark:text-white">
                       <span className="truncate">{row.name}</span>
-                      {isMe && <span className="rounded-full bg-orange-500 px-1.5 py-0.5 text-[9px] font-bold text-white">Siz</span>}
+                      {isMe && <span className="rounded-full bg-emerald-600 px-1.5 py-0.5 text-[9px] font-bold text-white">Siz</span>}
                     </p>
                     <p className="flex items-center gap-2 truncate text-[11px] font-medium text-slate-500 dark:text-slate-400">
                       <span className="truncate">{title.badge}</span>
                       <span className="shrink-0">· Lv {levelFromXp(row.xp ?? 0)}</span>
                       <span className="shrink-0">
-                        · <Icon name="ri-fire-fill" className="text-orange-500" /> {row.streak ?? 0}
+                        · <Icon name="ri-fire-fill" className="text-amber-500" /> {row.streak ?? 0}
                       </span>
                     </p>
                   </div>
-                  <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-extrabold tabular-nums text-orange-600 shadow-sm dark:bg-white/10 dark:text-orange-300">
-                    {(row.periodXp ?? 0).toLocaleString('uz-UZ')}
+                  <span className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-extrabold tabular-nums text-emerald-700 shadow-xs dark:bg-emerald-950/40 dark:text-emerald-300">
+                    {(row.periodXp ?? 0).toLocaleString('uz-UZ')} XP
                   </span>
                 </div>
               );

@@ -65,7 +65,7 @@ function HeroCollage({ className = '' }: { className?: string }) {
           Do‘stlaringizni jonli bellashuvga chorlang
         </p>
       </div>
-      <div className="pop-in relative flex items-center justify-center overflow-hidden rounded-[28px] bg-gradient-to-br from-amber-300 via-orange-400 to-orange-500 shadow-lg shadow-orange-500/30" style={{ animationDelay: '160ms' }}>
+      <div className="pop-in relative flex items-center justify-center overflow-hidden rounded-[28px] bg-gradient-to-br from-emerald-400 via-teal-500 to-emerald-600 shadow-lg shadow-emerald-500/20" style={{ animationDelay: '160ms' }}>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.45),transparent_55%)]" />
         <Trophy size={112} className="trophy-bob relative drop-shadow-[0_10px_12px_rgba(124,55,15,0.35)]" />
       </div>

@@ -155,32 +155,25 @@ export function Profile() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-4 sm:space-y-6">
-      {/* Profile Header Card — light-first design with banner */}
-      <Panel className="overflow-hidden !p-0 shadow-sm">
-        {/* Banner */}
-        <div className="relative h-24 overflow-hidden bg-slate-100 dark:bg-slate-800 border-b border-slate-200/80 dark:border-white/10 sm:h-32">
-          <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-slate-700 shadow-xs border border-slate-200/60 dark:bg-black/40 dark:text-slate-200 dark:border-white/10">
-            <Icon name="ri-fire-fill" className="text-amber-500" /> {stats?.streak ?? 0} kun
-          </span>
-        </div>
-
-        <div className="px-4 pb-5 sm:px-6">
-          <div className="-mt-10 flex flex-col gap-4 sm:-mt-12 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex min-w-0 flex-1 items-end gap-3.5 sm:gap-5">
+      {/* Profile Header Card */}
+      <Panel className="p-4 sm:p-6 shadow-sm">
+        <div>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 flex-1 items-center gap-3.5 sm:gap-5">
               {/* Avatar */}
               <div className="relative shrink-0">
                 <button
                   type="button"
                   onClick={() => setAvatarModalOpen(true)}
-                  className="group flex h-20 w-20 cursor-pointer items-center justify-center overflow-hidden rounded-full border-4 border-white bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-md transition-all hover:opacity-95 sm:h-24 sm:w-24 dark:border-[#111827]"
+                  className="group flex h-20 w-20 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-slate-200 bg-slate-100 text-slate-700 shadow-sm transition-all hover:opacity-95 sm:h-24 sm:w-24 dark:border-white/10 dark:bg-slate-800 dark:text-slate-200"
                   title="Avatar yoki rasm tanlash"
                 >
                   {me.avatar ? (
                     <img src={me.avatar} alt={me.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
                   ) : (
                     <div className="flex flex-col items-center justify-center">
-                      <Icon name="ri-user-3-fill" className="text-3xl text-slate-600 dark:text-slate-300" />
-                      <span className="text-[10px] font-bold tracking-wider text-slate-600 dark:text-slate-300">{me.name.slice(0, 2).toUpperCase() || 'MQ'}</span>
+                      <Icon name="ri-user-3-fill" className="text-3xl text-slate-500 dark:text-slate-400" />
+                      <span className="text-[10px] font-bold tracking-wider text-slate-500 dark:text-slate-400">{me.name.slice(0, 2).toUpperCase() || 'MQ'}</span>
                     </div>
                   )}
                 </button>
@@ -189,16 +182,21 @@ export function Profile() {
                   onClick={() => setAvatarModalOpen(true)}
                   title="Rasm / 3D avatar tanlash"
                   aria-label="Rasm / 3D avatar tanlash"
-                  className="absolute -bottom-0.5 -right-0.5 z-10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-slate-800 text-white shadow-md ring-2 ring-white transition-all hover:scale-110 hover:bg-slate-900 active:scale-95 dark:bg-slate-600 dark:hover:bg-slate-500 dark:ring-[#111827]"
+                  className="absolute -bottom-0.5 -right-0.5 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-slate-800 text-white shadow-md ring-2 ring-white transition-all hover:scale-110 active:scale-95 dark:bg-slate-700 dark:ring-[#111827]"
                 >
-                  <Icon name="ri-camera-fill" className="text-sm text-white" />
+                  <Icon name="ri-camera-fill" className="text-xs text-white" />
                 </button>
               </div>
 
               {/* Identity */}
-              <div className="min-w-0 flex-1 pb-1">
-                <h1 className="truncate text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl dark:text-white">{me.name}</h1>
-                <p className="truncate font-mono text-xs font-semibold text-emerald-600 sm:text-sm dark:text-emerald-400">@{me.username}</p>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="truncate text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl dark:text-white">{me.name}</h1>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                    <Icon name="ri-fire-fill" /> {stats?.streak ?? 0} kun
+                  </span>
+                </div>
+                <p className="truncate font-mono text-xs font-semibold text-primary sm:text-sm">@{me.username}</p>
               </div>
             </div>
 

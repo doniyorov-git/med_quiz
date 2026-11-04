@@ -12,7 +12,7 @@ import {
 import { Btn, Field, Icon, fieldClass } from '@/components/chrome';
 import { ImageField } from '@/components/image-field';
 import { deleteBank, renameBank, replaceQuestions } from '@/lib/model';
-import { blankQuestion, cleanQuestion, parseQuizText, serializeQuiz, uid } from '@/lib/parser';
+import { blankQuestion, cleanQuestion, parseQuizText, serializeQuiz, uid, extractTextFromFile } from '@/lib/parser';
 import { useBanks } from '@/lib/store';
 import type { Question } from '@/lib/types';
 
@@ -123,19 +123,24 @@ export function Editor() {
             <span>Fayl yuklash</span>
             <input
               type="file"
-              accept=".txt,text/plain"
+              accept=".txt,.doc,.docx,.pdf,text/plain,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               className="sr-only"
               onChange={async (event) => {
                 const file = event.target.files?.[0];
                 event.target.value = '';
                 if (!file) return;
-                const parsed = parseQuizText(await file.text());
-                if (!parsed.questions.length) {
-                  setError('Fayldan savol o‘qilmadi. Fayl formati: # Savol, + To‘g‘ri, - Noto‘g‘ri javob.');
-                  return;
+                try {
+                  const text = await extractTextFromFile(file);
+                  const parsed = parseQuizText(text);
+                  if (!parsed.questions.length) {
+                    setError('Fayldan savol o‘qilmadi. Fayl formati: # Savol, + To‘g‘ri, - Noto‘g‘ri javob.');
+                    return;
+                  }
+                  setError('');
+                  save([...bank.questions, ...parsed.questions]);
+                } catch {
+                  setError('Faylni o‘qishda xatolik yuz berdi.');
                 }
-                setError('');
-                save([...bank.questions, ...parsed.questions]);
               }}
             />
           </label>

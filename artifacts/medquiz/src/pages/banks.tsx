@@ -12,7 +12,7 @@ import {
 } from 'react-icons/hi';
 import { Btn, Icon, Panel, fieldClass } from '@/components/chrome';
 import { createBank, deleteBank, getBankSchedule, saveQuestionsToSubject } from '@/lib/model';
-import { cleanQuestion, parseQuizText } from '@/lib/parser';
+import { cleanQuestion, parseQuizText, extractTextFromFile } from '@/lib/parser';
 import { useBanks } from '@/lib/store';
 import { ExamCalendarModal } from '@/components/exam-calendar-modal';
 import type { Bank } from '@/lib/types';
@@ -75,7 +75,7 @@ export function Banks() {
     setSelectedFile(file);
     setFileName(file.name);
     try {
-      const text = await file.text();
+      const text = await extractTextFromFile(file);
       const parsed = parseQuizText(text);
       setParsedCount(parsed.questions.length);
       setError('');
@@ -84,7 +84,7 @@ export function Banks() {
         if (guessedName) setFan(guessedName);
       }
     } catch {
-      setError('Faylni o‘qishda xatolik yuz berdi.');
+      setError('Faylni o‘qishda xatolik yuz berdi. TXT, DOC, DOCX yoki PDF fayl ekanligini tekshiring.');
     }
   };
 
@@ -97,7 +97,7 @@ export function Banks() {
 
     let questionsText = rawText;
     if (mode === 'file' && selectedFile) {
-      questionsText = await selectedFile.text();
+      questionsText = await extractTextFromFile(selectedFile);
     }
 
     if (questionsText.trim()) {
@@ -360,7 +360,7 @@ export function Banks() {
                       <input
                         id="quiz-file"
                         type="file"
-                        accept=".txt,text/plain"
+                        accept=".txt,.doc,.docx,.pdf,text/plain,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                         className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
                         data-testid="input-quiz-file"
                         onChange={(event) => {
@@ -383,9 +383,9 @@ export function Banks() {
                         ) : (
                           <div className="text-center">
                             <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                              .txt faylni tanlang yoki shu yerga tashlang
+                              TXT, DOC, DOCX yoki PDF faylni tanlang
                             </span>
-                            <p className="mt-0.5 text-[11px] text-slate-500">Format: # Savol, + To‘g‘ri, - Noto‘g‘ri</p>
+                            <p className="mt-0.5 text-[11px] text-slate-500">Qo‘llab-quvvatlanadi: .txt, .doc, .docx, .pdf</p>
                           </div>
                         )}
                       </div>

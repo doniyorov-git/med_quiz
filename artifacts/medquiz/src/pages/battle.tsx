@@ -773,11 +773,15 @@ export function BattleRoom() {
 
   if (!room || !me) {
     return (
-      <Panel className="p-8 text-center">
-        <Icon name="ri-error-warning-line" className="text-4xl text-rose-500 mx-auto" />
-        <p className="mt-3 text-base font-bold text-slate-900 dark:text-white">{error || 'Xona topilmadi yoki yopilgan.'}</p>
-        <p className="mt-1 text-xs text-slate-500">Kodni qayta tekshiring yoki yangi xona oching.</p>
-        <Link className="mt-4 inline-flex items-center gap-1.5 btn-primary !rounded-[10px] text-xs font-semibold px-4 py-2" href="/battle">
+      <Panel className="p-8 text-center max-w-md mx-auto">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-rose-500/10 flex items-center justify-center">
+          <Icon name="ri-time-line" className="text-3xl text-rose-500" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Battle tugagan yoki topilmadi</h2>
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          Ushbu battle xonasi allaqachon yakunlangan yoki o‘chirilgan bo‘lishi mumkin.
+        </p>
+        <Link className="mt-5 inline-flex items-center gap-1.5 btn-primary !rounded-[10px] text-xs font-semibold px-4 py-2.5" href="/battle">
           <Icon name="ri-arrow-left-line" /> Battle Lobby
         </Link>
       </Panel>
@@ -786,6 +790,24 @@ export function BattleRoom() {
 
   const playing = (room.players ?? []).some((player) => player?.id === me.id);
   if (!playing) {
+    if (room.status === 'done') {
+      return (
+        <Panel className="p-8 text-center max-w-md mx-auto">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-rose-500/10 flex items-center justify-center">
+            <Icon name="ri-flag-line" className="text-3xl text-rose-500" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Battle tugagan</h2>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            Ushbu battle xonasi allaqachon yakunlangan. Yangi battle boshlang yoki boshqa xonaga qo‘shiling.
+          </p>
+          <div className="mt-6 flex justify-center gap-3">
+            <Link className="inline-flex items-center gap-2 btn-primary !rounded-[10px] text-xs font-semibold px-4 py-2.5" href="/battle">
+              <Icon name="ri-arrow-left-line" /> Yangi Battle
+            </Link>
+          </div>
+        </Panel>
+      );
+    }
     return (
       <Panel className="p-8 text-center">
         <Icon name="ri-loader-4-line" className="text-4xl text-primary animate-spin mx-auto" />
@@ -924,18 +946,54 @@ export function BattleRoom() {
           )}
 
           {room.status === 'done' && (
-            <Panel className="p-6">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-                <Icon name="ri-trophy-line" className="text-amber-500" /> Natijalar
-              </h2>
-              <div className="mt-4 space-y-2">
+            <Panel className="p-6 sm:p-8 text-center relative overflow-hidden">
+              <div className="mb-4">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-bold mb-3">
+                  <Icon name="ri-flag-2-line" /> Battle tugagan
+                </span>
+                {ranked[0]?.id === me.id ? (
+                  <div className="space-y-2">
+                    <div
+                      className="mx-auto my-2"
+                      dangerouslySetInnerHTML={{
+                        __html: `<lord-icon src="https://cdn.lordicon.com/lupuorrc.json" trigger="loop" colors="primary:#10b981,secondary:#f59e0b" style="width:120px;height:120px;margin:0 auto;display:block;"></lord-icon>`,
+                      }}
+                    />
+                    <h2 className="text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">
+                      Tabriklaymiz! Siz g‘alaba qozondingiz! 🏆🎉
+                    </h2>
+                    <p className="text-sm text-slate-600 dark:text-slate-300 max-w-md mx-auto">
+                      Ajoyib bilim va tezlik! Ushbu battle jangida 1-o‘rinni egalladingiz.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <div
+                      className="mx-auto my-2"
+                      dangerouslySetInnerHTML={{
+                        __html: `<lord-icon src="https://cdn.lordicon.com/fkmafinq.json" trigger="loop" colors="primary:#10b981,secondary:#64748b" style="width:90px;height:90px;margin:0 auto;display:block;"></lord-icon>`,
+                      }}
+                    />
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">Battle yakunlandi</h2>
+                    <p className="text-xs text-slate-500">G‘olib: {ranked[0]?.name || 'Talaba'}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 space-y-2 text-left max-w-lg mx-auto">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Natijalar jadvali</h3>
                 {ranked.map((player, index) => {
                   const playerXp = statsMap[player?.id || '']?.xp ?? 0;
                   const playerTitle = getMedicalTitle(playerXp);
+                  const isCurrentMe = player?.id === me.id;
                   return (
                     <div
                       key={player?.id || index}
-                      className="flex items-center justify-between rounded-[10px] border border-border px-3.5 py-3"
+                      className={`flex items-center justify-between rounded-[10px] border px-3.5 py-3 ${
+                        isCurrentMe
+                          ? 'border-emerald-500/40 bg-emerald-50/50 dark:bg-emerald-950/20'
+                          : 'border-slate-200 dark:border-white/10'
+                      }`}
                     >
                       <div className="flex items-center gap-2.5">
                         <span className="w-6 text-center font-mono text-sm font-bold text-slate-400 flex items-center justify-center">
@@ -951,7 +1009,7 @@ export function BattleRoom() {
                         </span>
                         <span className="text-sm font-medium">
                           {player?.name || 'Talaba'}
-                          {player?.id === me.id ? ' (Siz)' : ''}
+                          {isCurrentMe ? ' (Siz)' : ''}
                         </span>
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-[6px] text-[10px] font-semibold border ${playerTitle.color}`}>
                           <Icon name={playerTitle.icon} className="text-xs" />
@@ -963,9 +1021,11 @@ export function BattleRoom() {
                   );
                 })}
               </div>
-              <Link href="/battle" className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
-                <Icon name="ri-refresh-line" /> Yangi battle boshlash
-              </Link>
+              <div className="mt-6 flex justify-center">
+                <Link href="/battle" className="inline-flex items-center gap-2 btn-primary !rounded-[10px] text-xs font-semibold px-4 py-2.5">
+                  <Icon name="ri-refresh-line" /> Yangi battle boshlash
+                </Link>
+              </div>
             </Panel>
           )}
         </div>

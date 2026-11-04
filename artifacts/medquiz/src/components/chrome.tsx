@@ -71,9 +71,10 @@ const sideNav = [
 
 const mobileNav = [
   { href: '/dashboard', label: 'Asosiy', icon: 'ri-home-5-line', active: 'ri-home-5-fill' },
-  { href: '/friends', label: 'Do‘stlar', icon: 'ri-group-line', active: 'ri-group-fill' },
+  { href: '/banks', label: 'To‘plamlar', icon: 'ri-book-2-line', active: 'ri-book-2-fill' },
   { href: '/battle', label: 'Battle', icon: 'ri-sword-line', active: 'ri-sword-fill' },
   { href: '/leaderboard', label: 'Reyting', icon: 'ri-trophy-line', active: 'ri-trophy-fill' },
+  { href: '/friends', label: 'Do‘stlar', icon: 'ri-group-line', active: 'ri-group-fill' },
   { href: '/profile', label: 'Profil', icon: 'ri-user-3-line', active: 'ri-user-3-fill' },
 ];
 
