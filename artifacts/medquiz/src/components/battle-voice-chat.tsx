@@ -18,7 +18,28 @@ const RTC_CONFIG: RTCConfiguration = {
   ],
 };
 
-export function BattleVoiceChat({ roomCode, me }: { roomCode: string; me: Me | null }) {
+export interface VoiceState {
+  joined: boolean;
+  isMuted: boolean;
+  isSpeaking: boolean;
+  peersCount: number;
+}
+
+export function BattleVoiceChat({
+  roomCode,
+  me,
+  open,
+  onClose,
+  hideFloatingButton = false,
+  onStateChange,
+}: {
+  roomCode: string;
+  me: Me | null;
+  open?: boolean;
+  onClose?: () => void;
+  hideFloatingButton?: boolean;
+  onStateChange?: (state: VoiceState) => void;
+}) {
   const [joined, setJoined] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [pushToTalk, setPushToTalk] = useState(false);
@@ -350,13 +371,28 @@ export function BattleVoiceChat({ roomCode, me }: { roomCode: string; me: Me | n
   const activeMuted = pushToTalk ? !isHoldingPTT : isMuted;
   const [expanded, setExpanded] = useState(false);
 
-  return (
-    <div className="fixed left-1/2 z-40 flex -translate-x-1/2 flex-col items-center bottom-[calc(4.9rem+env(safe-area-inset-bottom))] sm:left-auto sm:right-6 sm:bottom-24 sm:translate-x-0 sm:items-end">
-      {/* Expanded Voice Controls Card (Bosilganda yoyiladigan oyna) */}
-      {expanded && (
-        <div className="mb-2 w-72 sm:w-80 rounded-2xl border border-slate-700/70 bg-slate-900/95 text-white p-3.5 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-right-4 duration-200">
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-3">
+  const isModalOpen = open !== undefined ? open : expanded;
+  const handleClose = () => {
+    if (open !== undefined) {
+      onClose?.();
+    } else {
+      setExpanded(false);
+    }
+  };
+
+  useEffect(() => {
+    onStateChange?.({
+      joined,
+      isMuted: activeMuted,
+      isSpeaking,
+      peersCount: peers.length + 1,
+    });
+  }, [joined, activeMuted, isSpeaking, peers.length, onStateChange]);
+
+  const modalContent = (
+    <div className="w-full sm:w-80 rounded-2xl border border-slate-700/70 bg-slate-900/98 text-white p-4 shadow-2xl backdrop-blur-xl animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-white/10 pb-2.5 mb-3">
             <div className="flex items-center gap-2">
               <span className="relative flex h-2.5 w-2.5">
                 {joined ? (
@@ -381,7 +417,7 @@ export function BattleVoiceChat({ roomCode, me }: { roomCode: string; me: Me | n
 
             <button
               type="button"
-              onClick={() => setExpanded(false)}
+              onClick={handleClose}
               className="rounded-lg p-1 text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
               title="Yashirish"
               aria-label="Yashirish"
@@ -549,7 +585,7 @@ export function BattleVoiceChat({ roomCode, me }: { roomCode: string; me: Me | n
                 type="button"
                 onClick={() => {
                   disconnectAll();
-                  setExpanded(false);
+                  handleClose();
                 }}
                 className="w-full py-2 px-3 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2"
               >
@@ -562,55 +598,67 @@ export function BattleVoiceChat({ roomCode, me }: { roomCode: string; me: Me | n
           {micError && (
             <p className="mt-2 text-[10px] text-amber-400 font-medium">{micError}</p>
           )}
+    </div>
+  );
+
+  return (
+    <>
+      {/* Centered / bottom modal overlay when opened */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[160] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-xs p-0 sm:p-4 animate-in fade-in duration-200">
+          {modalContent}
         </div>
       )}
 
-      {/* Floating Side Trigger Button (Yon tomondagi qulay tugma) */}
-      <button
-        type="button"
-        onClick={() => {
-          if (!joined) {
-            handleJoin();
-            setExpanded(true);
-          } else {
-            setExpanded(!expanded);
-          }
-        }}
-        className={`relative flex h-14 w-14 items-center justify-center rounded-full shadow-2xl transition-all duration-200 active:scale-95 border-2 sm:h-12 sm:w-12 sm:rounded-[10px] sm:border ${
-          expanded
-            ? 'bg-slate-900 text-white border-white/20 rotate-0 shadow-slate-900/50'
-            : joined
-            ? activeMuted
-              ? 'bg-gradient-to-tr from-slate-900 via-rose-950 to-slate-800 text-rose-400 border-rose-500/40 shadow-rose-900/40 ring-2 ring-rose-500/20'
-              : isSpeaking
-              ? 'bg-gradient-to-tr from-emerald-500 to-teal-400 text-white border-white/30 shadow-emerald-500/40 ring-4 ring-emerald-300/40 animate-pulse'
-              : 'bg-gradient-to-tr from-emerald-600 via-teal-600 to-cyan-600 text-white border-white/30 shadow-emerald-600/40 ring-2 ring-emerald-400/30'
-            : 'bg-gradient-to-tr from-cyan-600 via-teal-600 to-emerald-600 text-white border-white/30 hover:scale-110 shadow-teal-500/30 ring-2 ring-white/20'
-        }`}
-        title={joined ? 'Ovozli aloqa menyusi (Mute / Gapirish)' : 'Ovozli aloqaga ulanish'}
-        aria-label="Ovozli aloqa"
-      >
-        {expanded ? (
-          <Icon name="ri-close-line" className="text-2xl drop-shadow" />
-        ) : joined ? (
-          activeMuted ? (
-            <Icon name="ri-mic-off-fill" className="text-2xl drop-shadow text-rose-400" />
-          ) : isSpeaking ? (
-            <Icon name="ri-voiceprint-fill" className="text-2xl drop-shadow animate-pulse" />
-          ) : (
-            <Icon name="ri-phone-fill" className="text-2xl drop-shadow" />
-          )
-        ) : (
-          <Icon name="ri-headphone-fill" className="text-2xl drop-shadow" />
-        )}
+      {/* Legacy floating button only if hideFloatingButton is false */}
+      {!hideFloatingButton && (
+        <div className="fixed left-1/2 z-40 flex -translate-x-1/2 flex-col items-center bottom-[calc(4.9rem+env(safe-area-inset-bottom))] sm:left-auto sm:right-6 sm:bottom-24 sm:translate-x-0 sm:items-end">
+          <button
+            type="button"
+            onClick={() => {
+              if (!joined) {
+                handleJoin();
+                setExpanded(true);
+              } else {
+                setExpanded(!expanded);
+              }
+            }}
+            className={`relative flex h-14 w-14 items-center justify-center rounded-full shadow-2xl transition-all duration-200 active:scale-95 border-2 sm:h-12 sm:w-12 sm:rounded-[10px] sm:border ${
+              expanded
+                ? 'bg-slate-900 text-white border-white/20 rotate-0 shadow-slate-900/50'
+                : joined
+                ? activeMuted
+                  ? 'bg-gradient-to-tr from-slate-900 via-rose-950 to-slate-800 text-rose-400 border-rose-500/40 shadow-rose-900/40 ring-2 ring-rose-500/20'
+                  : isSpeaking
+                  ? 'bg-gradient-to-tr from-emerald-500 to-teal-400 text-white border-white/30 shadow-emerald-500/40 ring-4 ring-emerald-300/40 animate-pulse'
+                  : 'bg-gradient-to-tr from-emerald-600 via-teal-600 to-cyan-600 text-white border-white/30 shadow-emerald-600/40 ring-2 ring-emerald-400/30'
+                : 'bg-gradient-to-tr from-cyan-600 via-teal-600 to-emerald-600 text-white border-white/30 hover:scale-110 shadow-teal-500/30 ring-2 ring-white/20'
+            }`}
+            title={joined ? 'Ovozli aloqa menyusi (Mute / Gapirish)' : 'Ovozli aloqaga ulanish'}
+            aria-label="Ovozli aloqa"
+          >
+            {expanded ? (
+              <Icon name="ri-close-line" className="text-2xl drop-shadow" />
+            ) : joined ? (
+              activeMuted ? (
+                <Icon name="ri-mic-off-fill" className="text-2xl drop-shadow text-rose-400" />
+              ) : isSpeaking ? (
+                <Icon name="ri-voiceprint-fill" className="text-2xl drop-shadow animate-pulse" />
+              ) : (
+                <Icon name="ri-phone-fill" className="text-2xl drop-shadow" />
+              )
+            ) : (
+              <Icon name="ri-headphone-fill" className="text-2xl drop-shadow" />
+            )}
 
-        {/* Active Ping Dot & Peer Badge */}
-        {joined && (
-          <span className="absolute -top-1 -right-1 flex h-5 min-w-5 px-1 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white shadow-md ring-2 ring-white dark:ring-slate-900">
-            {peers.length + 1}
-          </span>
-        )}
-      </button>
-    </div>
+            {joined && (
+              <span className="absolute -top-1 -right-1 flex h-5 min-w-5 px-1 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white shadow-md ring-2 ring-white dark:ring-slate-900">
+                {peers.length + 1}
+              </span>
+            )}
+          </button>
+        </div>
+      )}
+    </>
   );
 }

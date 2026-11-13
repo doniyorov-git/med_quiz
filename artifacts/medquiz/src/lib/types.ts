@@ -26,6 +26,7 @@ export type Me = {
   username?: string;
   name: string;
   phone?: string;
+  password?: string;
   email?: string;
   university: string;
   course: string;

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { HiOutlineX } from 'react-icons/hi';
 import { Link, useLocation, useParams } from 'wouter';
 import { BattleChat } from '@/components/battle-chat';
-import { BattleReactions } from '@/components/battle-reactions';
+import { BattleReactions, REACTION_ICONS } from '@/components/battle-reactions';
 import { BattleVoiceChat } from '@/components/battle-voice-chat';
 import { Btn, Icon, Panel, fieldClass } from '@/components/chrome';
 import { Choices, Ring } from '@/components/choices';
@@ -26,6 +26,7 @@ import {
   putRoom,
   recordMistake,
   roomLink,
+  sendBattleReaction,
   sendInvite,
   setPlayerReady,
   tryAdvance,
@@ -677,7 +678,17 @@ export function BattleRoom() {
   const [joined, setJoined] = useState(false);
   const [loading, setLoading] = useState(!room);
   const [chatOpen, setChatOpen] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [reactionsOpen, setReactionsOpen] = useState(false);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const [voiceState, setVoiceState] = useState<{
+    joined: boolean;
+    isMuted: boolean;
+    isSpeaking: boolean;
+    peersCount: number;
+  }>({ joined: false, isMuted: false, isSpeaking: false, peersCount: 1 });
+  const [confirmLeaveOpen, setConfirmLeaveOpen] = useState(false);
+  const [shareToast, setShareToast] = useState('');
 
   // 1. Initial room fetch from server if not found in local storage
   useEffect(() => {
@@ -822,52 +833,68 @@ export function BattleRoom() {
   const ranked = [...(room.players ?? [])].sort((a, b) => playerScore(room, b?.id || '') - playerScore(room, a?.id || ''));
   const host = room.hostId === me.id;
 
+  const copyRoomCode = async () => {
+    if (!room) return;
+    try {
+      await navigator.clipboard.writeText(room.code.toUpperCase());
+      setShareToast(`Xona kodi nusxalandi: ${room.code.toUpperCase()}`);
+      setTimeout(() => setShareToast(''), 2500);
+    } catch {
+      /* ignore */
+    }
+  };
+
   const share = async () => {
+    if (!room) return;
     const url = roomLink(room.code);
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'MedQuiz battle', url });
+        await navigator.share({
+          title: `MedQuiz Battle · ${room.bankName}`,
+          text: `Men bilan MedQuiz-da tibbiy battle-ga qo‘shiling! Xona kodi: ${room.code.toUpperCase()}`,
+          url,
+        });
         return;
       } catch {
         /* fallback to clipboard */
       }
     }
-    await navigator.clipboard.writeText(url);
-    setCopied(true);
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareToast('Battle havolasi nusxalandi!');
+      setTimeout(() => setShareToast(''), 2500);
+    } catch {
+      /* ignore */
+    }
   };
 
   return (
-    <div className="relative pb-24 sm:pb-0">
-      {/* 1. Fullscreen Countdown Timer (Butun ekranda chiqadigan timer) */}
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-white">
+      {/* 1. Fullscreen Countdown Timer */}
       {room.status === 'countdown' && room.countdownAt && (
         <FullscreenCountdown started={room.countdownAt} room={room} />
       )}
 
-      {/* 2. Side Floating Expandable Reactions (Yon tomonda joylashgan va bosilsa yoyiladigan reaksiyalar) */}
-      <BattleReactions roomCode={room.code} me={me} />
+      {/* 2. Reactions Particle Overlay & Modal (NO floating button on screen) */}
+      <BattleReactions
+        roomCode={room.code}
+        me={me}
+        open={reactionsOpen}
+        onClose={() => setReactionsOpen(false)}
+        hideFloatingButton={true}
+      />
 
-      {/* 2. Floating Group Voice Chat Widget (on the side) */}
-      <BattleVoiceChat roomCode={room.code} me={me} />
+      {/* 3. Voice Chat Manager & Modal (NO floating button on screen) */}
+      <BattleVoiceChat
+        roomCode={room.code}
+        me={me}
+        open={voiceOpen}
+        onClose={() => setVoiceOpen(false)}
+        hideFloatingButton={true}
+        onStateChange={setVoiceState}
+      />
 
-      {/* 3. Floating Group Chat Trigger Button (on the side) */}
-      <div className="fixed left-1/2 z-40 -ml-[5.5rem] bottom-[calc(5.2rem+env(safe-area-inset-bottom))] sm:left-auto sm:right-6 sm:ml-0 sm:bottom-38">
-        <button
-          type="button"
-          onClick={() => setChatOpen(true)}
-          className="relative flex h-12 w-12 items-center justify-center rounded-[10px] shadow-2xl transition-all duration-200 active:scale-95 border bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-slate-100 border-slate-200/90 dark:border-white/15 hover:scale-110 shadow-slate-900/20 backdrop-blur-md cursor-pointer"
-          title="Guruh suhbati"
-          aria-label="Guruh suhbati"
-        >
-          <Icon name="ri-chat-3-fill" className="text-2xl text-primary drop-shadow" />
-          {unreadChatCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-5 min-w-5 px-1 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-md ring-2 ring-white dark:ring-slate-900 animate-bounce">
-              {unreadChatCount}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* 4. Group Battle Chat Modal / Drawer */}
+      {/* 4. Group Chat Drawer */}
       <BattleChat
         roomCode={room.code}
         me={me}
@@ -876,70 +903,186 @@ export function BattleRoom() {
         onUnreadChange={setUnreadChatCount}
       />
 
-      <div className={`grid gap-6 ${room.status === 'live' ? 'max-w-3xl mx-auto' : 'lg:grid-cols-[1fr_320px]'}`}>
-        {/* Main Quiz Area */}
-        <div className="w-full">
-          <div className="mb-2 sm:mb-4">
-            <p className="text-[11px] sm:text-xs text-muted-foreground flex items-center gap-1.5">
-              <span className="inline-block h-2 w-2 rounded-full bg-primary animate-pulse" />
-              <span>
-                {room.status === 'lobby'
-                  ? 'Kutilmoqda'
-                  : room.status === 'countdown'
-                  ? 'Tayyormisiz?'
-                  : room.status === 'live'
-                  ? 'Jonli jang'
-                  : 'Yakunlandi'}
-              </span>
-              <span>·</span>
-              <span className="font-mono font-bold tracking-wider">{room.code}</span>
-            </p>
-            <div className="mt-1 flex items-center justify-between gap-3">
-              <h1 className="min-w-0 text-base sm:text-xl font-bold leading-tight truncate">{room.bankName}</h1>
-
-              {room.status === 'live' && room.seconds > 0 && room.questionStartedAt && (
-                <div className="shrink-0 ml-1">
-                  <LiveRing started={room.questionStartedAt} total={room.seconds} />
-                </div>
-              )}
+      {/* 5. Leave Confirmation Modal */}
+      {confirmLeaveOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-sm rounded-[14px] bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 p-5 shadow-2xl text-center space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="mx-auto w-12 h-12 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center text-2xl">
+              <Icon name="ri-logout-box-r-line" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">Xonani tark etish</h3>
+              <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                {room.status === 'live'
+                  ? 'Jonli battle davom etmoqda. Chiqib ketsangiz, ushbu bellashuv natijasi hisoblanmasligi mumkin.'
+                  : 'Haqiqatan ham ushbu battle xonasidan chiqmoqchimisiz?'}
+              </p>
+            </div>
+            <div className="flex gap-2.5 pt-1">
+              <button
+                type="button"
+                onClick={() => setConfirmLeaveOpen(false)}
+                className="flex-1 h-10 rounded-[10px] border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                Qolish
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmLeaveOpen(false);
+                  leaveRoom(me.id, room.code);
+                  setLocation('/battle');
+                }}
+                className="flex-1 h-10 rounded-[10px] bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+              >
+                Ha, tark etish
+              </button>
             </div>
           </div>
+        </div>
+      )}
 
-          {error && <p className="mb-3 text-sm text-red-600" role="alert">{error}</p>}
+      {/* 6. Top Battle HUD Header */}
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-slate-200/80 bg-white/95 px-3 sm:px-6 backdrop-blur-xl dark:border-white/10 dark:bg-[#0b0f19]/95 transition-colors shrink-0">
+        {/* Left: Leave Room */}
+        <button
+          type="button"
+          onClick={() => setConfirmLeaveOpen(true)}
+          className="flex items-center gap-1.5 h-9 px-3 rounded-[10px] text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-500/10 hover:bg-rose-500/15 border border-rose-500/20 dark:text-rose-400 dark:hover:text-rose-300 transition-colors cursor-pointer"
+          title="Xonani tark etish"
+        >
+          <Icon name="ri-logout-box-r-line" className="text-sm" />
+          <span className="hidden sm:inline">Tark etish</span>
+          <span className="sm:hidden">Chiqish</span>
+        </button>
 
-          {(room.status === 'lobby' || room.status === 'countdown') && (
-            <Panel className="p-6">
-              <p className="text-sm text-muted-foreground flex items-center gap-2">
-                <Icon name="ri-information-line" />
-                {room.questions.length} ta savol · {room.order === 'mixed' ? 'aralash tartibda' : 'ketma-ket'} ·{' '}
-                {room.seconds ? `${room.seconds}s har savolga` : 'vaqtsiz'}
-              </p>
-              <div className="mt-5 flex items-center gap-2">
-                <Btn className="shrink-0 flex items-center gap-1.5" testId="button-share-room" onClick={() => void share()}>
-                  <Icon name="ri-share-forward-line" /> Do‘stga ulashish
-                </Btn>
-                <p className="min-w-0 flex-1 break-all rounded-[10px] bg-slate-100 dark:bg-white/5 px-3 py-2.5 text-xs font-mono text-slate-700 dark:text-slate-300">
-                  {roomLink(room.code)}
-                </p>
-              </div>
-              {copied && <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">Havola nusxalandi!</p>}
-              <div className="mt-4 p-3 rounded-xl bg-primary/5 border border-primary/15 flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-300">
-                <Icon name="ri-headphone-fill" className="text-primary text-base shrink-0" />
-                <span>Guruh bilan jonli ovozli gaplashish yoki yozishish uchun yuqoridagi <strong>«Ovozli aloqa»</strong> va <strong>«Suhbat»</strong> tugmalaridan foydalanishingiz mumkin.</span>
-              </div>
-              <div className="mt-5 flex flex-wrap gap-2">
-                <Btn
-                  kind="line"
-                  onClick={() => {
-                    leaveRoom(me.id, room.code);
-                    setLocation('/battle');
-                  }}
-                >
-                  <Icon name="ri-logout-box-r-line" /> Tark etish
-                </Btn>
-              </div>
-            </Panel>
+        {/* Center: Status & Room code / question counter */}
+        <div className="flex items-center gap-2">
+          {room.status === 'live' ? (
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                Savol {room.index + 1} / {room.questions.length}
+              </span>
+            </div>
+          ) : room.status === 'lobby' ? (
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium hidden sm:inline">Xona:</span>
+              <button
+                type="button"
+                onClick={copyRoomCode}
+                className="font-mono font-bold text-xs sm:text-sm px-2 py-0.5 rounded-[8px] bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center gap-1 cursor-pointer"
+                title="Kodni nusxalash"
+              >
+                <span>{room.code.toUpperCase()}</span>
+                <Icon name="ri-file-copy-line" className="text-xs" />
+              </button>
+            </div>
+          ) : room.status === 'countdown' ? (
+            <span className="text-xs sm:text-sm font-bold text-amber-500 animate-pulse">
+              Tayyorlaning...
+            </span>
+          ) : (
+            <span className="text-xs sm:text-sm font-bold text-emerald-500">
+              Natijalar
+            </span>
           )}
+        </div>
+
+        {/* Right: Timer (Live) or Participant Count (Lobby) */}
+        <div className="flex items-center gap-2">
+          {room.status === 'live' && room.seconds > 0 && room.questionStartedAt ? (
+            <LiveRing started={room.questionStartedAt} total={room.seconds} />
+          ) : (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-[8px] bg-slate-100 dark:bg-white/5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <Icon name="ri-group-line" className="text-primary text-sm" />
+              <span>{room.players?.length ?? 1} kishi</span>
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* Main Container */}
+      <main className="flex-1 w-full px-3 sm:px-6 py-4 pb-28 sm:pb-32 overflow-y-auto">
+        <div className={`grid gap-6 ${room.status === 'live' ? 'max-w-3xl mx-auto' : 'lg:grid-cols-[1fr_320px] max-w-5xl mx-auto'}`}>
+          {/* Main Quiz Area */}
+          <div className="w-full">
+            {error && <p className="mb-3 text-sm text-red-600" role="alert">{error}</p>}
+
+            {(room.status === 'lobby' || room.status === 'countdown') && (
+              <div className="space-y-4">
+                {/* Test Info Card */}
+                <Panel className="p-5 sm:p-6 space-y-4">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded-[6px] inline-block mb-1.5">
+                      Test to‘plami
+                    </span>
+                    <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-snug">
+                      {room.bankName}
+                    </h2>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] bg-slate-100 dark:bg-white/5 font-medium">
+                      <Icon name="ri-questionnaire-line" className="text-primary" /> {room.questions.length} ta savol
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] bg-slate-100 dark:bg-white/5 font-medium">
+                      <Icon name="ri-time-line" className="text-primary" /> {room.seconds ? `${room.seconds}s har savolga` : 'Vaqtsiz'}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] bg-slate-100 dark:bg-white/5 font-medium">
+                      <Icon name="ri-shuffle-line" className="text-primary" /> {room.order === 'mixed' ? 'Aralash tartib' : 'Ketma-ket'}
+                    </span>
+                  </div>
+                </Panel>
+
+                {/* Room Code & Share Card (NO RAW URL) */}
+                <Panel className="p-5 sm:p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                        Xona kodi
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Do‘stlaringiz ushbu kod orqali battle-ga qo‘shilishi mumkin
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-[12px] border border-slate-200/80 bg-slate-50/80 dark:border-white/10 dark:bg-white/5 p-3.5">
+                    <div className="font-mono text-2xl sm:text-3xl font-black tracking-widest text-primary px-2 text-center sm:text-left">
+                      {room.code.toUpperCase()}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={copyRoomCode}
+                        className="flex-1 sm:flex-none h-10 px-3.5 rounded-[10px] border border-slate-200/80 bg-white hover:bg-slate-100 text-slate-700 dark:border-white/10 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                        title="Kodni nusxalash"
+                      >
+                        <Icon name="ri-file-copy-line" />
+                        <span>Kodni nusxalash</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void share()}
+                        className="flex-1 sm:flex-none h-10 px-4 rounded-[10px] bg-primary hover:bg-primary/90 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                        title="Do‘stlarga ulashish"
+                      >
+                        <Icon name="ri-share-forward-line" />
+                        <span>Do‘stlarga ulashish</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {shareToast && (
+                    <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 animate-in fade-in">
+                      <Icon name="ri-checkbox-circle-fill" /> {shareToast}
+                    </p>
+                  )}
+                </Panel>
+              </div>
+            )}
 
           {room.status === 'live' && room.questions[room.index] && (
             <LiveQuestion room={room} meId={me.id} host={host} />
@@ -1130,8 +1273,94 @@ export function BattleRoom() {
           </Panel>
         )}
       </div>
+    </main>
+
+    {/* Unified Docked Bottom Bar (Hech qanday savolni to‘sib qo‘ymaydi) */}
+    <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-[#111827]/95 border-t border-slate-200/80 dark:border-white/10 px-3 sm:px-6 py-2 backdrop-blur-xl shadow-lg flex items-center justify-between gap-2">
+      {/* Left: Chat & Voice */}
+      <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Group Chat Button */}
+        <button
+          type="button"
+          onClick={() => setChatOpen(true)}
+          className="relative flex items-center gap-1.5 h-10 px-3 rounded-[10px] border border-slate-200/80 dark:border-white/10 bg-slate-100/80 hover:bg-slate-200/70 dark:bg-white/5 dark:hover:bg-white/10 text-xs font-semibold text-slate-800 dark:text-slate-200 transition-colors cursor-pointer shrink-0"
+          title="Guruh suhbati"
+        >
+          <Icon name="ri-chat-3-line" className="text-base text-primary" />
+          <span className="hidden sm:inline">Suhbat</span>
+          {unreadChatCount > 0 && (
+            <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-xs">
+              {unreadChatCount}
+            </span>
+          )}
+        </button>
+
+        {/* Voice Chat Button */}
+        <button
+          type="button"
+          onClick={() => setVoiceOpen(true)}
+          className={`flex items-center gap-1.5 h-10 px-3 rounded-[10px] border text-xs font-semibold transition-all cursor-pointer shrink-0 ${
+            voiceState.joined
+              ? voiceState.isSpeaking
+                ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400 ring-2 ring-emerald-400/30 animate-pulse'
+                : voiceState.isMuted
+                ? 'border-rose-500/40 bg-rose-500/15 text-rose-400'
+                : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400'
+              : 'border-slate-200/80 dark:border-white/10 bg-slate-100/80 hover:bg-slate-200/70 dark:bg-white/5 dark:hover:bg-white/10 text-slate-800 dark:text-slate-200'
+          }`}
+          title="Ovozli aloqa sozlamalari"
+        >
+          <Icon
+            name={
+              voiceState.joined
+                ? voiceState.isMuted
+                  ? 'ri-mic-off-fill'
+                  : voiceState.isSpeaking
+                  ? 'ri-voiceprint-fill'
+                  : 'ri-mic-fill'
+                : 'ri-headphone-line'
+            }
+            className="text-base"
+          />
+          <span className="hidden sm:inline">
+            {voiceState.joined
+              ? voiceState.isSpeaking
+                ? 'Gapiryapsiz'
+                : voiceState.isMuted
+                ? 'Muted'
+                : `Ovozli (${voiceState.peersCount})`
+              : 'Ovozli aloqa'}
+          </span>
+        </button>
+      </div>
+
+      {/* Right: Quick Reactions Bar */}
+      <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto py-0.5 max-w-[55%] sm:max-w-none">
+        {REACTION_ICONS.slice(0, 6).map((rx) => (
+          <button
+            key={rx.id}
+            type="button"
+            onClick={() => {
+              if (me) sendBattleReaction(room.code, me, rx.icon);
+            }}
+            title={rx.label}
+            className={`h-9 w-9 sm:h-10 sm:w-10 rounded-[10px] flex items-center justify-center text-lg sm:text-xl border border-transparent hover:border-slate-200/80 dark:hover:border-white/10 transition-transform active:scale-75 hover:scale-110 cursor-pointer ${rx.bg} shrink-0`}
+          >
+            <Icon name={rx.icon} className={rx.color} />
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => setReactionsOpen(true)}
+          className="h-9 w-9 sm:h-10 sm:w-10 rounded-[10px] flex items-center justify-center text-sm font-bold border border-slate-200/80 dark:border-white/10 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 transition-transform active:scale-90 hover:scale-105 cursor-pointer shrink-0"
+          title="Barcha reaksiyalar"
+        >
+          <Icon name="ri-add-line" className="text-base" />
+        </button>
+      </div>
     </div>
-  );
+  </div>
+);
 }
 
 {/* Fullscreen Countdown Timer Component (Butun ekranda chiqadigan timer) */}
@@ -1239,20 +1468,24 @@ function LiveQuestion({ room, meId, host }: { room: Room; meId: string; host: bo
   const shown = mine?.picks ?? picks;
 
   return (
-    <Panel className="p-3 sm:p-5">
-      <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-white/5 pb-2">
-        <p className="text-[11px] sm:text-xs text-muted-foreground flex items-center gap-1 font-medium">
-          <Icon name="ri-questionnaire-line" className="text-primary" />
-          Savol {room.index + 1} / {room.questions.length}
+    <Panel className="p-4 sm:p-6 space-y-4 shadow-sm">
+      <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-white/5 pb-2.5">
+        <p className="text-xs text-muted-foreground flex items-center gap-1.5 font-semibold">
+          <Icon name="ri-questionnaire-line" className="text-primary text-base" />
+          <span>Savol {room.index + 1} / {room.questions.length}</span>
         </p>
-        <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-[6px] bg-primary/10 text-primary font-semibold">
+        <span className="text-[11px] px-2.5 py-0.5 rounded-[8px] bg-primary/10 text-primary font-bold">
           {multi ? 'Ko‘p javobli' : 'Bitta to‘g‘ri javob'}
         </span>
       </div>
       {question.image && (
-        <img src={question.image} alt="" className="my-2 max-h-36 sm:max-h-56 w-full rounded-[10px] object-contain" />
+        <img
+          src={question.image}
+          alt=""
+          className="my-3 max-h-52 sm:max-h-72 w-full rounded-[10px] object-contain border border-slate-200/60 dark:border-white/10"
+        />
       )}
-      <h2 className="mt-2.5 sm:mt-3 text-sm sm:text-base font-semibold leading-snug sm:leading-relaxed text-slate-900 dark:text-white">
+      <h2 className="text-base sm:text-lg font-bold leading-relaxed text-slate-900 dark:text-white">
         {question.prompt}
       </h2>
       <Choices
@@ -1274,14 +1507,14 @@ function LiveQuestion({ room, meId, host }: { room: Room; meId: string; host: bo
           );
         }}
       />
-      <div className="mt-3 sm:mt-4 flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-slate-200/70 dark:border-white/5">
-        <p className="text-[11px] sm:text-xs text-muted-foreground">
-          {mine ? `+${mine.points} ball${mine.points >= 25 ? ' · birinchi' : ''}` : 'Birinchi to‘g‘ri javob ko‘proq ball'}
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-200/70 dark:border-white/5">
+        <p className="text-xs text-muted-foreground font-medium">
+          {mine ? `+${mine.points} ball${mine.points >= 25 ? ' · birinchi javob!' : ''}` : 'Tezroq va to‘g‘ri javob bergan ko‘proq ball oladi'}
         </p>
         <div className="flex gap-2">
           {multi && !mine && (
             <Btn
-              className="py-1.5 px-3 text-xs sm:text-sm"
+              className="py-2 px-4 text-xs sm:text-sm font-semibold !rounded-[10px]"
               disabled={!picks.length}
               onClick={() => {
                 answerRoom(meId, room.code, picks);
@@ -1294,7 +1527,7 @@ function LiveQuestion({ room, meId, host }: { room: Room; meId: string; host: bo
             </Btn>
           )}
           {host && (
-            <Btn kind="line" className="py-1.5 px-3 text-xs sm:text-sm" onClick={() => forceNext(meId, room.code)}>
+            <Btn kind="line" className="py-2 px-4 text-xs sm:text-sm font-semibold !rounded-[10px]" onClick={() => forceNext(meId, room.code)}>
               Keyingisini ochish
             </Btn>
           )}

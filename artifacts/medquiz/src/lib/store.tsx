@@ -5,6 +5,7 @@ import { uid } from '@/lib/parser';
 import {
   beat,
   clearMe,
+  defaultUsername,
   fetchFriendships,
   fetchInvites,
   fetchPublicUsers,

@@ -153,9 +153,12 @@ export function Shell({ children }: { children: ReactNode }) {
         : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
     }`;
 
+  const isBattleRoom = location.startsWith('/battle/') && location !== '/battle';
+
   return (
     <div className="min-h-screen flex">
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 z-50">
+      {!isBattleRoom && (
+        <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 z-50">
         <div className="flex flex-col flex-grow bg-white/95 dark:bg-[#111827] border-r border-slate-200/80 dark:border-white/10">
           <Link href="/dashboard" className="flex items-center gap-3 px-6 py-5 border-b border-slate-200/80 dark:border-white/10" data-testid="link-logo">
             <div className="w-10 h-10 rounded-[10px] bg-gradient-to-br from-med-500 to-med-600 flex items-center justify-center shadow-md shadow-med-500/30">
@@ -207,9 +210,10 @@ export function Shell({ children }: { children: ReactNode }) {
           </div>
         </div>
       </aside>
+      )}
 
-      {open && <button type="button" className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs lg:hidden" aria-label="Menyuni yopish" onClick={() => setOpen(false)} />}
-      {open && (
+      {open && !isBattleRoom && <button type="button" className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs lg:hidden" aria-label="Menyuni yopish" onClick={() => setOpen(false)} />}
+      {open && !isBattleRoom && (
         <aside className="fixed inset-y-0 left-0 z-50 w-72 border-r border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#111827] shadow-2xl lg:hidden">
           <div className="flex h-full flex-col">
             <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-white/10 px-4 py-4">
@@ -249,90 +253,94 @@ export function Shell({ children }: { children: ReactNode }) {
         </aside>
       )}
 
-      <div className="min-w-0 flex-1 overflow-x-hidden lg:pl-64">
-        <header className="sticky top-0 z-30 border-b border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-[#090d16]/95 backdrop-blur-xl shadow-xs transition-colors duration-200">
-          <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 lg:px-8">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <button
-                type="button"
-                className="flex items-center justify-center h-10 w-10 rounded-[10px] border border-slate-200/80 bg-slate-100/80 hover:bg-slate-200/60 text-slate-600 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 dark:text-slate-300 lg:hidden shrink-0 cursor-pointer"
-                aria-label="Menyu"
-                onClick={() => setOpen(true)}
-              >
-                <HiOutlineMenu className="h-5 w-5" />
-              </button>
-              <Link href="/dashboard" className="flex items-center gap-2 sm:gap-2.5" data-testid="link-header-logo">
-                <span className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-gradient-to-br from-med-500 to-med-600 font-display text-lg font-bold text-white shadow-xs shrink-0">M</span>
-                <span className="font-display text-lg font-bold text-slate-900 dark:text-white">MedQuiz</span>
-              </Link>
-            </div>
-
-            <div className="flex items-center gap-1.5 sm:gap-2.5">
-              {/* Search input with exact matching h-10 */}
-              <div className="group flex items-center h-10 rounded-[10px] border border-slate-200/80 bg-slate-100/80 px-2.5 sm:px-3 hover:bg-slate-200/60 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 transition-colors">
-                <HiOutlineSearch className="h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white shrink-0 mr-1.5 sm:mr-2" />
-                <input
-                  value={query}
-                  onChange={(event) => { setQuery(event.target.value); setSearchOpen(true); }}
-                  onFocus={() => setSearchOpen(true)}
-                  placeholder="Qidirish..."
-                  className="w-16 sm:w-28 md:w-44 bg-transparent text-xs sm:text-sm text-slate-800 dark:text-slate-200 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                  data-testid="input-search"
-                />
-                <kbd className="hidden rounded-[6px] border border-slate-200 bg-white dark:border-white/10 dark:bg-[#1f2937] px-1.5 py-0.5 text-[10px] text-slate-500 md:inline ml-1.5">⌘K</kbd>
+      <div className={isBattleRoom ? 'min-h-screen w-full flex flex-col overflow-x-hidden' : 'min-w-0 flex-1 overflow-x-hidden lg:pl-64'}>
+        {!isBattleRoom && (
+          <header className="sticky top-0 z-30 border-b border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-[#090d16]/95 backdrop-blur-xl shadow-xs transition-colors duration-200">
+            <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 lg:px-8">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <button
+                  type="button"
+                  className="flex items-center justify-center h-10 w-10 rounded-[10px] border border-slate-200/80 bg-slate-100/80 hover:bg-slate-200/60 text-slate-600 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 dark:text-slate-300 lg:hidden shrink-0 cursor-pointer"
+                  aria-label="Menyu"
+                  onClick={() => setOpen(true)}
+                >
+                  <HiOutlineMenu className="h-5 w-5" />
+                </button>
+                <Link href="/dashboard" className="flex items-center gap-2 sm:gap-2.5" data-testid="link-header-logo">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-gradient-to-br from-med-500 to-med-600 font-display text-lg font-bold text-white shadow-xs shrink-0">M</span>
+                  <span className="font-display text-lg font-bold text-slate-900 dark:text-white">MedQuiz</span>
+                </Link>
               </div>
 
-              {/* Language Switcher */}
-              <LanguageSwitcher />
+              <div className="flex items-center gap-1.5 sm:gap-2.5">
+                {/* Search input with exact matching h-10 */}
+                <div className="group flex items-center h-10 rounded-[10px] border border-slate-200/80 bg-slate-100/80 px-2.5 sm:px-3 hover:bg-slate-200/60 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 transition-colors">
+                  <HiOutlineSearch className="h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white shrink-0 mr-1.5 sm:mr-2" />
+                  <input
+                    value={query}
+                    onChange={(event) => { setQuery(event.target.value); setSearchOpen(true); }}
+                    onFocus={() => setSearchOpen(true)}
+                    placeholder="Qidirish..."
+                    className="w-16 sm:w-28 md:w-44 bg-transparent text-xs sm:text-sm text-slate-800 dark:text-slate-200 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                    data-testid="input-search"
+                  />
+                  <kbd className="hidden rounded-[6px] border border-slate-200 bg-white dark:border-white/10 dark:bg-[#1f2937] px-1.5 py-0.5 text-[10px] text-slate-500 md:inline ml-1.5">⌘K</kbd>
+                </div>
 
-              {/* InviteBell */}
-              <InviteBell />
+                {/* Language Switcher */}
+                <LanguageSwitcher />
 
-              <Link href="/profile" className="hidden lg:flex items-center gap-2.5 h-10 rounded-[10px] border border-slate-200/80 bg-slate-100/80 hover:bg-slate-200/60 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 px-2.5" data-testid="link-header-profile">
-                <Avatar name={me?.name ?? ''} image={me?.avatar} rounded="rounded-[8px]" size="w-7 h-7" />
-                <span className="text-xs font-semibold text-slate-900 dark:text-white truncate max-w-[100px]">{me?.name}</span>
-              </Link>
+                {/* InviteBell */}
+                <InviteBell />
+
+                <Link href="/profile" className="hidden lg:flex items-center gap-2.5 h-10 rounded-[10px] border border-slate-200/80 bg-slate-100/80 hover:bg-slate-200/60 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 px-2.5" data-testid="link-header-profile">
+                  <Avatar name={me?.name ?? ''} image={me?.avatar} rounded="rounded-[8px]" />
+                  <span className="text-xs font-semibold text-slate-900 dark:text-white truncate max-w-[100px]">{me?.name}</span>
+                </Link>
+              </div>
             </div>
-          </div>
-        </header>
-        <main className="px-4 py-6 pb-24 lg:px-8 lg:py-8 lg:pb-8">
+          </header>
+        )}
+        <main className={isBattleRoom ? 'flex-1 w-full p-0 flex flex-col' : 'px-4 py-6 pb-24 lg:px-8 lg:py-8 lg:pb-8'}>
           {children}
         </main>
       </div>
 
-      {searchOpen && <SearchSheet query={query} setQuery={setQuery} onClose={() => setSearchOpen(false)} />}
+      {!isBattleRoom && searchOpen && <SearchSheet query={query} setQuery={setQuery} onClose={() => setSearchOpen(false)} />}
       <GlobalInvitePopup />
 
-      <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden" aria-label="Pastki menyu">
-        <div className="absolute inset-0 border-t border-slate-200/80 bg-white/95 shadow-[0_-6px_24px_rgba(15,23,42,0.06)] backdrop-blur-xl dark:border-white/10 dark:bg-[#090d16]/95" />
-        <div className="relative flex h-16 items-center px-1 pb-safe">
-          {mobileNav.map((item) => {
-            const active = isActive(location, item.href);
-            const iconName = active ? item.active : item.icon;
-            const label = t(item.labelKey) || item.defaultLabel;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="relative flex h-full min-w-0 flex-1 flex-col items-center justify-center px-0.5 text-center"
-              >
-                {active && <span className="absolute -top-0.5 h-1 w-8 rounded-[10px] bg-med-500" />}
-                <Icon
-                  name={iconName}
-                  className={`text-xl transition-transform ${active ? 'scale-105 text-med-600 dark:text-med-400' : 'text-slate-500 dark:text-slate-400'}`}
-                />
-                <span
-                  className={`mt-1 max-w-full truncate text-[11px] font-medium leading-none ${
-                    active ? 'font-semibold text-med-600 dark:text-med-400' : 'text-slate-500 dark:text-slate-400'
-                  }`}
+      {!isBattleRoom && (
+        <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden" aria-label="Pastki menyu">
+          <div className="absolute inset-0 border-t border-slate-200/80 bg-white/95 shadow-[0_-6px_24px_rgba(15,23,42,0.06)] backdrop-blur-xl dark:border-white/10 dark:bg-[#090d16]/95" />
+          <div className="relative flex h-16 items-center px-1 pb-safe">
+            {mobileNav.map((item) => {
+              const active = isActive(location, item.href);
+              const iconName = active ? item.active : item.icon;
+              const label = t(item.labelKey) || item.defaultLabel;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="relative flex h-full min-w-0 flex-1 flex-col items-center justify-center px-0.5 text-center"
                 >
-                  {label}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+                  {active && <span className="absolute -top-0.5 h-1 w-8 rounded-[10px] bg-med-500" />}
+                  <Icon
+                    name={iconName}
+                    className={`text-xl transition-transform ${active ? 'scale-105 text-med-600 dark:text-med-400' : 'text-slate-500 dark:text-slate-400'}`}
+                  />
+                  <span
+                    className={`mt-1 max-w-full truncate text-[11px] font-medium leading-none ${
+                      active ? 'font-semibold text-med-600 dark:text-med-400' : 'text-slate-500 dark:text-slate-400'
+                    }`}
+                  >
+                    {label}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
+      )}
     </div>
   );
 }

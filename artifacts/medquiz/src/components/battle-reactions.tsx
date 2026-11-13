@@ -23,10 +23,31 @@ type Particle = {
   x: number;
 };
 
-export function BattleReactions({ roomCode, me }: { roomCode: string; me: Me | null }) {
+export function BattleReactions({
+  roomCode,
+  me,
+  open,
+  onClose,
+  hideFloatingButton = false,
+}: {
+  roomCode: string;
+  me: Me | null;
+  open?: boolean;
+  onClose?: () => void;
+  hideFloatingButton?: boolean;
+}) {
   const [particles, setParticles] = useState<Particle[]>([]);
   const [lastRxTime, setLastRxTime] = useState(Date.now() - 5000);
   const [expanded, setExpanded] = useState(false);
+
+  const isPaletteOpen = open !== undefined ? open : expanded;
+  const handleClose = () => {
+    if (open !== undefined) {
+      onClose?.();
+    } else {
+      setExpanded(false);
+    }
+  };
 
   const spawnParticle = (iconName: string, sender: string) => {
     const rxItem = REACTION_ICONS.find((r) => r.icon === iconName || r.id === iconName);
@@ -128,62 +149,68 @@ export function BattleReactions({ roomCode, me }: { roomCode: string; me: Me | n
         ))}
       </div>
 
-      {/* Side Reaction Dock: Yon tomonda joylashgan va bosilsa yoyiladigan menyu */}
-      <div className="fixed left-1/2 z-40 ml-10 flex flex-col items-start bottom-[calc(5.2rem+env(safe-area-inset-bottom))] sm:left-auto sm:right-6 sm:ml-0 sm:bottom-10 sm:items-end">
-        {/* Expanded Palette (Yoyilgan holati) */}
-        {expanded && (
-          <div className="fixed inset-x-3 bottom-[calc(8.9rem+env(safe-area-inset-bottom))] z-50 rounded-[14px] sm:static sm:mb-2.5 sm:w-64 sm:rounded-[10px] border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-[#111827]/95 p-3 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-right-3 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-200/70 dark:border-white/10 pb-2 mb-2">
-              <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+      {/* Modal Dialog Palette when opened from unified dock or triggered */}
+      {isPaletteOpen && (
+        <div className="fixed inset-0 z-[160] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-xs p-0 sm:p-4 animate-in fade-in duration-200">
+          <div className="w-full sm:w-80 rounded-t-2xl sm:rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-[#111827]/98 p-4 shadow-2xl backdrop-blur-xl animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-slate-200/70 dark:border-white/10 pb-2.5 mb-3">
+              <span className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                 <Icon name="ri-fire-fill" className="text-amber-500" />
                 Jonli Reaksiyalar
               </span>
               <button
                 type="button"
-                onClick={() => setExpanded(false)}
-                className="rounded-[6px] p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-white transition-colors"
+                onClick={handleClose}
+                className="rounded-[6px] p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-white transition-colors cursor-pointer"
                 aria-label="Yopish"
               >
-                <Icon name="ri-close-line" className="text-base" />
+                <Icon name="ri-close-line" className="text-lg" />
               </button>
             </div>
 
-            <div className="grid grid-cols-4 gap-1.5">
+            <div className="grid grid-cols-4 gap-2">
               {REACTION_ICONS.map((rx) => (
                 <button
                   key={rx.id}
                   type="button"
-                  onClick={() => handleSend(rx.icon)}
+                  onClick={() => {
+                    handleSend(rx.icon);
+                    handleClose();
+                  }}
                   title={rx.label}
-                  className={`flex flex-col items-center justify-center p-2 rounded-[8px] transition-all hover:scale-110 active:scale-90 ${rx.bg}`}
+                  className={`flex flex-col items-center justify-center p-2.5 rounded-[10px] border border-transparent hover:border-slate-200/80 dark:hover:border-white/10 transition-all hover:scale-105 active:scale-95 cursor-pointer ${rx.bg}`}
                 >
                   <Icon name={rx.icon} className={`text-2xl ${rx.color}`} />
-                  <span className="mt-1 text-[10px] text-slate-500 font-medium">{rx.label}</span>
+                  <span className="mt-1 text-[11px] text-slate-600 dark:text-slate-300 font-medium">{rx.label}</span>
                 </button>
               ))}
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Trigger Button: Yon tomondagi tugma chiroyli fon va yaltirash bilan */}
-        <button
-          type="button"
-          onClick={() => setExpanded(!expanded)}
-          className={`flex h-12 w-12 items-center justify-center rounded-[10px] shadow-2xl transition-all duration-200 active:scale-95 border ${
-            expanded
-              ? 'bg-slate-900 text-white border-white/20 rotate-90 shadow-slate-900/50'
-              : 'bg-gradient-to-tr from-amber-500 via-rose-500 to-primary text-white border-white/30 hover:scale-110 shadow-rose-500/30 ring-2 ring-white/20 hover:shadow-primary/40'
-          }`}
-          title="Reaksiyalar menyusi"
-          aria-label="Reaksiyalar menyusi"
-        >
-          {expanded ? (
-            <Icon name="ri-close-line" className="text-2xl drop-shadow" />
-          ) : (
-            <Icon name="ri-fire-fill" className="text-2xl drop-shadow" />
-          )}
-        </button>
-      </div>
+      {/* Legacy Floating Side Reaction Dock (only if hideFloatingButton is false) */}
+      {!hideFloatingButton && (
+        <div className="fixed left-1/2 z-40 ml-10 flex flex-col items-start bottom-[calc(5.2rem+env(safe-area-inset-bottom))] sm:left-auto sm:right-6 sm:ml-0 sm:bottom-10 sm:items-end">
+          <button
+            type="button"
+            onClick={() => setExpanded(!expanded)}
+            className={`flex h-12 w-12 items-center justify-center rounded-[10px] shadow-2xl transition-all duration-200 active:scale-95 border ${
+              expanded
+                ? 'bg-slate-900 text-white border-white/20 rotate-90 shadow-slate-900/50'
+                : 'bg-gradient-to-tr from-amber-500 via-rose-500 to-primary text-white border-white/30 hover:scale-110 shadow-rose-500/30 ring-2 ring-white/20 hover:shadow-primary/40'
+            }`}
+            title="Reaksiyalar menyusi"
+            aria-label="Reaksiyalar menyusi"
+          >
+            {expanded ? (
+              <Icon name="ri-close-line" className="text-2xl drop-shadow" />
+            ) : (
+              <Icon name="ri-fire-fill" className="text-2xl drop-shadow" />
+            )}
+          </button>
+        </div>
+      )}
     </>
   );
 }
