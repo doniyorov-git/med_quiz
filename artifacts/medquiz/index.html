@@ -27,6 +27,14 @@
             document.documentElement.classList.remove('dark');
           }
           document.documentElement.setAttribute('data-theme', t);
+
+          var fs = localStorage.getItem('medquiz-font-size');
+          if (fs === 'large') document.documentElement.style.fontSize = '17px';
+          else if (fs === 'huge') document.documentElement.style.fontSize = '19px';
+          else if (fs === 'normal') document.documentElement.style.fontSize = '15px';
+
+          var c = localStorage.getItem('medquiz-contrast');
+          if (c === 'high') document.documentElement.classList.add('high-contrast');
         } catch (e) {}
       })();
     </script>

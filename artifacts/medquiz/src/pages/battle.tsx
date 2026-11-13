@@ -366,7 +366,7 @@ export function BattleLobby() {
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="relative shrink-0">
-                      <div className="h-10 w-10 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold shadow-xs">
+                      <div className="h-10 w-10 rounded-[10px] overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold shadow-xs">
                         {user.avatar ? (
                           <img src={user.avatar} alt="" className="h-full w-full object-cover" />
                         ) : (

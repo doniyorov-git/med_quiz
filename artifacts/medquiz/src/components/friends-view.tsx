@@ -221,7 +221,7 @@ export function FriendsView({ me, onSelectUserForBattle }: FriendsViewProps) {
                   title="Ma‘lumotlarni ko‘rish"
                 >
                   <div className="relative shrink-0">
-                    <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-slate-700 flex items-center justify-center font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 shadow-xs">
+                    <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-[10px] overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-slate-700 flex items-center justify-center font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 shadow-xs">
                       {u.avatar ? (
                         <img src={u.avatar} alt="" className="h-full w-full object-cover" />
                       ) : (
@@ -229,7 +229,7 @@ export function FriendsView({ me, onSelectUserForBattle }: FriendsViewProps) {
                       )}
                     </div>
                     {isOnline && (
-                      <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-[#0e1422] bg-green-500" />
+                      <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-[4px] border-2 border-white dark:border-[#0e1422] bg-green-500" />
                     )}
                   </div>
 
@@ -335,31 +335,70 @@ export function FriendsView({ me, onSelectUserForBattle }: FriendsViewProps) {
                 </div>
               </div>
 
-              {/* Expanded details panel */}
+              {/* Expanded details panel: Streak & Results Card */}
               {isExpanded && (
-                <div className="border-t border-slate-200/80 dark:border-white/5 p-3.5 bg-slate-50/70 dark:bg-white/[0.02] text-xs space-y-2.5 animate-in fade-in duration-150">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-600 dark:text-slate-300">
-                    <p className="flex items-center gap-1.5">
-                      <Icon name="ri-hospital-line" className="text-primary" />
-                      <span>{u.university || 'Toshkent Tibbiyot Universiteti'}</span>
-                    </p>
-                    <p className="flex items-center gap-1.5">
-                      <Icon name="ri-microscope-line" className="text-primary" />
-                      <span>{[u.faculty, u.course].filter(Boolean).join(' · ') || 'Davolash ishi'}</span>
-                    </p>
+                <div className="border-t border-slate-200/80 dark:border-white/5 p-3.5 bg-slate-50/70 dark:bg-white/[0.02] text-xs space-y-3 animate-in fade-in duration-150">
+                  {/* Streak & Performance Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {/* Streak */}
+                    <div className="p-2.5 rounded-[10px] border border-amber-500/25 bg-amber-500/10 text-center shadow-xs">
+                      <div className="flex items-center justify-center gap-1 text-amber-600 dark:text-amber-400 font-bold text-xs">
+                        <Icon name="ri-fire-fill" className="text-sm" />
+                        <span>Streak</span>
+                      </div>
+                      <p className="mt-1 text-base sm:text-lg font-extrabold text-amber-700 dark:text-amber-300">
+                        {u.streak} kun
+                      </p>
+                    </div>
+
+                    {/* Testlar */}
+                    <div className="p-2.5 rounded-[10px] border border-emerald-500/25 bg-emerald-500/10 text-center shadow-xs">
+                      <div className="flex items-center justify-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold text-xs">
+                        <Icon name="ri-file-list-3-line" className="text-sm" />
+                        <span>Testlar</span>
+                      </div>
+                      <p className="mt-1 text-base sm:text-lg font-extrabold text-emerald-700 dark:text-emerald-300">
+                        {u.quizzes} ta
+                      </p>
+                    </div>
+
+                    {/* Battle g'alabalari */}
+                    <div className="p-2.5 rounded-[10px] border border-sky-500/25 bg-sky-500/10 text-center shadow-xs">
+                      <div className="flex items-center justify-center gap-1 text-sky-600 dark:text-sky-400 font-bold text-xs">
+                        <Icon name="ri-trophy-line" className="text-sm" />
+                        <span>G‘alabalar</span>
+                      </div>
+                      <p className="mt-1 text-base sm:text-lg font-extrabold text-sky-700 dark:text-sky-300">
+                        {u.battleWins} ta
+                      </p>
+                    </div>
+
+                    {/* Ball (XP) */}
+                    <div className="p-2.5 rounded-[10px] border border-indigo-500/25 bg-indigo-500/10 text-center shadow-xs">
+                      <div className="flex items-center justify-center gap-1 text-indigo-600 dark:text-indigo-400 font-bold text-xs">
+                        <Icon name="ri-flashlight-fill" className="text-sm text-indigo-500" />
+                        <span>Ball (XP)</span>
+                      </div>
+                      <p className="mt-1 text-base sm:text-lg font-extrabold text-indigo-700 dark:text-indigo-300">
+                        {(u.xp ?? 0).toLocaleString()}
+                      </p>
+                    </div>
                   </div>
 
-                  {u.bio && (
-                    <p className="text-slate-500 dark:text-slate-400 italic bg-white dark:bg-white/5 p-2 rounded-[8px] border border-slate-200/60 dark:border-white/5">
-                      "{u.bio}"
-                    </p>
-                  )}
-
+                  {/* Footer status & Actions */}
                   <div className="flex items-center justify-between pt-1 text-[11px] text-slate-500 flex-wrap gap-2">
-                    <div className="flex items-center gap-3">
-                      <span>Testlar: <strong className="text-slate-700 dark:text-slate-200">{u.quizzes}</strong></span>
-                      <span>Battle: <strong className="text-emerald-600 dark:text-emerald-400">{u.battleWins}</strong></span>
-                      <span>Streak: <strong className="text-amber-500">{u.streak} k</strong></span>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-0.5 rounded-[6px] font-bold border text-[11px] ${title.color}`}>
+                        {title.title}
+                      </span>
+                      {isOnline ? (
+                        <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          Hozir onlayn
+                        </span>
+                      ) : (
+                        <span className="text-slate-400">Oflayn</span>
+                      )}
                     </div>
 
                     {status === 'friends' && (
@@ -369,7 +408,7 @@ export function FriendsView({ me, onSelectUserForBattle }: FriendsViewProps) {
                           removeFriend(me.id, u.id);
                           setFriendships(getFriendships());
                         }}
-                        className="text-rose-500 hover:text-rose-600 font-semibold inline-flex items-center gap-1"
+                        className="text-rose-500 hover:text-rose-600 font-bold inline-flex items-center gap-1 cursor-pointer transition-colors"
                       >
                         <Icon name="ri-user-unfollow-line" /> Do‘stlikdan chiqarish
                       </button>

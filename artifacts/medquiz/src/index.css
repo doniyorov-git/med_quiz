@@ -79,6 +79,17 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  /* High contrast mode */
+  html.high-contrast {
+    filter: contrast(1.15);
+  }
+  html.high-contrast.light body {
+    color: #000000 !important;
+  }
+  html.high-contrast.dark body {
+    color: #ffffff !important;
+  }
+
   /* Dark mode protection against white background leaks */
   .dark .bg-white:not(.keep-white) {
     background-color: #111827 !important;

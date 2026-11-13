@@ -25,7 +25,7 @@ type Row = {
 function Face({ row, size, ring }: { row: Row; size: number; ring: string }) {
   return (
     <div
-      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700 font-extrabold text-slate-700 dark:text-slate-200 shadow-md ring-4 ${ring}`}
+      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-[10px] bg-slate-100 dark:bg-slate-700 font-extrabold text-slate-700 dark:text-slate-200 shadow-md ring-4 ${ring}`}
       style={{ width: size, height: size, fontSize: size * 0.34 }}
     >
       {row.avatar ? <img src={row.avatar} alt="" className="h-full w-full object-cover" /> : (row.name || 'M').slice(0, 2).toUpperCase()}

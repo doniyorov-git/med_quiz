@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
-import { Btn, Field, Panel, Icon, fieldClass } from '@/components/chrome';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { useState, useEffect, useRef } from 'react';
+import { Field, Panel, Icon, fieldClass } from '@/components/chrome';
 import { fileToImage } from '@/lib/images';
-import { getMedicalTitle, levelFromXp, MEDICAL_TITLES } from '@/lib/model';
+import { getMedicalTitle, levelFromXp } from '@/lib/model';
 import { useStatsMap, useStore } from '@/lib/store';
-import { AvatarModal } from '@/components/avatar-modal';
-import type { PublicUser, UserSession } from '@/lib/types';
+import { useI18n, LANGUAGES } from '@/lib/i18n';
+import type { UserSession } from '@/lib/types';
+
+type FontSize = 'normal' | 'large' | 'huge';
+type ContrastMode = 'standard' | 'high';
 
 function getInitialSessions(userId: string): UserSession[] {
   const SESSIONS_KEY = `medquiz-v2-sessions-${userId}`;
@@ -96,15 +98,62 @@ function getInitialSessions(userId: string): UserSession[] {
 }
 
 export function Profile() {
-  const { me, updateMe, leave } = useStore();
+  const { me, updateMe, leave, theme, setTheme } = useStore();
   const stats = useStatsMap()[me?.id ?? ''];
-  const [avatarModalOpen, setAvatarModalOpen] = useState(false);
+  const { lang, changeLanguage } = useI18n();
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [profileTab, setProfileTab] = useState<'titles' | 'sessions'>('titles');
+  const [profileTab, setProfileTab] = useState<'settings' | 'sessions'>('settings');
   const [sessions, setSessions] = useState<UserSession[]>(() => getInitialSessions(me?.id || 'guest'));
   const [sessionToast, setSessionToast] = useState('');
+
+  // Settings states
+  const [fontSize, setFontSizeState] = useState<FontSize>(() => {
+    return (localStorage.getItem('medquiz-font-size') as FontSize) || 'normal';
+  });
+
+  const [contrast, setContrastState] = useState<ContrastMode>(() => {
+    return (localStorage.getItem('medquiz-contrast') as ContrastMode) || 'standard';
+  });
+
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
+    return localStorage.getItem('medquiz-sound') !== 'false';
+  });
+
+  const [notifEnabled, setNotifEnabled] = useState<boolean>(() => {
+    return localStorage.getItem('medquiz-notifications') !== 'false';
+  });
+
+  // Apply Font Size
+  const setFontSize = (size: FontSize) => {
+    setFontSizeState(size);
+    localStorage.setItem('medquiz-font-size', size);
+    if (size === 'large') document.documentElement.style.fontSize = '17px';
+    else if (size === 'huge') document.documentElement.style.fontSize = '19px';
+    else document.documentElement.style.fontSize = '15px';
+  };
+
+  // Apply Contrast
+  const setContrast = (mode: ContrastMode) => {
+    setContrastState(mode);
+    localStorage.setItem('medquiz-contrast', mode);
+    document.documentElement.classList.toggle('high-contrast', mode === 'high');
+  };
+
+  // Apply Sound
+  const setSound = (enabled: boolean) => {
+    setSoundEnabled(enabled);
+    localStorage.setItem('medquiz-sound', enabled ? 'true' : 'false');
+  };
+
+  // Apply Notifications
+  const setNotif = (enabled: boolean) => {
+    setNotifEnabled(enabled);
+    localStorage.setItem('medquiz-notifications', enabled ? 'true' : 'false');
+  };
 
   useEffect(() => {
     if (me?.id) {
@@ -130,12 +179,8 @@ export function Profile() {
 
   const xp = stats?.xp ?? 0;
   const currentTitle = getMedicalTitle(xp);
-  const nextTitle = MEDICAL_TITLES.find((t) => t.minXp > xp);
-  const xpNeeded = nextTitle ? nextTitle.minXp - xp : 0;
-  const progressPercent = nextTitle
-    ? Math.min(100, Math.round(((xp - currentTitle.minXp) / (nextTitle.minXp - currentTitle.minXp)) * 100))
-    : 100;
 
+  // Directly handle gallery photo selection
   const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
@@ -156,17 +201,24 @@ export function Profile() {
   return (
     <div className="mx-auto max-w-4xl space-y-4 sm:space-y-6">
       {/* Profile Header Card */}
-      <Panel className="p-4 sm:p-6 shadow-sm">
+      <Panel className="p-4 sm:p-6 shadow-sm !rounded-[10px]">
         <div>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 flex-1 items-center gap-3.5 sm:gap-5">
-              {/* Avatar */}
+              {/* Avatar (Direct gallery picker, rounded-[10px], NOT rounded-full) */}
               <div className="relative shrink-0">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={handleAvatarChange}
+                />
                 <button
                   type="button"
-                  onClick={() => setAvatarModalOpen(true)}
-                  className="group flex h-20 w-20 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-slate-200 bg-slate-100 text-slate-700 shadow-sm transition-all hover:opacity-95 sm:h-24 sm:w-24 dark:border-white/10 dark:bg-slate-800 dark:text-slate-200"
-                  title="Avatar yoki rasm tanlash"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="group flex h-20 w-20 sm:h-24 sm:w-24 cursor-pointer items-center justify-center overflow-hidden rounded-[10px] border-2 border-slate-200/90 bg-slate-100 text-slate-700 shadow-sm transition-all hover:opacity-95 dark:border-white/10 dark:bg-slate-800 dark:text-slate-200 active:scale-95"
+                  title="Galereyadan rasm tanlash"
                 >
                   {me.avatar ? (
                     <img src={me.avatar} alt={me.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
@@ -179,10 +231,10 @@ export function Profile() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setAvatarModalOpen(true)}
-                  title="Rasm / 3D avatar tanlash"
-                  aria-label="Rasm / 3D avatar tanlash"
-                  className="absolute -bottom-0.5 -right-0.5 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-slate-800 text-white shadow-md ring-2 ring-white transition-all hover:scale-110 active:scale-95 dark:bg-slate-700 dark:ring-[#111827]"
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Galereyadan rasm yuklash"
+                  aria-label="Galereyadan rasm yuklash"
+                  className="absolute -bottom-1 -right-1 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-[8px] bg-primary text-white shadow-md ring-2 ring-white transition-all hover:scale-110 active:scale-95 dark:ring-[#111827]"
                 >
                   <Icon name="ri-camera-fill" className="text-xs text-white" />
                 </button>
@@ -192,18 +244,19 @@ export function Profile() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="truncate text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl dark:text-white">{me.name}</h1>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                  <span className="inline-flex items-center gap-1 rounded-[8px] bg-amber-500/15 border border-amber-500/25 px-2.5 py-1 text-xs font-bold text-amber-600 dark:text-amber-400">
                     <Icon name="ri-fire-fill" /> {stats?.streak ?? 0} kun
                   </span>
                 </div>
-                <p className="truncate font-mono text-xs font-semibold text-primary sm:text-sm">@{me.username}</p>
+                <p className="truncate font-mono text-xs font-semibold text-primary sm:text-sm mt-0.5">@{me.username}</p>
               </div>
             </div>
 
+            {/* Edit Profile Button */}
             <button
               type="button"
               onClick={() => setEditModalOpen(true)}
-              className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-[10px] border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 shadow-sm transition-all hover:border-emerald-400 hover:text-emerald-700 active:scale-95 sm:w-auto dark:border-white/10 dark:bg-white/5 dark:text-slate-100"
+              className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 h-10 px-4 rounded-[10px] border border-slate-200/90 bg-slate-100/90 hover:bg-slate-200/70 text-sm font-bold text-slate-800 shadow-xs transition-all active:scale-95 sm:w-auto dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 dark:text-slate-100"
               data-testid="btn-open-edit-modal"
             >
               <Icon name="ri-edit-line" className="text-emerald-600 dark:text-emerald-400" />
@@ -211,34 +264,44 @@ export function Profile() {
             </button>
           </div>
 
-          {/* Title / level chips */}
-          <div className="mt-3.5 flex flex-wrap items-center gap-1.5">
-            <span className={`inline-flex items-center gap-1 rounded-[10px] border px-2.5 py-1 text-[11px] font-bold sm:text-xs ${currentTitle.color}`}>
-              <Icon name={currentTitle.icon} className="text-xs" />
-              <span className="truncate">{currentTitle.title}</span>
-            </span>
-            <span className="rounded-[10px] bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 sm:text-xs dark:bg-white/10 dark:text-slate-300">Daraja {levelFromXp(xp)}</span>
-            <span className="rounded-[10px] bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-600 sm:text-xs dark:bg-amber-500/10 dark:text-amber-400">
-              {(xp ?? 0).toLocaleString()} XP
-            </span>
+          {/* Title / Level / Points Badges - Prominently Visible & Bold (Kattaroq va yaqqol ko'rinadigan) */}
+          <div className="mt-4 flex flex-wrap items-center gap-2.5">
+            {/* Medical Title */}
+            <div className={`inline-flex items-center gap-2 rounded-[10px] border px-4 py-2.5 text-xs sm:text-sm font-extrabold shadow-xs ${currentTitle.color}`}>
+              <Icon name={currentTitle.icon} className="text-base sm:text-lg" />
+              <span>{currentTitle.title}</span>
+            </div>
+
+            {/* Level */}
+            <div className="inline-flex items-center gap-2 rounded-[10px] border border-slate-200/90 bg-slate-100/90 px-4 py-2.5 text-xs sm:text-sm font-extrabold text-slate-800 dark:border-white/10 dark:bg-white/10 dark:text-white shadow-xs">
+              <Icon name="ri-medal-line" className="text-base sm:text-lg text-primary" />
+              <span>Daraja {levelFromXp(xp)}</span>
+            </div>
+
+            {/* Points (XP) */}
+            <div className="inline-flex items-center gap-2 rounded-[10px] border border-amber-500/30 bg-amber-500/15 px-4 py-2.5 text-xs sm:text-sm font-extrabold text-amber-700 dark:text-amber-300 shadow-xs">
+              <Icon name="ri-flashlight-fill" className="text-base sm:text-lg text-amber-500" />
+              <span>{(xp ?? 0).toLocaleString()} XP</span>
+            </div>
+
             {me.avatar && (
-              <button type="button" onClick={() => updateMe({ avatar: null })} className="rounded-[10px] p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-500/10" title="Rasmni o‘chirish" aria-label="Rasmni o‘chirish">
-                <Icon name="ri-delete-bin-line" className="text-sm" />
+              <button
+                type="button"
+                onClick={() => updateMe({ avatar: null })}
+                className="h-10 px-3 rounded-[10px] border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                title="Rasmni o‘chirish"
+              >
+                <Icon name="ri-delete-bin-line" className="text-base" />
+                <span>Rasmni o‘chirish</span>
               </button>
             )}
           </div>
 
-          {(me.university || me.course || me.faculty) && (
-            <p className="mt-2.5 flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
-              <Icon name="ri-hospital-line" className="shrink-0 text-sm text-emerald-600" />
-              <span className="truncate">{[me.university, me.course, me.faculty].filter(Boolean).join(' · ')}</span>
-            </p>
-          )}
-          {me.bio && <p className="mt-1 text-xs italic text-slate-500 dark:text-slate-400">“{me.bio}”</p>}
-          {uploading && <p className="mt-1 animate-pulse text-xs text-primary">Rasm yuklanmoqda...</p>}
-          {uploadError && <p className="mt-1 text-xs text-rose-500">{uploadError}</p>}
+          {me.bio && <p className="mt-3 text-xs italic text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/5 p-2.5 rounded-[8px] border border-slate-200/60 dark:border-white/5">“{me.bio}”</p>}
+          {uploading && <p className="mt-2 animate-pulse text-xs text-primary font-bold">Galereyadan rasm yuklanmoqda...</p>}
+          {uploadError && <p className="mt-2 text-xs text-rose-500 font-semibold">{uploadError}</p>}
 
-          {/* Quick stats */}
+          {/* Quick stats grid */}
           <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
             {[
               { label: 'Testlar', value: stats?.quizzes ?? 0, icon: 'ri-file-list-3-line', box: 'bg-emerald-50 border-emerald-100 dark:bg-emerald-500/10 dark:border-emerald-500/20', ic: 'text-emerald-600 dark:text-emerald-400', num: 'text-emerald-700 dark:text-emerald-300' },
@@ -255,162 +318,297 @@ export function Profile() {
         </div>
       </Panel>
 
-      {/* Tabs: Tibbiy Darajalar vs Faol Seanslar */}
-      <div className="flex gap-1 overflow-x-auto rounded-[10px] border border-slate-200/80 bg-slate-100/70 p-1 scrollbar-hide dark:border-white/10 dark:bg-white/5">
+      {/* Tabs: Sozlamalar va Ko‘rinish VS Faol Seanslar (rounded-[10px]) */}
+      <div className="grid grid-cols-2 gap-1.5 p-1 rounded-[10px] border border-slate-200/80 bg-slate-100/80 dark:border-white/10 dark:bg-white/5">
         <button
           type="button"
-          onClick={() => setProfileTab('titles')}
-          className={`flex flex-1 items-center justify-center gap-1.5 rounded-[10px] px-3 py-2 text-xs font-bold transition-all sm:px-4 sm:py-2.5 sm:text-sm ${
-            profileTab === 'titles'
-              ? 'bg-white text-emerald-700 shadow-sm dark:bg-[#1f2937] dark:text-emerald-400'
-              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+          onClick={() => setProfileTab('settings')}
+          className={`flex items-center justify-center gap-2 h-10 px-3 rounded-[8px] text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+            profileTab === 'settings'
+              ? 'bg-white text-primary shadow-xs dark:bg-[#1f2937] dark:text-white'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
-          <Icon name="ri-stethoscope-fill" />
-          <span className="hidden sm:inline">Tibbiy Unvonlar va Karyera</span>
-          <span className="sm:hidden">Unvonlar</span>
+          <Icon name="ri-settings-3-line" className="text-base" />
+          <span>Sozlamalar va Ko‘rinish</span>
         </button>
 
         <button
           type="button"
           onClick={() => setProfileTab('sessions')}
-          className={`flex flex-1 items-center justify-center gap-1.5 rounded-[10px] px-3 py-2 text-xs font-bold transition-all sm:px-4 sm:py-2.5 sm:text-sm ${
+          className={`flex items-center justify-center gap-2 h-10 px-3 rounded-[8px] text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             profileTab === 'sessions'
-              ? 'bg-white text-emerald-700 shadow-sm dark:bg-[#1f2937] dark:text-emerald-400'
-              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              ? 'bg-white text-primary shadow-xs dark:bg-[#1f2937] dark:text-white'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
-          <Icon name="ri-shield-keyhole-line" />
-          <span className="hidden sm:inline">Faol Seanslar va Xavfsizlik</span>
-          <span className="sm:hidden">Seanslar</span>
-          <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] sm:text-xs font-bold">
+          <Icon name="ri-shield-keyhole-line" className="text-base" />
+          <span>Faol Seanslar</span>
+          <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 text-[10px] sm:text-xs font-bold">
             {sessions.length}
           </span>
         </button>
       </div>
 
-      {/* Tab 2: Medical Career Progression Card */}
-      {profileTab === 'titles' && (
-        <Panel className="p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Icon name="ri-stethoscope-fill" className="text-primary text-xl" />
-                Tibbiy Darajalar va Unvonlar Bosqichi
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Har bir yechilgan test va battle g‘alabasi uchun XP to‘plab, yangi ilmiy unvonlarga erishing.
-              </p>
-            </div>
-            {nextTitle && (
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                Keyingi unvon uchun: <strong className="text-primary">{(xpNeeded ?? 0).toLocaleString()} XP</strong>
-              </span>
-            )}
+      {/* Tab 1: Sozlamalar (Shrift o‘lchami, Kontrast, Mavzu, Ovoz, Bildirishnomalar, Til) */}
+      {profileTab === 'settings' && (
+        <Panel className="p-4 sm:p-6 space-y-5 !rounded-[10px]">
+          <div>
+            <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Icon name="ri-palette-line" className="text-primary text-xl" />
+              <span>Ilova Sozlamalari va Ko‘rinish</span>
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              O‘qish va test yechishni o‘zingizga qulay qilib moslashtiring.
+            </p>
           </div>
 
-          {/* Progress Bar */}
-          <div className="mb-6">
-            <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400 mb-1.5 font-medium">
-              <span className="flex items-center gap-1.5">
-                <Icon name={currentTitle.icon} className="text-sm" />
-                {currentTitle.badge}
-              </span>
-              <span className="flex items-center gap-1.5">
-                {nextTitle ? (
-                  <>
-                    <Icon name={nextTitle.icon} className="text-sm" />
-                    {nextTitle.badge}
-                  </>
-                ) : (
-                  <>
-                    <Icon name="ri-vip-crown-fill" className="text-amber-500 text-sm" />
-                    Eng oliy unvon
-                  </>
-                )}
-              </span>
+          <div className="space-y-4">
+            {/* Shrift o‘lchami (Font size) */}
+            <div className="p-4 rounded-[10px] border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02] space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <Icon name="ri-font-size" className="text-primary text-base" />
+                    <span>Shrift o‘lchami</span>
+                  </p>
+                  <p className="text-[11px] text-slate-500">Savollar va matnlarni o‘qishni osonlashtirish</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: 'normal' as FontSize, label: 'Standart (15px)' },
+                  { id: 'large' as FontSize, label: 'Katta (17px)' },
+                  { id: 'huge' as FontSize, label: 'Juda katta (19px)' },
+                ].map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setFontSize(s.id)}
+                    className={`h-10 px-2 rounded-[10px] text-xs font-bold transition-all border cursor-pointer active:scale-95 ${
+                      fontSize === s.id
+                        ? 'bg-primary text-white border-primary shadow-xs'
+                        : 'border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#111827] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded-[10px] overflow-hidden p-0.5 border border-slate-200 dark:border-white/10">
-              <div
-                className="h-full bg-primary rounded-[8px] transition-all duration-500"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-          </div>
 
-          {/* Roadmap of all medical titles with Remix Icons */}
-          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {MEDICAL_TITLES.map((t) => {
-              const isUnlocked = xp >= t.minXp;
-              const isCurrent = currentTitle.id === t.id;
-              return (
-                <div
-                  key={t.id}
-                  className={`p-3.5 rounded-[10px] border transition-all ${
-                    isCurrent
-                      ? 'border-primary ring-2 ring-primary/20 bg-primary/5 dark:bg-primary/10'
-                      : isUnlocked
-                      ? 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/40'
-                      : 'border-slate-200/50 dark:border-white/5 opacity-50 bg-slate-50/50 dark:bg-slate-900/40'
+            {/* Kontrast rejimi (Contrast Mode) */}
+            <div className="p-4 rounded-[10px] border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02] space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <Icon name="ri-contrast-line" className="text-primary text-base" />
+                    <span>Kontrast rejimi</span>
+                  </p>
+                  <p className="text-[11px] text-slate-500">Matn va elementlar chegaralarini yanada aniq va qalin ko‘rsatish</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setContrast('standard')}
+                  className={`h-10 px-3 rounded-[10px] text-xs font-bold transition-all border cursor-pointer active:scale-95 ${
+                    contrast === 'standard'
+                      ? 'bg-primary text-white border-primary shadow-xs'
+                      : 'border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#111827] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className={`flex h-9 w-9 items-center justify-center rounded-[8px] border ${t.color}`}>
-                      <Icon name={t.icon} className="text-lg" />
-                    </div>
-                    {isCurrent ? (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-[10px] bg-primary text-white">
-                        Hozirgi
-                      </span>
-                    ) : isUnlocked ? (
-                      <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                        <Icon name="ri-check-line" /> Ochiq
-                      </span>
-                    ) : (
-                      <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                        <Icon name="ri-lock-line" /> Qulflangan
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-2.5 font-bold text-sm text-slate-900 dark:text-slate-100">{t.title}</p>
-                  <p className="text-[11px] text-slate-500 line-clamp-1">{t.stage}</p>
-                  <p className="mt-2 text-[10px] font-semibold text-slate-400 dark:text-slate-500">
-                    {(t.minXp ?? 0).toLocaleString()} XP dan boshlab
+                  Standart kontrast
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setContrast('high')}
+                  className={`h-10 px-3 rounded-[10px] text-xs font-bold transition-all border cursor-pointer active:scale-95 ${
+                    contrast === 'high'
+                      ? 'bg-primary text-white border-primary shadow-xs'
+                      : 'border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#111827] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                  }`}
+                >
+                  Yuqori kontrast (High)
+                </button>
+              </div>
+            </div>
+
+            {/* Dizayn rejimi (Mavzu / Theme) */}
+            <div className="p-4 rounded-[10px] border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02] space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <Icon name="ri-sun-line" className="text-primary text-base" />
+                    <span>Dizayn rejimi</span>
                   </p>
+                  <p className="text-[11px] text-slate-500">Kunduzgi yoki tungi ko‘rinish</p>
                 </div>
-              );
-            })}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTheme('light')}
+                  className={`flex items-center justify-center gap-2 h-10 px-3 rounded-[10px] text-xs font-bold transition-all border cursor-pointer active:scale-95 ${
+                    theme === 'light'
+                      ? 'bg-primary text-white border-primary shadow-xs'
+                      : 'border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#111827] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                  }`}
+                >
+                  <Icon name="ri-sun-line" className="text-base" />
+                  <span>Kunduzgi rejim</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTheme('dark')}
+                  className={`flex items-center justify-center gap-2 h-10 px-3 rounded-[10px] text-xs font-bold transition-all border cursor-pointer active:scale-95 ${
+                    theme === 'dark'
+                      ? 'bg-primary text-white border-primary shadow-xs'
+                      : 'border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#111827] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                  }`}
+                >
+                  <Icon name="ri-moon-line" className="text-base" />
+                  <span>Tungi rejim</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Ovozli effektlar (Sound Effects) */}
+            <div className="p-4 rounded-[10px] border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02] space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <Icon name="ri-volume-up-line" className="text-primary text-base" />
+                    <span>Ovozli effektlar</span>
+                  </p>
+                  <p className="text-[11px] text-slate-500">Test yechish, to‘g‘ri javob va battle tovushlari</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSound(true)}
+                  className={`flex items-center justify-center gap-2 h-10 px-3 rounded-[10px] text-xs font-bold transition-all border cursor-pointer active:scale-95 ${
+                    soundEnabled
+                      ? 'bg-primary text-white border-primary shadow-xs'
+                      : 'border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#111827] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                  }`}
+                >
+                  <Icon name="ri-volume-up-line" className="text-base" />
+                  <span>Yoqilgan</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSound(false)}
+                  className={`flex items-center justify-center gap-2 h-10 px-3 rounded-[10px] text-xs font-bold transition-all border cursor-pointer active:scale-95 ${
+                    !soundEnabled
+                      ? 'bg-primary text-white border-primary shadow-xs'
+                      : 'border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#111827] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                  }`}
+                >
+                  <Icon name="ri-volume-mute-line" className="text-base" />
+                  <span>O‘chirilgan</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Bildirishnomalar (Notifications) */}
+            <div className="p-4 rounded-[10px] border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02] space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <Icon name="ri-notification-3-line" className="text-primary text-base" />
+                    <span>Battle va Do‘stlik xabarlari</span>
+                  </p>
+                  <p className="text-[11px] text-slate-500">Boshqa foydalanuvchilar musobaqaga chaqirganda popup chiqishi</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setNotif(true)}
+                  className={`flex items-center justify-center gap-2 h-10 px-3 rounded-[10px] text-xs font-bold transition-all border cursor-pointer active:scale-95 ${
+                    notifEnabled
+                      ? 'bg-primary text-white border-primary shadow-xs'
+                      : 'border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#111827] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                  }`}
+                >
+                  <Icon name="ri-notification-3-line" className="text-base" />
+                  <span>Yoqilgan</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNotif(false)}
+                  className={`flex items-center justify-center gap-2 h-10 px-3 rounded-[10px] text-xs font-bold transition-all border cursor-pointer active:scale-95 ${
+                    !notifEnabled
+                      ? 'bg-primary text-white border-primary shadow-xs'
+                      : 'border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#111827] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                  }`}
+                >
+                  <Icon name="ri-notification-off-line" className="text-base" />
+                  <span>O‘chirilgan</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Ilova tili (Language) */}
+            <div className="p-4 rounded-[10px] border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.02] space-y-2.5">
+              <div>
+                <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <Icon name="ri-global-line" className="text-primary text-base" />
+                  <span>Ilova tili (Language)</span>
+                </p>
+                <p className="text-[11px] text-slate-500">MedQuiz interfeysi tili</p>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {LANGUAGES.map((l) => (
+                  <button
+                    key={l.id}
+                    type="button"
+                    onClick={() => changeLanguage(l.id)}
+                    className={`flex items-center justify-center gap-1.5 h-10 px-2 rounded-[10px] text-xs font-bold transition-all border cursor-pointer active:scale-95 ${
+                      lang === l.id
+                        ? 'bg-primary text-white border-primary shadow-xs'
+                        : 'border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#111827] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                    }`}
+                  >
+                    <span>{l.flag}</span>
+                    <span>{l.code}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </Panel>
       )}
 
-      {/* Tab 3: Active Sessions (Faol seanslar va Xavfsizlik) */}
+      {/* Tab 2: Faol Seanslar va Xavfsizlik (Active Sessions) */}
       {profileTab === 'sessions' && (
-        <Panel className="p-4 sm:p-6 space-y-5">
+        <Panel className="p-4 sm:p-6 space-y-5 !rounded-[10px]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Icon name="ri-shield-keyhole-line" className="text-primary text-xl" />
-                Faol Seanslar va Kirilgan Qurilmalar
-              </h3>
+                <span>Faol Seanslar va Kirilgan Qurilmalar</span>
+              </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Hisobingizga kirilgan barcha kompyuter, telefon va brauzerlar ro‘yxati. Shubhali seanslarni bitta bosishda tugatishingiz mumkin.
+                Hisobingizga kirilgan barcha kompyuter, telefon va brauzerlar ro‘yxati.
               </p>
             </div>
             {sessions.filter((s) => !s.isCurrent).length > 0 && (
               <button
                 type="button"
                 onClick={handleRevokeAllOtherSessions}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold border border-rose-500/20 transition-all cursor-pointer self-start sm:self-auto active:scale-95"
+                className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-[10px] bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold border border-rose-500/20 transition-all cursor-pointer self-start sm:self-auto active:scale-95"
               >
                 <Icon name="ri-logout-box-r-line" className="text-sm" />
-                <span>Boshqa seanslardan chiqish</span>
+                <span>Boshqa barcha seanslardan chiqish</span>
               </button>
             )}
           </div>
 
           {sessionToast && (
-            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+            <div className="p-3 rounded-[10px] bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 text-xs font-bold flex items-center gap-2 animate-in fade-in">
               <Icon name="ri-checkbox-circle-fill" className="text-base" />
               <span>{sessionToast}</span>
             </div>
@@ -428,7 +626,7 @@ export function Profile() {
               return (
                 <div
                   key={sess.id}
-                  className={`p-4 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                  className={`p-4 rounded-[10px] border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                     sess.isCurrent
                       ? 'border-emerald-500/40 bg-emerald-50/30 dark:bg-emerald-950/10 shadow-xs'
                       : 'border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-white/5'
@@ -436,7 +634,7 @@ export function Profile() {
                 >
                   <div className="flex items-start gap-3.5 min-w-0">
                     <div
-                      className={`h-10 w-10 shrink-0 rounded-xl flex items-center justify-center text-lg ${
+                      className={`h-10 w-10 shrink-0 rounded-[10px] flex items-center justify-center text-lg ${
                         sess.isCurrent
                           ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
                           : 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300'
@@ -451,7 +649,7 @@ export function Profile() {
                           {sess.deviceName}
                         </span>
                         {sess.isCurrent && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold border border-emerald-500/30">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[6px] bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold border border-emerald-500/30">
                             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                             Ushbu qurilma (Joriy)
                           </span>
@@ -481,14 +679,14 @@ export function Profile() {
 
                   <div className="flex items-center justify-end sm:justify-center shrink-0">
                     {sess.isCurrent ? (
-                      <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                      <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                         <Icon name="ri-check-line" /> Faol
                       </span>
                     ) : (
                       <button
                         type="button"
                         onClick={() => handleRevokeSession(sess.id)}
-                        className="px-3 py-1.5 rounded-lg border border-rose-500/30 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/20 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs font-semibold transition-colors cursor-pointer active:scale-95"
+                        className="px-3 py-1.5 rounded-[8px] border border-rose-500/30 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/20 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs font-bold transition-colors cursor-pointer active:scale-95"
                       >
                         Tugatish
                       </button>
@@ -499,21 +697,31 @@ export function Profile() {
             })}
           </div>
 
-          <div className="p-3.5 rounded-xl bg-slate-100/70 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 text-xs text-slate-500 dark:text-slate-400 space-y-1">
+          <div className="p-3.5 rounded-[10px] bg-slate-100/70 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 text-xs text-slate-500 dark:text-slate-400 space-y-1">
             <p className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
               <Icon name="ri-information-line" />
-              Xavfsizlik bo‘yicha eslatma:
+              <span>Xavfsizlik eslatmasi:</span>
             </p>
             <p className="text-[11px] leading-relaxed">
-              Agar siz notanish qurilma yoki joylashuvni ko‘rsangiz, darhol "Tugatish" tugmasini bosing. Bu ushbu qurilmadagi barcha ruxsatnomalarni bekor qiladi.
+              Notanish qurilmani ko‘rsangiz, darhol "Tugatish" tugmasini bosing. Bu ushbu qurilmadagi barcha ruxsatnomalarni bekor qiladi.
             </p>
+          </div>
+
+          {/* Logout Section */}
+          <div className="pt-2 flex justify-start">
+            <button
+              type="button"
+              onClick={leave}
+              className="inline-flex items-center gap-1.5 h-10 px-4 rounded-[10px] text-xs sm:text-sm font-bold text-rose-600 border border-rose-500/30 bg-rose-50/50 hover:bg-rose-100/80 dark:bg-rose-950/20 dark:hover:bg-rose-950/40 transition-all cursor-pointer active:scale-95 shadow-xs"
+            >
+              <Icon name="ri-logout-box-r-line" className="text-base" />
+              <span>Shu qurilmadan chiqish (Logout)</span>
+            </button>
           </div>
         </Panel>
       )}
 
-
-
-      {/* Bottom Sheet Modal for Editing Personal Details (pastdan tepaga ochiladigan modal) */}
+      {/* Bottom Sheet Modal for Editing Personal Details */}
       {editModalOpen && (
         <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center p-0 sm:p-4">
           {/* Backdrop */}
@@ -529,7 +737,7 @@ export function Profile() {
             role="dialog"
             aria-modal="true"
             aria-label="Shaxsiy ma‘lumotlarni tahrirlash"
-            className="relative z-10 w-full max-w-lg overflow-hidden rounded-t-[16px] sm:rounded-[10px] border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#111827] shadow-2xl transition-all duration-300 max-h-[90vh] flex flex-col animate-in slide-in-from-bottom duration-250"
+            className="relative z-10 w-full max-w-lg overflow-hidden rounded-t-[14px] sm:rounded-[10px] border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#111827] shadow-2xl transition-all duration-300 max-h-[90vh] flex flex-col animate-in slide-in-from-bottom duration-250"
           >
             {/* Mobile Pull Handle */}
             <div className="mx-auto mt-2.5 h-1.5 w-12 rounded-[10px] bg-slate-300 dark:bg-white/20 sm:hidden shrink-0" />
@@ -545,7 +753,7 @@ export function Profile() {
                     Shaxsiy ma‘lumotlarni tahrirlash
                   </h3>
                   <p className="text-[11px] text-slate-500">
-                    Ism, oliygoh va profil ma‘lumotlarini o‘zgartiring
+                    Ism, username va bio ma‘lumotlarini o‘zgartiring
                   </p>
                 </div>
               </div>
@@ -561,7 +769,7 @@ export function Profile() {
 
             {/* Scrollable Form Body */}
             <div className="overflow-y-auto p-4 sm:p-5 space-y-3.5">
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-3">
                 <Field label="Ism va familiya">
                   <input
                     className={fieldClass}
@@ -578,60 +786,39 @@ export function Profile() {
                     onChange={(event) => updateMe({ username: event.target.value.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase() })}
                   />
                 </Field>
-                <Field label="Universitet / Institut">
-                  <input
-                    className={fieldClass}
-                    value={me.university || ''}
-                    placeholder="Toshkent Tibbiyot Akademiyasi"
-                    onChange={(event) => updateMe({ university: event.target.value })}
-                  />
-                </Field>
-                <Field label="Kurs">
-                  <input
-                    className={fieldClass}
-                    value={me.course || ''}
-                    placeholder="3-kurs"
-                    onChange={(event) => updateMe({ course: event.target.value })}
-                  />
-                </Field>
-                <Field label="Fakultet">
-                  <input
-                    className={fieldClass}
-                    value={me.faculty || ''}
-                    placeholder="Davolash ishi"
-                    onChange={(event) => updateMe({ faculty: event.target.value })}
-                  />
-                </Field>
-                <Field label="Bio (Qisqacha)">
-                  <input
-                    className={fieldClass}
+                <Field label="Bio (Qisqacha o‘zingiz haqingizda)">
+                  <textarea
+                    rows={2}
+                    className={`${fieldClass} resize-none`}
                     value={me.bio || ''}
-                    placeholder="Bo‘lajak neyroxirurg..."
+                    placeholder="Bo‘lajak kardiolog..."
                     onChange={(event) => updateMe({ bio: event.target.value })}
                   />
                 </Field>
-              </div>
 
-              {/* Theme toggle */}
-              <div className="p-3 rounded-[10px] bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/5 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-slate-800 dark:text-white flex items-center gap-1.5">
-                    <Icon name="ri-contrast-2-line" /> Dizayn rejimi
-                  </p>
-                  <p className="text-[11px] text-slate-500">Kunduzgi yoki tungi ko‘rinish</p>
+                {/* Direct gallery photo trigger inside modal too */}
+                <div className="p-3 rounded-[10px] bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/5 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-[8px] overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-sm text-slate-600 dark:text-slate-300 shrink-0">
+                      {me.avatar ? (
+                        <img src={me.avatar} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        me.name.slice(0, 2).toUpperCase()
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-800 dark:text-white">Profil rasmi</p>
+                      <p className="text-[11px] text-slate-500">Galereyadan o‘z rasmingizni yuklang</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="h-9 px-3 rounded-[8px] border border-slate-200 dark:border-white/10 bg-white dark:bg-[#1f2937] text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                  >
+                    Galereyadan tanlash
+                  </button>
                 </div>
-                <ThemeToggle showLabel />
-              </div>
-
-              {/* Danger section: Logout */}
-              <div className="pt-2 flex justify-start">
-                <button
-                  type="button"
-                  onClick={leave}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
-                >
-                  <Icon name="ri-logout-box-r-line" /> Shu qurilmadan chiqish
-                </button>
               </div>
             </div>
 
@@ -640,23 +827,15 @@ export function Profile() {
               <button
                 type="button"
                 onClick={() => setEditModalOpen(false)}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-[10px] bg-primary hover:bg-primary/90 text-white font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95"
+                className="w-full sm:w-auto h-10 px-5 rounded-[10px] bg-primary hover:bg-primary/90 text-white font-bold text-xs sm:text-sm shadow-md transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
               >
-                <Icon name="ri-check-line" className="text-sm mr-1" /> Saqlash va Yopish
+                <Icon name="ri-check-line" className="text-base" />
+                <span>Saqlash va Yopish</span>
               </button>
             </div>
           </div>
         </div>
       )}
-
-      {/* 3D Mem & Photo Avatar Modal */}
-      <AvatarModal
-        isOpen={avatarModalOpen}
-        onClose={() => setAvatarModalOpen(false)}
-        currentAvatar={me.avatar}
-        currentName={me.name}
-        onSelectAvatar={(url) => updateMe({ avatar: url })}
-      />
     </div>
   );
 }

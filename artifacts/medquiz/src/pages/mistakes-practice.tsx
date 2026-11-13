@@ -118,7 +118,7 @@ export function MistakesPractice() {
                     key={n}
                     type="button"
                     onClick={() => setCount(n)}
-                    className={`rounded-full border px-3.5 py-1.5 text-xs font-bold transition active:scale-95 ${
+                    className={`rounded-[10px] border px-3.5 py-1.5 text-xs font-bold transition active:scale-95 cursor-pointer ${
                       Math.min(count, pool.length) === n
                         ? 'border-emerald-500 bg-emerald-500 text-white shadow-sm'
                         : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-400 dark:border-white/10 dark:bg-white/5 dark:text-slate-300'
