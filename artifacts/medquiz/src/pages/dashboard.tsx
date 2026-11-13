@@ -1,11 +1,23 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'wouter';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, YAxis } from 'recharts';
-import { HiOutlineAcademicCap, HiOutlineArrowRight, HiOutlineBookmark, HiOutlineChartBar, HiOutlineFire, HiOutlineLightningBolt, HiOutlinePlay, HiOutlineTrash, HiOutlineTrendingUp, HiOutlineXCircle } from 'react-icons/hi';
+import {
+  HiOutlineAcademicCap,
+  HiOutlineArrowRight,
+  HiOutlineBookmark,
+  HiOutlineChartBar,
+  HiOutlineFire,
+  HiOutlineLightningBolt,
+  HiOutlinePlay,
+  HiOutlineTrash,
+  HiOutlineTrendingUp,
+  HiOutlineXCircle,
+} from 'react-icons/hi';
 import { deleteBank, getMedicalTitle, levelFromXp, recentAccuracy } from '@/lib/model';
 import { Icon } from '@/components/chrome';
 import { cleanQuestion } from '@/lib/parser';
 import { useBanks, useMistakes, useStatsMap, useStore } from '@/lib/store';
+import { useI18n } from '@/lib/i18n';
 import type { Stats } from '@/lib/types';
 
 const banners = [
@@ -32,7 +44,6 @@ function DashBanner() {
           data-testid="link-dash-banner"
         >
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-white/75">Reklama</p>
             <p className="mt-1 truncate font-display text-xl font-bold sm:text-2xl">{banner.title}</p>
             <p className="mt-1 truncate text-sm text-white/90">{banner.text}</p>
           </div>
@@ -52,6 +63,7 @@ export function Dashboard() {
   const { me } = useStore();
   const banks = useBanks();
   const mistakes = useMistakes();
+  const { t } = useI18n();
   const stats = useStatsMap()[me?.id ?? ''];
   const xp = stats?.xp ?? 0;
   const level = levelFromXp(xp);
@@ -62,15 +74,33 @@ export function Dashboard() {
 
   return (
     <div className="space-y-6 lg:space-y-8">
+      {/* Restored DashBanner */}
       <DashBanner />
+
+      {/* Quick stats grid */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-        <Stat icon={HiOutlineFire} label="Streak" value={`${stats?.streak ?? 0} kun`} tone="text-amber-600 bg-amber-500/15 dark:text-orange-400" />
-        <Stat icon={HiOutlineAcademicCap} label="Yechilgan testlar" value={`${stats?.quizzes ?? 0}`} tone="text-med-600 bg-med-500/15 dark:text-med-400" />
-        <Stat icon={HiOutlineChartBar} label="O‘rtacha aniqlik" value={stats?.answered ? `${average}%` : '—'} tone="text-sky-600 bg-sky-500/15 dark:text-sky-400" />
+        <Stat
+          icon={HiOutlineFire}
+          label={t('stats_streak')}
+          value={`${stats?.streak ?? 0} kun`}
+          tone="text-amber-600 bg-amber-500/15 dark:text-orange-400"
+        />
+        <Stat
+          icon={HiOutlineAcademicCap}
+          label={t('stats_quizzes')}
+          value={`${stats?.quizzes ?? 0}`}
+          tone="text-med-600 bg-med-500/15 dark:text-med-400"
+        />
+        <Stat
+          icon={HiOutlineChartBar}
+          label={t('stats_accuracy')}
+          value={stats?.answered ? `${average}%` : '—'}
+          tone="text-sky-600 bg-sky-500/15 dark:text-sky-400"
+        />
         <AccuracyChart history={stats?.history} />
         <ActionStat
           icon={HiOutlineXCircle}
-          label="Xatolarim"
+          label={t('stats_mistakes')}
           value={`${mistakes.length} ta`}
           href="/mistakes"
           tone="text-rose-600 bg-rose-500/15 dark:text-rose-400"
@@ -78,47 +108,74 @@ export function Dashboard() {
         />
         <ActionStat
           icon={HiOutlineBookmark}
-          label="Saqlanganlar"
+          label={t('stats_saved')}
           value={`${savedCount} ta`}
           href="/mistakes?tab=saved"
           tone="text-emerald-600 bg-emerald-500/15 dark:text-emerald-400"
           borderTone="hover:border-emerald-500/40"
         />
       </div>
+
+      {/* Feature links */}
       <div className="grid gap-4 sm:grid-cols-3">
         <Link href="/banks" className="group">
-          <div className="glass-card-hover h-full p-5 sm:p-6">
+          <div className="glass-card-hover h-full p-5 sm:p-6 !rounded-[10px]">
             <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-[10px] bg-gradient-to-br from-violet-500 to-purple-600 shadow-md shadow-violet-500/25 transition-transform duration-300 group-hover:scale-105">
               <HiOutlineLightningBolt className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
             </div>
-            <h3 className="mt-4 font-display text-lg sm:text-xl font-bold text-slate-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">To‘plamlar</h3>
-            <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">O‘z .txt savollaringizni yuklang va tahrirlang</p>
-            <div className="mt-4 flex items-center gap-2 text-xs sm:text-sm font-semibold text-violet-600 dark:text-violet-400">Boshlash <HiOutlineArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></div>
+            <h3 className="mt-4 font-display text-lg sm:text-xl font-bold text-slate-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+              {t('nav_banks')}
+            </h3>
+            <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+              O‘z .txt savollaringizni yuklang va tahrirlang
+            </p>
+            <div className="mt-4 flex items-center gap-2 text-xs sm:text-sm font-semibold text-violet-600 dark:text-violet-400">
+              <span>Boshlash</span>
+              <HiOutlineArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </div>
           </div>
         </Link>
+
         <Link href="/battle" className="group" data-testid="link-dashboard-battle">
-          <div className="glass-card-hover h-full p-5 sm:p-6">
+          <div className="glass-card-hover h-full p-5 sm:p-6 !rounded-[10px]">
             <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-[10px] bg-gradient-to-br from-rose-500 to-pink-600 shadow-md shadow-rose-500/25 transition-transform duration-300 group-hover:scale-105">
               <HiOutlinePlay className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
             </div>
-            <h3 className="mt-4 font-display text-lg sm:text-xl font-bold text-slate-900 dark:text-white group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">Battle</h3>
-            <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Havola yoki onlayn taklif bilan bellashing</p>
-            <div className="mt-4 flex items-center gap-2 text-xs sm:text-sm font-semibold text-rose-600 dark:text-rose-400">Boshlash <HiOutlineArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></div>
+            <h3 className="mt-4 font-display text-lg sm:text-xl font-bold text-slate-900 dark:text-white group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">
+              Battle
+            </h3>
+            <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+              Havola yoki onlayn taklif bilan bellashing
+            </p>
+            <div className="mt-4 flex items-center gap-2 text-xs sm:text-sm font-semibold text-rose-600 dark:text-rose-400">
+              <span>Boshlash</span>
+              <HiOutlineArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </div>
           </div>
         </Link>
+
         <Link href="/friends" className="group" data-testid="link-dashboard-friends">
-          <div className="glass-card-hover h-full p-5 sm:p-6">
+          <div className="glass-card-hover h-full p-5 sm:p-6 !rounded-[10px]">
             <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-[10px] bg-gradient-to-br from-emerald-500 to-teal-600 shadow-md shadow-emerald-500/25 transition-transform duration-300 group-hover:scale-105">
               <Icon name="ri-user-heart-line" className="text-2xl text-white" />
             </div>
-            <h3 className="mt-4 font-display text-lg sm:text-xl font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Do‘stlar</h3>
-            <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Kursdoshlarni topish va Instagram-uslubdagi profillar</p>
-            <div className="mt-4 flex items-center gap-2 text-xs sm:text-sm font-semibold text-emerald-600 dark:text-emerald-400">Ochish <HiOutlineArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></div>
+            <h3 className="mt-4 font-display text-lg sm:text-xl font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+              {t('nav_friends')}
+            </h3>
+            <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+              Kursdoshlarni topish va do‘stlar tarmog‘i
+            </p>
+            <div className="mt-4 flex items-center gap-2 text-xs sm:text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+              <span>Ochish</span>
+              <HiOutlineArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </div>
           </div>
         </Link>
       </div>
+
+      {/* Main bottom grid */}
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="glass-card p-6 lg:col-span-2">
+        <div className="glass-card p-6 lg:col-span-2 !rounded-[10px]">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="flex items-center gap-2 font-display text-lg font-bold text-slate-900 dark:text-white">
               <HiOutlineLightningBolt className="h-5 w-5 text-amber-500 dark:text-gold-400" /> Mashq
@@ -128,135 +185,103 @@ export function Dashboard() {
           {!ready.length ? (
             <div className="py-8 text-center">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[10px] bg-med-500/15 text-med-600 dark:text-med-400">
-                <HiOutlineAcademicCap className="h-8 w-8" />
+                <HiOutlineLightningBolt className="h-8 w-8" />
               </div>
-              <p className="mt-4 text-slate-500 dark:text-slate-400">Hali savol yo‘q. To‘plamlardan boshlang.</p>
-              <Link href="/banks" className="btn-secondary mt-4 inline-flex !rounded-[10px]">Savollarni yuklash</Link>
+              <p className="mt-4 font-semibold text-slate-700 dark:text-slate-300">Savollar to‘plami bo‘sh</p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Boshlash uchun avval to‘plam yarating yoki yuklang.</p>
+              <Link href="/banks" className="btn-primary mt-4 inline-flex items-center gap-2 text-xs font-semibold !rounded-[10px]">
+                To‘plam yaratish <HiOutlineArrowRight className="h-4 w-4" />
+              </Link>
             </div>
           ) : (
-            <div className="space-y-3">
-              {ready.slice(0, 4).map((bank) => (
-                <div key={bank.id} className="flex items-center justify-between gap-3 rounded-[10px] border border-slate-200/80 bg-slate-50/70 p-3.5 dark:border-white/10 dark:bg-[#111827]">
-                  <div>
-                    <p className="font-semibold text-slate-900 dark:text-white">{bank.name}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{(bank.questions ?? []).filter((question) => cleanQuestion(question)).length} ta savol</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {ready.slice(0, 4).map((bank) => {
+                const count = (bank.questions ?? []).filter((q) => cleanQuestion(q)).length;
+                return (
+                  <div key={bank.id} className="flex flex-col justify-between rounded-[10px] border border-slate-200/80 bg-slate-50/70 p-4 transition-all hover:border-med-500/40 dark:border-white/10 dark:bg-white/[0.02]">
+                    <div>
+                      <h4 className="font-semibold text-slate-900 dark:text-white truncate">{bank.name}</h4>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{count} ta tayyor savol</p>
+                    </div>
+                    <div className="mt-4 flex items-center justify-between">
+                      <Link
+                        href={`/play/${bank.id}`}
+                        className="inline-flex items-center gap-1.5 rounded-[8px] bg-med-600 hover:bg-med-500 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition-all active:scale-95"
+                      >
+                        <HiOutlinePlay className="h-3.5 w-3.5" /> Boshlash
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(`«${bank.name}» to‘plamini o‘chirishni tasdiqlaysizmi?`)) {
+                            deleteBank(bank.id);
+                          }
+                        }}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                        title="O‘chirish"
+                      >
+                        <HiOutlineTrash className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
-                  <Link href={`/play/${bank.id}`} className="btn-primary px-4 py-2 text-xs sm:text-sm !rounded-[10px]" data-testid={`link-play-${bank.id}`}>Boshlash</Link>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
-        <div className="glass-card p-6">
-          <h2 className="mb-6 font-display text-lg font-bold text-slate-900 dark:text-white">Daraja va Unvon</h2>
-          <div className="text-center">
-            <div className="relative mx-auto h-28 w-28">
-              <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" className="text-slate-200 dark:text-slate-800" strokeWidth="8" />
-                <circle cx="50" cy="50" r="42" fill="none" stroke="#00d683" strokeWidth="8" strokeLinecap="round" strokeDasharray={`${(into / 500) * 264} 264`} />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="font-display text-2xl font-bold text-slate-900 dark:text-white">{level}</span>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400">daraja</span>
-              </div>
+
+        {/* Right column: Level card */}
+        <div className="glass-card p-6 !rounded-[10px]">
+          <div className="flex items-center justify-between">
+            <h3 className="font-display font-bold text-slate-900 dark:text-white">Darajangiz</h3>
+            <span className="badge-primary !rounded-[8px]">Daraja {level}</span>
+          </div>
+          <div className="mt-4 text-center py-4">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-med-500 to-med-600 text-white shadow-lg shadow-med-500/25">
+              <span className="font-display text-3xl font-black">{level}</span>
             </div>
-            <div className="mt-3">
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[8px] text-xs font-semibold border ${getMedicalTitle(xp).color}`}>
-                <Icon name={getMedicalTitle(xp).icon} className="text-sm" />
-                <span>{getMedicalTitle(xp).title}</span>
-              </span>
+            <p className="mt-3 font-display font-bold text-lg text-slate-900 dark:text-white">
+              {getMedicalTitle(xp).title}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {(xp ?? 0).toLocaleString()} XP to‘plandi
+            </p>
+            <div className="mt-4 h-2 w-full rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+              <div className="h-full rounded-full bg-med-500" style={{ width: `${(into / 500) * 100}%` }} />
             </div>
-            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 font-medium">{into} / 500 XP keyingi darajagacha</p>
-            <Link href="/achievements" className="mt-3 inline-flex text-xs font-semibold text-med-600 dark:text-med-400 hover:underline" data-testid="link-achievements">Yutuqlar va unvonlar</Link>
+            <p className="mt-1.5 text-[11px] text-slate-400">
+              Keyingi darajagacha {500 - into} XP qoldi
+            </p>
           </div>
         </div>
       </div>
-      <section>
-        <h2 className="mb-4 font-display text-lg font-bold text-slate-900 dark:text-white">Fanlar</h2>
-        {!ready.length ? (
-          <div className="glass-card p-6">
-            <p className="text-sm text-slate-500 dark:text-slate-400">Hali fan yo‘q. To‘plamlar sahifasida fan nomini yozib savol yuklang.</p>
-            <Link href="/banks" className="btn-secondary mt-4 inline-flex !rounded-[10px]">Savollarni yuklash</Link>
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {ready.map((bank) => {
-              const count = (bank.questions ?? []).filter((question) => cleanQuestion(question)).length;
-              return (
-                <div key={bank.id} className="glass-card flex h-full flex-col justify-between p-6 hover:border-med-500/30 transition-all hover:shadow-md" data-testid={`card-subject-${bank.id}`}>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-med-600 dark:text-med-400">Fan</p>
-                    <h3 className="mt-2 font-display text-xl font-bold text-slate-900 dark:text-white">{bank.name}</h3>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{count} ta tayyor savol</p>
-                  </div>
-                  <div className="mt-5 flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100 dark:border-white/10">
-                    <Link href={`/play/${bank.id}`} className="btn-primary shrink-0 !rounded-[10px] !px-3.5 !py-2 text-xs font-semibold" data-testid={`link-subject-play-${bank.id}`}>Boshlash</Link>
-                    <Link href={`/banks/${bank.id}`} className="btn-secondary shrink-0 !rounded-[10px] !px-3.5 !py-2 text-xs font-medium" data-testid={`link-subject-open-${bank.id}`}>Tahrirlash</Link>
-                    <button type="button" className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-[10px] p-2 text-xs font-semibold text-slate-400 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400" data-testid={`button-delete-subject-${bank.id}`} onClick={() => { if (window.confirm(`«${bank.name}» to‘plamini o‘chirishni xohlaysizmi?`)) deleteBank(bank.id); }}>
-                      <HiOutlineTrash className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
     </div>
   );
 }
 
-function AccuracyChart({ history }: { history: Stats['history'] }) {
-  const series = recentAccuracy(history);
+function Stat({ icon: IconComponent, label, value, tone }: { icon: any; label: string; value: string; tone: string }) {
   return (
-    <div className="glass-card p-5">
-      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-[10px] bg-med-500/15 text-med-600 dark:text-med-400">
-        <HiOutlineTrendingUp className="h-5 w-5" />
+    <div className="rounded-[10px] border border-slate-200/80 bg-white/90 p-4 shadow-xs dark:border-white/10 dark:bg-[#111827]">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">{label}</span>
+        <span className={`flex h-8 w-8 items-center justify-center rounded-[8px] ${tone}`}>
+          <IconComponent className="h-4 w-4" />
+        </span>
       </div>
-      <p className="text-sm text-slate-500 dark:text-slate-400">So‘nggi natijalar</p>
-      <div className="mt-1 h-8" aria-label="So‘nggi 7 kun aniqlik">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={series} margin={{ top: 4, right: 2, left: 2, bottom: 0 }}>
-            <defs>
-              <linearGradient id="dash-accuracy" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#00d683" stopOpacity={0.45} />
-                <stop offset="100%" stopColor="#00d683" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <YAxis hide domain={[0, 100]} />
-            <Tooltip
-              cursor={{ stroke: 'rgba(0,214,131,0.35)', strokeWidth: 1 }}
-              contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, fontSize: 12, color: '#e2e8f0' }}
-              labelStyle={{ color: '#94a3b8' }}
-              formatter={(value) => [`${value}%`, 'Aniqlik']}
-            />
-            <Area type="monotone" dataKey="accuracy" stroke="#00d683" strokeWidth={2} fill="url(#dash-accuracy)" dot={false} activeDot={{ r: 3, fill: '#00d683', stroke: '#0f172a' }} />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  );
-}
-
-function Stat({ icon: Glyph, label, value, tone }: { icon: typeof HiOutlineFire; label: string; value: string; tone: string }) {
-  return (
-    <div className="glass-card p-5">
-      <div className={`mb-4 flex h-10 w-10 items-center justify-center rounded-[10px] ${tone}`}><Glyph className="h-5 w-5" /></div>
-      <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{label}</p>
-      <p className="mt-1 font-display text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
+      <p className="mt-2 font-display text-xl sm:text-2xl font-black text-slate-900 dark:text-white">{value}</p>
     </div>
   );
 }
 
 function ActionStat({
-  icon: Glyph,
+  icon: IconComponent,
   label,
   value,
   href,
   tone,
   borderTone,
 }: {
-  icon: typeof HiOutlineFire;
+  icon: any;
   label: string;
   value: string;
   href: string;
@@ -264,22 +289,61 @@ function ActionStat({
   borderTone: string;
 }) {
   return (
-    <Link href={href} className="group block">
-      <div className={`glass-card p-5 h-full transition-all duration-200 border border-transparent ${borderTone} group-hover:shadow-md flex flex-col justify-between`}>
-        <div>
-          <div className="mb-4 flex items-center justify-between">
-            <div className={`flex h-10 w-10 items-center justify-center rounded-[10px] ${tone}`}>
-              <Glyph className="h-5 w-5" />
-            </div>
-            <span className="text-[11px] font-semibold text-slate-400 group-hover:text-slate-800 dark:group-hover:text-white transition-colors flex items-center gap-1">
-              Ko‘rish <HiOutlineArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
-            </span>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{label}</p>
-          <p className="mt-1 font-display text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
-        </div>
+    <Link
+      href={href}
+      className={`group rounded-[10px] border border-slate-200/80 bg-white/90 p-4 shadow-xs transition-all ${borderTone} dark:border-white/10 dark:bg-[#111827]`}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">{label}</span>
+        <span className={`flex h-8 w-8 items-center justify-center rounded-[8px] transition-transform duration-200 group-hover:scale-110 ${tone}`}>
+          <IconComponent className="h-4 w-4" />
+        </span>
+      </div>
+      <div className="mt-2 flex items-baseline justify-between">
+        <p className="font-display text-xl sm:text-2xl font-black text-slate-900 dark:text-white">{value}</p>
+        <HiOutlineArrowRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-slate-700 dark:group-hover:text-white" />
       </div>
     </Link>
   );
 }
 
+function AccuracyChart({ history }: { history?: Record<string, any> }) {
+  const data = recentAccuracy(history);
+  return (
+    <div className="col-span-2 rounded-[10px] border border-slate-200/80 bg-white/90 p-4 shadow-xs dark:border-white/10 dark:bg-[#111827] lg:col-span-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">So‘nggi 7 kunlik aniqlik dinamikasi</span>
+        <span className="flex items-center gap-1 text-[11px] font-bold text-med-600 dark:text-med-400">
+          <HiOutlineTrendingUp className="h-3.5 w-3.5" />
+          <span>Statistika</span>
+        </span>
+      </div>
+      <div className="mt-3 h-24 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 5, right: 0, left: -25, bottom: 0 }}>
+            <defs>
+              <linearGradient id="accuracy-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#00d683" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#00d683" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <YAxis domain={[0, 100]} hide />
+            <Tooltip
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  return (
+                    <div className="rounded-[6px] border border-slate-200 bg-white px-2 py-1 text-xs shadow-md dark:border-white/10 dark:bg-[#1f2937]">
+                      <p className="font-bold text-slate-900 dark:text-white">{payload[0].value}% aniqlik</p>
+                    </div>
+                  );
+                }
+                return null;
+              }}
+            />
+            <Area type="monotone" dataKey="accuracy" stroke="#00d683" strokeWidth={2} fill="url(#accuracy-grad)" />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}

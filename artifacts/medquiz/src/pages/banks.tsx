@@ -15,12 +15,14 @@ import { createBank, deleteBank, getBankSchedule, saveQuestionsToSubject } from 
 import { cleanQuestion, parseQuizText, extractTextFromFile } from '@/lib/parser';
 import { useBanks } from '@/lib/store';
 import { ExamCalendarModal } from '@/components/exam-calendar-modal';
+import { useI18n } from '@/lib/i18n';
 import type { Bank } from '@/lib/types';
 
 const controlClass = `${fieldClass} !rounded-[10px]`;
 
 export function Banks() {
   const banks = useBanks();
+  const { t } = useI18n();
   const [, setLocation] = useLocation();
   const [open, setOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -134,15 +136,15 @@ export function Banks() {
       <Panel>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="font-display text-xl font-bold text-slate-900 dark:text-white">Mening to‘plamlarim</h2>
+            <h2 className="font-display text-xl font-bold text-slate-900 dark:text-white">{t('banks_title')}</h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Imtihon savollarini yuklang, tahrirlang yoki yangi test to‘plamini yarating.
+              {t('banks_sub')}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2.5">
+          <div>
             <button
               type="button"
-              className="btn-primary !rounded-[10px] px-4 py-2.5 text-sm shadow-md"
+              className="btn-primary !rounded-[10px] px-4 py-2.5 text-sm shadow-md cursor-pointer"
               data-testid="button-add-questions"
               onClick={() => {
                 setError('');
@@ -150,33 +152,22 @@ export function Banks() {
               }}
             >
               <HiOutlinePlus className="h-4 w-4" />
-              Savollar qo‘shish
+              {t('banks_add_questions')}
             </button>
-            {banks.length > 0 && (
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded-[10px] border border-rose-500/30 bg-rose-500/10 px-4 py-2.5 text-sm font-semibold text-rose-600 dark:text-rose-300 hover:bg-rose-500/20 transition-colors"
-                data-testid="button-delete-questions"
-                onClick={() => setDeleteOpen(true)}
-              >
-                <HiOutlineTrash className="h-4 w-4" />
-                Savollarni o‘chirish
-              </button>
-            )}
           </div>
         </div>
 
         {!banks.length && (
           <div className="mt-8 rounded-[10px] border border-dashed border-slate-300 dark:border-white/10 p-10 text-center">
             <HiOutlineDocumentText className="mx-auto h-12 w-12 text-slate-400" />
-            <p className="mt-3 font-semibold text-slate-700 dark:text-slate-300">Hali test to‘plami yaratilmagan</p>
-            <p className="mt-1 text-sm text-slate-500">«Savollar qo‘shish» tugmasini bosib birinchi to‘plamni kiriting.</p>
+            <p className="mt-3 font-semibold text-slate-700 dark:text-slate-300">{t('banks_empty_title')}</p>
+            <p className="mt-1 text-sm text-slate-500">{t('banks_empty_desc')}</p>
             <button
               type="button"
-              className="btn-primary mt-4 text-sm !rounded-[10px]"
+              className="btn-primary mt-4 text-sm !rounded-[10px] cursor-pointer"
               onClick={() => setOpen(true)}
             >
-              <HiOutlinePlus className="h-4 w-4" /> To‘plam qo‘shish
+              <HiOutlinePlus className="h-4 w-4" /> {t('banks_add_questions')}
             </button>
           </div>
         )}
@@ -197,72 +188,87 @@ export function Banks() {
                   <div className="flex items-start justify-between gap-2">
                     <Link
                       href={`/banks/${bank.id}`}
-                      className="font-display font-bold text-base text-slate-900 group-hover:text-med-600 dark:text-white dark:group-hover:text-med-400 transition-colors"
+                      className="font-display font-bold text-base text-slate-900 group-hover:text-med-600 dark:text-white dark:group-hover:text-med-400 transition-colors truncate"
                       data-testid={`link-bank-${bank.id}`}
                     >
                       {bank.name}
                     </Link>
                     <span className="badge-primary shrink-0 text-xs !rounded-[10px]">
-                      {playableCount} tayyor
+                      {playableCount} {t('banks_ready_count')}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    Jami {(bank.questions ?? []).length} ta savol
-                  </p>
-
-                  {/* Imtihon Kalendari & Mashqlar Tugmasi */}
-                  <button
-                    type="button"
-                    onClick={() => setCalendarBank(bank)}
-                    className={`mt-2.5 w-full flex items-center justify-between px-2.5 py-1.5 rounded-[8px] text-xs font-semibold border transition-all ${
-                      daysLeft !== null
-                        ? 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20'
-                        : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-white/10'
-                    }`}
-                    title="Imtihon kalendarini ochish"
-                  >
-                    <span className="flex items-center gap-1.5 truncate">
-                      <Icon name="ri-calendar-event-line" className={daysLeft !== null ? 'text-amber-500' : 'text-slate-400'} />
-                      <span className="truncate">{daysLeft !== null ? `Imtihon: ${schedule?.examDate}` : 'Imtihon kalendari'}</span>
-                    </span>
-                    <span className="font-bold text-[11px] shrink-0 ml-1">
-                      {daysLeft !== null ? `${daysLeft} kun` : 'Reja →'}
-                    </span>
-                  </button>
+                  <div className="mt-1 flex items-center gap-2 flex-wrap">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {t('banks_total_questions', { count: (bank.questions ?? []).length })}
+                    </p>
+                    {daysLeft !== null && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-[6px]">
+                        <Icon name="ri-calendar-line text-[11px]" />
+                        <span>{t('banks_days_left', { days: daysLeft })}</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="mt-4 flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/5">
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
+                    {/* Boshlash (Play) Icon Button */}
                     <Link
                       href={`/play/${bank.id}`}
-                      className={`inline-flex items-center gap-1 rounded-[10px] px-3 py-1.5 text-xs font-semibold ${
+                      className={`inline-flex items-center justify-center h-9 w-9 rounded-[10px] transition-all shadow-xs active:scale-95 ${
                         playableCount > 0
-                          ? 'bg-med-600 hover:bg-med-500 text-white shadow-xs'
-                          : 'pointer-events-none bg-slate-200 text-slate-400 dark:bg-[#1f2937] dark:text-slate-500'
+                          ? 'bg-med-600 hover:bg-med-500 text-white'
+                          : 'pointer-events-none bg-slate-200 text-slate-400 dark:bg-[#1f2937] dark:text-slate-500 opacity-50'
                       }`}
+                      title={t('banks_play_btn')}
+                      data-testid={`link-play-${bank.id}`}
                     >
-                      <HiOutlinePlay className="h-3.5 w-3.5" /> Boshlash
+                      <Icon name="ri-play-fill text-lg" />
                     </Link>
+
+                    {/* Tahrirlash (Edit) Icon Button */}
                     <Link
                       href={`/banks/${bank.id}`}
-                      className="inline-flex items-center gap-1 rounded-[10px] bg-slate-100 hover:bg-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 dark:bg-white/5 dark:hover:bg-white/10 dark:text-slate-300"
+                      className="inline-flex items-center justify-center h-9 w-9 rounded-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-white/5 dark:hover:bg-white/10 dark:text-slate-200 border border-slate-200/80 dark:border-white/10 transition-all active:scale-95 cursor-pointer"
+                      title={t('banks_edit_btn')}
+                      data-testid={`link-edit-${bank.id}`}
                     >
-                      <HiOutlinePencilAlt className="h-3.5 w-3.5" /> Tahrirlash
+                      <Icon name="ri-edit-line text-base" />
                     </Link>
+
+                    {/* Imtihon Kalendari (Exam Calendar) Icon Button */}
+                    <button
+                      type="button"
+                      onClick={() => setCalendarBank(bank)}
+                      className={`relative inline-flex items-center justify-center h-9 w-9 rounded-[10px] border transition-all active:scale-95 cursor-pointer ${
+                        daysLeft !== null
+                          ? 'bg-amber-500/15 border-amber-500/30 text-amber-600 dark:text-amber-400'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-600 dark:bg-white/5 dark:hover:bg-white/10 dark:text-slate-300 border-slate-200/80 dark:border-white/10'
+                      }`}
+                      title={daysLeft !== null ? `Imtihon: ${schedule?.examDate} (${daysLeft} kun qoldi)` : t('banks_calendar_btn')}
+                    >
+                      <Icon name="ri-calendar-event-line text-base" />
+                      {daysLeft !== null && (
+                        <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-amber-500 text-[9px] font-extrabold text-white">
+                          {daysLeft}k
+                        </span>
+                      )}
+                    </button>
                   </div>
 
+                  {/* O'chirish (Delete) Icon Button */}
                   <button
                     type="button"
-                    className="inline-flex items-center rounded-[10px] p-1.5 text-xs text-slate-400 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400"
+                    className="inline-flex items-center justify-center h-9 w-9 rounded-[10px] text-slate-400 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 transition-colors active:scale-95 cursor-pointer"
                     data-testid={`button-delete-bank-${bank.id}`}
-                    title="To‘plamni o‘chirish"
+                    title={t('banks_delete_btn')}
                     onClick={() => {
                       if (window.confirm(`«${bank.name}» to‘plamini o‘chirishni tasdiqlaysizmi?`)) {
                         deleteBank(bank.id);
                       }
                     }}
                   >
-                    <HiOutlineTrash className="h-4 w-4" />
+                    <Icon name="ri-delete-bin-line text-base" />
                   </button>
                 </div>
               </div>

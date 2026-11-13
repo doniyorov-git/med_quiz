@@ -203,7 +203,7 @@ export function Profile() {
             <button
               type="button"
               onClick={() => setEditModalOpen(true)}
-              className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-[12px] border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 shadow-sm transition-all hover:border-emerald-400 hover:text-emerald-700 active:scale-95 sm:w-auto dark:border-white/10 dark:bg-white/5 dark:text-slate-100"
+              className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-[10px] border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 shadow-sm transition-all hover:border-emerald-400 hover:text-emerald-700 active:scale-95 sm:w-auto dark:border-white/10 dark:bg-white/5 dark:text-slate-100"
               data-testid="btn-open-edit-modal"
             >
               <Icon name="ri-edit-line" className="text-emerald-600 dark:text-emerald-400" />
@@ -213,16 +213,16 @@ export function Profile() {
 
           {/* Title / level chips */}
           <div className="mt-3.5 flex flex-wrap items-center gap-1.5">
-            <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-bold sm:text-xs ${currentTitle.color}`}>
+            <span className={`inline-flex items-center gap-1 rounded-[10px] border px-2.5 py-1 text-[11px] font-bold sm:text-xs ${currentTitle.color}`}>
               <Icon name={currentTitle.icon} className="text-xs" />
               <span className="truncate">{currentTitle.title}</span>
             </span>
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 sm:text-xs dark:bg-white/10 dark:text-slate-300">Daraja {levelFromXp(xp)}</span>
-            <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-600 sm:text-xs dark:bg-amber-500/10 dark:text-amber-400">
+            <span className="rounded-[10px] bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 sm:text-xs dark:bg-white/10 dark:text-slate-300">Daraja {levelFromXp(xp)}</span>
+            <span className="rounded-[10px] bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-600 sm:text-xs dark:bg-amber-500/10 dark:text-amber-400">
               {(xp ?? 0).toLocaleString()} XP
             </span>
             {me.avatar && (
-              <button type="button" onClick={() => updateMe({ avatar: null })} className="rounded-full p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-500/10" title="Rasmni o‘chirish" aria-label="Rasmni o‘chirish">
+              <button type="button" onClick={() => updateMe({ avatar: null })} className="rounded-[10px] p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-500/10" title="Rasmni o‘chirish" aria-label="Rasmni o‘chirish">
                 <Icon name="ri-delete-bin-line" className="text-sm" />
               </button>
             )}
@@ -245,7 +245,7 @@ export function Profile() {
               { label: 'G‘alabalar', value: stats?.battleWins ?? 0, icon: 'ri-trophy-line', box: 'bg-sky-50 border-sky-100 dark:bg-sky-500/10 dark:border-sky-500/20', ic: 'text-sky-600 dark:text-sky-400', num: 'text-sky-700 dark:text-sky-300' },
               { label: 'Streak', value: `${stats?.streak ?? 0} kun`, icon: 'ri-fire-fill', box: 'bg-amber-50 border-amber-100 dark:bg-amber-500/10 dark:border-amber-500/20', ic: 'text-amber-500', num: 'text-amber-700 dark:text-amber-300' },
             ].map((c) => (
-              <div key={c.label} className={`rounded-[14px] border p-2.5 text-center sm:p-3.5 ${c.box}`}>
+              <div key={c.label} className={`rounded-[10px] border p-2.5 text-center sm:p-3.5 ${c.box}`}>
                 <Icon name={c.icon} className={`text-lg sm:text-xl ${c.ic}`} />
                 <p className={`mt-1 text-base font-extrabold leading-none sm:text-xl ${c.num}`}>{c.value}</p>
                 <p className="mt-1 text-[10px] font-semibold text-slate-500 sm:text-xs dark:text-slate-400">{c.label}</p>
@@ -256,7 +256,7 @@ export function Profile() {
       </Panel>
 
       {/* Tabs: Tibbiy Darajalar vs Faol Seanslar */}
-      <div className="flex gap-1 overflow-x-auto rounded-[14px] border border-slate-200/80 bg-slate-100/70 p-1 scrollbar-hide dark:border-white/10 dark:bg-white/5">
+      <div className="flex gap-1 overflow-x-auto rounded-[10px] border border-slate-200/80 bg-slate-100/70 p-1 scrollbar-hide dark:border-white/10 dark:bg-white/5">
         <button
           type="button"
           onClick={() => setProfileTab('titles')}

@@ -272,21 +272,21 @@ export function BattleLobby() {
           </div>
           <Link
             href="/friends"
-            className="text-xs font-semibold px-2.5 py-1.5 rounded-[8px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all flex items-center gap-1.5 shrink-0 self-start sm:self-auto"
+            className="text-xs font-bold h-8 px-3 rounded-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all flex items-center gap-1.5 shrink-0 self-start sm:self-auto cursor-pointer"
           >
             <Icon name="ri-user-add-line" />
             <span>Do‘st qo‘shish</span>
           </Link>
         </div>
 
-        {/* Filter Pills */}
+        {/* Filter Pills (rounded-[10px]) */}
         <div className="flex items-center gap-1.5 mt-3 overflow-x-auto scrollbar-hide text-xs pb-1">
           <button
             type="button"
             onClick={() => setFriendFilter('all')}
-            className={`px-3 py-1.5 rounded-full font-medium transition-colors shrink-0 ${
+            className={`h-8 px-3 rounded-[10px] text-xs font-bold transition-all shrink-0 cursor-pointer ${
               friendFilter === 'all'
-                ? 'bg-primary text-white font-semibold shadow-xs'
+                ? 'bg-primary text-white shadow-xs'
                 : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10'
             }`}
           >
@@ -295,9 +295,9 @@ export function BattleLobby() {
           <button
             type="button"
             onClick={() => setFriendFilter('online')}
-            className={`px-3 py-1.5 rounded-full font-medium transition-colors shrink-0 flex items-center gap-1.5 ${
+            className={`h-8 px-3 rounded-[10px] text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
               friendFilter === 'online'
-                ? 'bg-emerald-600 text-white font-semibold shadow-xs'
+                ? 'bg-emerald-600 text-white shadow-xs'
                 : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10'
             }`}
           >
@@ -307,9 +307,9 @@ export function BattleLobby() {
           <button
             type="button"
             onClick={() => setFriendFilter('offline')}
-            className={`px-3 py-1.5 rounded-full font-medium transition-colors shrink-0 flex items-center gap-1.5 ${
+            className={`h-8 px-3 rounded-[10px] text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
               friendFilter === 'offline'
-                ? 'bg-slate-700 text-white font-semibold shadow-xs'
+                ? 'bg-slate-700 text-white shadow-xs'
                 : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10'
             }`}
           >

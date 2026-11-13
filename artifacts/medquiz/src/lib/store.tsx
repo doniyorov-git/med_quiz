@@ -20,11 +20,14 @@ import {
   subscribePresence,
 } from '@/lib/model';
 import type { Me } from '@/lib/types';
+import { saveStoredAccount } from '@/lib/auth-storage';
 
 type Theme = 'light' | 'dark';
 
 export type EnterData = {
   name: string;
+  username?: string;
+  password?: string;
   phone?: string;
   email?: string;
   university?: string;
@@ -96,6 +99,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         ? {
             ...existing,
             name: trimmedName,
+            ...(data.username !== undefined ? { username: data.username } : {}),
+            ...(data.password !== undefined ? { password: data.password } : {}),
             ...(data.phone !== undefined ? { phone: data.phone } : {}),
             ...(data.email !== undefined ? { email: data.email } : {}),
             ...(data.university !== undefined ? { university: data.university } : {}),
@@ -106,6 +111,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         : {
             id: uid('user'),
             name: trimmedName,
+            username: data.username || undefined,
+            password: data.password || '',
             phone: data.phone || '',
             email: data.email || '',
             university: data.university || '',
@@ -114,6 +121,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             avatar: data.avatar || null,
           };
       saveMe(next);
+      saveStoredAccount({
+        id: next.id,
+        name: next.name,
+        username: next.username || defaultUsername(next.name, next.id),
+        phone: next.phone || '',
+        password: next.password || '',
+        email: next.email || '',
+        avatar: next.avatar || null,
+        createdAt: Date.now(),
+      });
       setMe(next);
       setLast(next);
     },

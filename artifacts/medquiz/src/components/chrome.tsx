@@ -25,6 +25,8 @@ import { HiOutlineBell } from 'react-icons/hi';
 import { useBanks, useInvites, useOnline, useStatsMap, useStore } from '@/lib/store';
 import { getMedicalTitle, joinRoom, respondInvite } from '@/lib/model';
 import { ThemeSwitch } from '@/components/theme-toggle';
+import { LanguageSwitcher } from '@/components/language-switcher';
+import { useI18n, type TranslationKey } from '@/lib/i18n';
 
 import { HiOutlineUserGroup, HiUserGroup } from 'react-icons/hi';
 
@@ -59,23 +61,22 @@ export function Field({ label, children }: { label: string; children: ReactNode 
 
 export const fieldClass = 'input-field';
 
-const sideNav = [
-  { href: '/dashboard', label: 'Boshqaruv', icon: HiOutlineHome },
-  { href: '/friends', label: 'Do‘stlar', icon: HiOutlineUserGroup },
-  { href: '/banks', label: 'To‘plamlar', icon: HiOutlineCollection },
-  { href: '/mistakes', label: 'Xatolarim', icon: HiOutlineExclamationCircle },
-  { href: '/battle', label: 'Battle', icon: HiOutlineLightningBolt },
-  { href: '/leaderboard', label: 'Reyting', icon: HiOutlineChartSquareBar },
-  { href: '/achievements', label: 'Yutuqlar', icon: HiOutlineStar },
+const sideNav: { href: string; labelKey: TranslationKey; defaultLabel: string; icon: any }[] = [
+  { href: '/dashboard', labelKey: 'nav_dashboard', defaultLabel: 'Boshqaruv', icon: HiOutlineHome },
+  { href: '/friends', labelKey: 'nav_friends', defaultLabel: 'Do‘stlar', icon: HiOutlineUserGroup },
+  { href: '/banks', labelKey: 'nav_banks', defaultLabel: 'To‘plamlar', icon: HiOutlineCollection },
+  { href: '/mistakes', labelKey: 'nav_mistakes', defaultLabel: 'Xatolarim', icon: HiOutlineExclamationCircle },
+  { href: '/battle', labelKey: 'nav_battle', defaultLabel: 'Battle', icon: HiOutlineLightningBolt },
+  { href: '/leaderboard', labelKey: 'nav_leaderboard', defaultLabel: 'Reyting', icon: HiOutlineChartSquareBar },
+  { href: '/achievements', labelKey: 'nav_achievements', defaultLabel: 'Yutuqlar', icon: HiOutlineStar },
 ];
 
-const mobileNav = [
-  { href: '/dashboard', label: 'Asosiy', icon: 'ri-home-5-line', active: 'ri-home-5-fill' },
-  { href: '/banks', label: 'To‘plamlar', icon: 'ri-book-2-line', active: 'ri-book-2-fill' },
-  { href: '/battle', label: 'Battle', icon: 'ri-sword-line', active: 'ri-sword-fill' },
-  { href: '/leaderboard', label: 'Reyting', icon: 'ri-trophy-line', active: 'ri-trophy-fill' },
-  { href: '/friends', label: 'Do‘stlar', icon: 'ri-group-line', active: 'ri-group-fill' },
-  { href: '/profile', label: 'Profil', icon: 'ri-user-3-line', active: 'ri-user-3-fill' },
+const mobileNav: { href: string; labelKey: TranslationKey; defaultLabel: string; icon: string; active: string }[] = [
+  { href: '/dashboard', labelKey: 'nav_home', defaultLabel: 'Asosiy', icon: 'ri-home-5-line', active: 'ri-home-5-fill' },
+  { href: '/banks', labelKey: 'nav_banks', defaultLabel: 'To‘plamlar', icon: 'ri-book-2-line', active: 'ri-book-2-fill' },
+  { href: '/battle', labelKey: 'nav_battle', defaultLabel: 'Battle', icon: 'ri-sword-line', active: 'ri-sword-fill' },
+  { href: '/leaderboard', labelKey: 'nav_leaderboard', defaultLabel: 'Reyting', icon: 'ri-trophy-line', active: 'ri-trophy-fill' },
+  { href: '/profile', labelKey: 'nav_profile', defaultLabel: 'Profil', icon: 'ri-user-3-line', active: 'ri-user-3-fill' },
 ];
 
 function SideDock({ xp, streak, quizzes }: { xp: number; streak: number; quizzes: number }) {
@@ -118,6 +119,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const { me, leave } = useStore();
   const stats = useStatsMap()[me?.id ?? ''];
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -127,6 +129,17 @@ export function Shell({ children }: { children: ReactNode }) {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
 
   useEffect(() => setOpen(false), [location]);
@@ -155,12 +168,15 @@ export function Shell({ children }: { children: ReactNode }) {
           </Link>
           <nav className="flex min-h-0 flex-1 flex-col px-3 py-4 overflow-y-auto scrollbar-hide" aria-label="Asosiy">
             <div className="space-y-1">
-              {sideNav.map((item) => (
-                <Link key={item.href} href={item.href} className={itemClass(item.href)} data-testid={`link-nav-${item.label}`}>
-                  <item.icon className="w-5 h-5" />
-                  <span>{item.label}</span>
-                </Link>
-              ))}
+              {sideNav.map((item) => {
+                const label = t(item.labelKey) || item.defaultLabel;
+                return (
+                  <Link key={item.href} href={item.href} className={itemClass(item.href)} data-testid={`link-nav-${item.defaultLabel}`}>
+                    <item.icon className="w-5 h-5" />
+                    <span>{label}</span>
+                  </Link>
+                );
+              })}
             </div>
             <div className="mt-auto pt-4">
               <SideDock xp={stats?.xp ?? 0} streak={stats?.streak ?? 0} quizzes={stats?.quizzes ?? 0} />
@@ -209,12 +225,15 @@ export function Shell({ children }: { children: ReactNode }) {
             </div>
             <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-4">
               <div className="space-y-1">
-                {sideNav.map((item) => (
-                  <Link key={item.href} href={item.href} className={itemClass(item.href)}>
-                    <item.icon className="h-5 w-5" />
-                    <span>{item.label}</span>
-                  </Link>
-                ))}
+                {sideNav.map((item) => {
+                  const label = t(item.labelKey) || item.defaultLabel;
+                  return (
+                    <Link key={item.href} href={item.href} className={itemClass(item.href)}>
+                      <item.icon className="h-5 w-5" />
+                      <span>{label}</span>
+                    </Link>
+                  );
+                })}
               </div>
               <div className="mt-auto pt-4">
                 <SideDock xp={stats?.xp ?? 0} streak={stats?.streak ?? 0} quizzes={stats?.quizzes ?? 0} />
@@ -223,7 +242,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <div className="border-t border-slate-200/80 dark:border-white/10 p-4 space-y-3">
               <ThemeSwitch />
               <button type="button" onClick={leave} className="flex w-full items-center justify-center gap-2 rounded-[10px] px-4 py-2.5 text-rose-600 hover:bg-rose-500/10 dark:text-rose-400 font-semibold text-xs border border-rose-500/20">
-                <HiOutlineLogout className="h-5 w-5" /> Chiqish
+                <HiOutlineLogout className="h-5 w-5" /> {t('nav_logout')}
               </button>
             </div>
           </div>
@@ -232,37 +251,46 @@ export function Shell({ children }: { children: ReactNode }) {
 
       <div className="min-w-0 flex-1 overflow-x-hidden lg:pl-64">
         <header className="sticky top-0 z-30 border-b border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-[#090d16]/95 backdrop-blur-xl shadow-xs transition-colors duration-200">
-          <div className="flex items-center justify-between px-4 py-3.5 lg:px-8">
-            <button type="button" className="rounded-[10px] p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/5 lg:hidden" aria-label="Menyu" onClick={() => setOpen(true)}>
-              <HiOutlineMenu className="h-6 w-6" />
-            </button>
-            <Link href="/dashboard" className="hidden items-center gap-2.5 sm:flex" data-testid="link-header-logo">
-              <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-gradient-to-br from-med-500 to-med-600 font-display text-lg font-bold text-white shadow-xs">M</span>
-              <span className="font-display text-lg font-bold text-slate-900 dark:text-white">MedQuiz</span>
-            </Link>
+          <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 lg:px-8">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="group flex items-center gap-2 rounded-[10px] border border-slate-200/80 bg-slate-100/80 px-2.5 py-1.5 sm:px-3 sm:py-2 transition-colors hover:bg-slate-200/60 dark:border-white/10 dark:bg-[#1f2937]/50 dark:hover:bg-[#1f2937]">
-                <HiOutlineSearch className="h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white shrink-0" />
+              <button
+                type="button"
+                className="flex items-center justify-center h-10 w-10 rounded-[10px] border border-slate-200/80 bg-slate-100/80 hover:bg-slate-200/60 text-slate-600 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 dark:text-slate-300 lg:hidden shrink-0 cursor-pointer"
+                aria-label="Menyu"
+                onClick={() => setOpen(true)}
+              >
+                <HiOutlineMenu className="h-5 w-5" />
+              </button>
+              <Link href="/dashboard" className="flex items-center gap-2 sm:gap-2.5" data-testid="link-header-logo">
+                <span className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-gradient-to-br from-med-500 to-med-600 font-display text-lg font-bold text-white shadow-xs shrink-0">M</span>
+                <span className="font-display text-lg font-bold text-slate-900 dark:text-white">MedQuiz</span>
+              </Link>
+            </div>
+
+            <div className="flex items-center gap-1.5 sm:gap-2.5">
+              {/* Search input with exact matching h-10 */}
+              <div className="group flex items-center h-10 rounded-[10px] border border-slate-200/80 bg-slate-100/80 px-2.5 sm:px-3 hover:bg-slate-200/60 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 transition-colors">
+                <HiOutlineSearch className="h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white shrink-0 mr-1.5 sm:mr-2" />
                 <input
                   value={query}
                   onChange={(event) => { setQuery(event.target.value); setSearchOpen(true); }}
                   onFocus={() => setSearchOpen(true)}
                   placeholder="Qidirish..."
-                  className="w-16 sm:w-28 bg-transparent text-xs sm:text-sm text-slate-800 dark:text-slate-200 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 md:w-44"
+                  className="w-16 sm:w-28 md:w-44 bg-transparent text-xs sm:text-sm text-slate-800 dark:text-slate-200 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   data-testid="input-search"
                 />
-                <kbd className="hidden rounded-[6px] border border-slate-200 bg-white dark:border-white/10 dark:bg-[#1f2937] px-1.5 py-0.5 text-[11px] text-slate-500 md:inline">⌘K</kbd>
+                <kbd className="hidden rounded-[6px] border border-slate-200 bg-white dark:border-white/10 dark:bg-[#1f2937] px-1.5 py-0.5 text-[10px] text-slate-500 md:inline ml-1.5">⌘K</kbd>
               </div>
+
+              {/* Language Switcher */}
+              <LanguageSwitcher />
+
+              {/* InviteBell */}
               <InviteBell />
-              <Link href="/profile" className="hidden lg:flex items-center gap-3 rounded-[10px] p-1.5 pr-3 hover:bg-slate-100 dark:hover:bg-white/5" data-testid="link-header-profile">
-                <Avatar name={me?.name ?? ''} image={me?.avatar} rounded="rounded-[10px]" />
-                <div className="hidden md:block text-left">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white leading-tight">{me?.name}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium">
-                    <Icon name={myTitle.icon} className="text-primary text-xs" />
-                    <span>{myTitle.title}</span>
-                  </p>
-                </div>
+
+              <Link href="/profile" className="hidden lg:flex items-center gap-2.5 h-10 rounded-[10px] border border-slate-200/80 bg-slate-100/80 hover:bg-slate-200/60 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 px-2.5" data-testid="link-header-profile">
+                <Avatar name={me?.name ?? ''} image={me?.avatar} rounded="rounded-[8px]" size="w-7 h-7" />
+                <span className="text-xs font-semibold text-slate-900 dark:text-white truncate max-w-[100px]">{me?.name}</span>
               </Link>
             </div>
           </div>
@@ -281,6 +309,7 @@ export function Shell({ children }: { children: ReactNode }) {
           {mobileNav.map((item) => {
             const active = isActive(location, item.href);
             const iconName = active ? item.active : item.icon;
+            const label = t(item.labelKey) || item.defaultLabel;
             return (
               <Link
                 key={item.href}
@@ -297,7 +326,7 @@ export function Shell({ children }: { children: ReactNode }) {
                     active ? 'font-semibold text-med-600 dark:text-med-400' : 'text-slate-500 dark:text-slate-400'
                   }`}
                 >
-                  {item.label}
+                  {label}
                 </span>
               </Link>
             );
@@ -447,14 +476,14 @@ function InviteBell() {
     <>
       <button
         type="button"
-        className="relative rounded-[10px] border border-slate-200/80 bg-white/80 p-2 text-slate-600 backdrop-blur-xl hover:bg-slate-100 hover:text-slate-900 dark:border-white/10 dark:bg-[#111827] dark:text-slate-300 dark:hover:bg-[#1f2937] dark:hover:text-white"
+        className="relative flex items-center justify-center h-10 w-10 rounded-[10px] border border-slate-200/80 bg-slate-100/80 hover:bg-slate-200/60 text-slate-600 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 dark:text-slate-300 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
         aria-label="Takliflar"
         data-testid="button-invites"
         onClick={() => setOpen((value) => !value)}
       >
         <Icon name="ri-notification-3-line" className="text-lg" />
         {incoming.length > 0 && (
-          <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[9px] font-bold text-white animate-pulse">
+          <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-500 text-[9px] font-bold text-white shadow-xs animate-pulse">
             {incoming.length}
           </span>
         )}

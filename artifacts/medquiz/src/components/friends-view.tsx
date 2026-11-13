@@ -116,7 +116,7 @@ export function FriendsView({ me, onSelectUserForBattle }: FriendsViewProps) {
         <button
           type="button"
           onClick={() => setTab('all')}
-          className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-[8px] text-xs font-bold transition-all ${
+          className={`flex items-center justify-center gap-1.5 h-9 px-2 rounded-[8px] text-xs font-bold transition-all ${
             tab === 'all'
               ? 'bg-white dark:bg-[#1f2937] text-primary shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -132,7 +132,7 @@ export function FriendsView({ me, onSelectUserForBattle }: FriendsViewProps) {
         <button
           type="button"
           onClick={() => setTab('online')}
-          className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-[8px] text-xs font-bold transition-all ${
+          className={`flex items-center justify-center gap-1.5 h-9 px-2 rounded-[8px] text-xs font-bold transition-all ${
             tab === 'online'
               ? 'bg-white dark:bg-[#1f2937] text-emerald-600 dark:text-emerald-400 shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -148,7 +148,7 @@ export function FriendsView({ me, onSelectUserForBattle }: FriendsViewProps) {
         <button
           type="button"
           onClick={() => setTab('friends')}
-          className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-[8px] text-xs font-bold transition-all ${
+          className={`flex items-center justify-center gap-1.5 h-9 px-2 rounded-[8px] text-xs font-bold transition-all ${
             tab === 'friends'
               ? 'bg-white dark:bg-[#1f2937] text-primary shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -164,7 +164,7 @@ export function FriendsView({ me, onSelectUserForBattle }: FriendsViewProps) {
         <button
           type="button"
           onClick={() => setTab('pending')}
-          className={`relative flex items-center justify-center gap-1.5 py-2 px-2 rounded-[8px] text-xs font-bold transition-all ${
+          className={`relative flex items-center justify-center gap-1.5 h-9 px-2 rounded-[8px] text-xs font-bold transition-all ${
             tab === 'pending'
               ? 'bg-white dark:bg-[#1f2937] text-primary shadow-xs'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
