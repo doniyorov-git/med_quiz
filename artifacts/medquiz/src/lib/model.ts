@@ -811,22 +811,16 @@ export function answerRoom(meId: string, code: string, picks: number[]) {
 export function tryAdvance(code: string) {
   const existing = getRoom(code);
   if (!existing || existing.status !== 'live') return;
-  const key = String(existing.index);
-  const answers = existing.answers ?? {};
-  const players = existing.players ?? [];
 
-  // 1. Check if all players answered
-  const allAnswered =
-    players.length > 0 &&
-    players.every((player) => Boolean(answers[player?.id]?.[key]));
-
-  // 2. Check if question timer has expired (biror kishi qotib qolsa yoki vaqt tugasa)
+  // Faqat vaqt to‘liq tugaganda avtomatik keyingi savolga o‘tadi!
+  // Foydalanuvchilar javob berganida, javob rangini (yashil/qizil) ko‘rib,
+  // "Keyingi savol" tugmasini bosgandan keyingina keyingisiga o‘tishi kerak.
   const isTimeExpired =
     existing.seconds > 0 &&
     existing.questionStartedAt &&
     Date.now() - existing.questionStartedAt >= existing.seconds * 1000;
 
-  if (!allAnswered && !isTimeExpired) return;
+  if (!isTimeExpired) return;
 
   const nextIndex = existing.index + 1;
   if (nextIndex >= (existing.questions ?? []).length) {

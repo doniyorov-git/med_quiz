@@ -12,6 +12,7 @@ import { MistakesPage } from '@/pages/mistakes';
 import { MistakesPractice } from '@/pages/mistakes-practice';
 import { Play } from '@/pages/play';
 import { Profile } from '@/pages/profile';
+import { SettingsPage } from '@/pages/settings-page';
 import { Welcome } from '@/pages/welcome';
 import type { ReactNode } from 'react';
 
@@ -37,6 +38,7 @@ function Pages() {
       <Route path="/mistakes"><Guard><MistakesPage /></Guard></Route>
       <Route path="/leaderboard"><Guard><Leaderboard /></Guard></Route>
       <Route path="/profile"><Guard><Profile /></Guard></Route>
+      <Route path="/settings"><Guard><SettingsPage /></Guard></Route>
       <Route path="/achievements"><Guard><Achievements /></Guard></Route>
       <Route>
         <div className="grid min-h-[100dvh] place-items-center px-6">

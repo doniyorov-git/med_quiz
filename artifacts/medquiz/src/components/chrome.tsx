@@ -69,6 +69,7 @@ const sideNav: { href: string; labelKey: TranslationKey; defaultLabel: string; i
   { href: '/battle', labelKey: 'nav_battle', defaultLabel: 'Battle', icon: HiOutlineLightningBolt },
   { href: '/leaderboard', labelKey: 'nav_leaderboard', defaultLabel: 'Reyting', icon: HiOutlineChartSquareBar },
   { href: '/achievements', labelKey: 'nav_achievements', defaultLabel: 'Yutuqlar', icon: HiOutlineStar },
+  { href: '/settings', labelKey: 'nav_settings' as TranslationKey, defaultLabel: 'Sozlamalar', icon: HiOutlineCog },
 ];
 
 const mobileNav: { href: string; labelKey: TranslationKey; defaultLabel: string; icon: string; active: string }[] = [

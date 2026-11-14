@@ -369,12 +369,24 @@
     background-color: rgba(16, 185, 129, 0.12);
   }
   .answer-option.correct {
-    border-color: #10b981;
-    background-color: rgba(16, 185, 129, 0.1);
+    border-color: #10b981 !important;
+    background-color: rgba(16, 185, 129, 0.14) !important;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3) !important;
+  }
+  .dark .answer-option.correct {
+    border-color: #10b981 !important;
+    background-color: rgba(16, 185, 129, 0.22) !important;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.4) !important;
   }
   .answer-option.incorrect {
-    border-color: #ef4444;
-    background-color: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444 !important;
+    background-color: rgba(239, 68, 68, 0.14) !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3) !important;
+  }
+  .dark .answer-option.incorrect {
+    border-color: #ef4444 !important;
+    background-color: rgba(239, 68, 68, 0.22) !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.4) !important;
   }
 
   .text-gradient {

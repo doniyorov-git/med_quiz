@@ -32,6 +32,7 @@ import {
   tryAdvance,
 } from '@/lib/model';
 import { cleanQuestion, isCorrectPick } from '@/lib/parser';
+import { playSound } from '@/lib/sound';
 import { useBanks, useInvites, useOnline, useRooms, useStatsMap, useStore } from '@/lib/store';
 import type { FriendRequest, OrderMode, PublicUser, Room } from '@/lib/types';
 
@@ -227,36 +228,112 @@ export function BattleLobby() {
 
   return (
     <div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {/* Card 1: Xona yaratish */}
         <button
           type="button"
-          className="glass-card p-4 text-left hover:border-primary/50 transition-colors"
+          className="group relative overflow-hidden rounded-[16px] border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent p-4 text-left hover:border-emerald-500/60 transition-all shadow-sm active:scale-95 cursor-pointer"
           data-testid="button-open-create-room"
           onClick={() => {
             setError('');
             setSheet('create');
           }}
         >
-          <h2 className="font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
-            <Icon name="ri-sword-line" className="text-primary text-base" /> Xona yaratish
-          </h2>
-          <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">To‘plam, soni va vaqt</p>
+          <div className="flex items-center justify-between">
+            <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-emerald-600 text-white shadow-md shadow-emerald-600/30">
+              <Icon name="ri-sword-line" className="text-xl" />
+            </div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
+              Yangi
+            </span>
+          </div>
+          <h2 className="mt-3 font-bold text-sm sm:text-base text-slate-900 dark:text-white">Xona yaratish</h2>
+          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">To‘plam, soni va vaqtni tanlash</p>
         </button>
+
+        {/* Card 2: Kod bilan qo‘shilish */}
         <button
           type="button"
-          className="glass-card p-4 text-left hover:border-primary/50 transition-colors"
+          className="group relative overflow-hidden rounded-[16px] border border-teal-500/30 bg-gradient-to-br from-teal-500/10 via-teal-500/5 to-transparent p-4 text-left hover:border-teal-500/60 transition-all shadow-sm active:scale-95 cursor-pointer"
           data-testid="button-open-join-room"
           onClick={() => {
             setJoinError('');
             setSheet('join');
           }}
         >
-          <h2 className="font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
-            <Icon name="ri-key-line" className="text-primary text-base" /> Kod bilan qo‘shilish
-          </h2>
-          <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
-            {active ? `Ochiq xona · ${active.code}` : 'Xona kodi va havola'}
+          <div className="flex items-center justify-between">
+            <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-teal-600 text-white shadow-md shadow-teal-600/30">
+              <Icon name="ri-key-line" className="text-xl" />
+            </div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/25">
+              {active ? 'Ochiq' : 'Ulanish'}
+            </span>
+          </div>
+          <h2 className="mt-3 font-bold text-sm sm:text-base text-slate-900 dark:text-white">Kod bilan kirish</h2>
+          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+            {active ? `Ochiq xona: ${active.code}` : 'Do‘st xonasi kodi va link'}
           </p>
+        </button>
+
+        {/* Card 3: Tezkor AI Bot Jangi */}
+        <button
+          type="button"
+          className="group relative overflow-hidden rounded-[16px] border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 via-cyan-500/5 to-transparent p-4 text-left hover:border-cyan-500/60 transition-all shadow-sm active:scale-95 cursor-pointer"
+          onClick={() => {
+            if (!banks.length) {
+              setSheet('create');
+              return;
+            }
+            const b = selectedBank || banks[0];
+            const cleanQs = (b.questions || []).filter(cleanQuestion);
+            if (!cleanQs.length) {
+              setSheet('create');
+              return;
+            }
+            const botList = [
+              { name: 'Dr. Jasur Mansurov', avatar: null },
+              { name: 'Madina Rahimova (Magistr)', avatar: null },
+              { name: 'Shaxzod Aliyev (Nevrolog)', avatar: null },
+              { name: 'Dr. Farrux Zokirov', avatar: null },
+            ];
+            const pickedBot = botList[Math.floor(Math.random() * botList.length)];
+            const botId = `user-seed-bot-${Date.now().toString(36)}`;
+            const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            const shuffledQs = [...cleanQs].sort(() => 0.5 - Math.random()).slice(0, 10);
+            
+            const newRoom: Room = {
+              code: roomCode,
+              hostId: me ? me.id : 'me',
+              bankId: b.id,
+              bankName: b.name,
+              questions: shuffledQs,
+              count: shuffledQs.length,
+              seconds: 25,
+              status: 'live',
+              index: 0,
+              questionStartedAt: Date.now(),
+              players: [
+                { id: me ? me.id : 'me', name: me ? me.name : 'Talaba', avatar: me ? me.avatar : null, seen: Date.now() },
+                { id: botId, name: pickedBot.name, avatar: pickedBot.avatar, seen: Date.now() },
+              ],
+              answers: {},
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            };
+            putRoom(newRoom);
+            setLocation(`/battle/${roomCode}`);
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-gradient-to-tr from-cyan-600 to-blue-600 text-white shadow-md shadow-cyan-600/30">
+              <Icon name="ri-robot-line" className="text-xl" />
+            </div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/25">
+              AI Duel
+            </span>
+          </div>
+          <h2 className="mt-3 font-bold text-sm sm:text-base text-slate-900 dark:text-white">Tezkor Bot Jangi</h2>
+          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Kutmasdan darhol AI bilan bellashuv</p>
         </button>
       </div>
 
@@ -461,13 +538,53 @@ export function BattleLobby() {
                         </Btn>
                       )
                     ) : (
-                      <span
-                        className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-[8px] bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 font-medium cursor-not-allowed select-none border border-slate-200/50 dark:border-white/5"
-                        title="Foydalanuvchi hozir oflayn"
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (active && me) {
+                            sendInvite(me, { id: user.id, name: user.name, avatar: user.avatar ?? null, seen: user.seen || Date.now() }, active);
+                            return;
+                          }
+                          const b = selectedBank || banks[0];
+                          if (!b) {
+                            setSheet('create');
+                            return;
+                          }
+                          const cleanQs = (b.questions || []).filter(cleanQuestion);
+                          if (!cleanQs.length) {
+                            setSheet('create');
+                            return;
+                          }
+                          const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+                          const shuffledQs = [...cleanQs].sort(() => 0.5 - Math.random()).slice(0, 10);
+                          const newRoom: Room = {
+                            code: roomCode,
+                            hostId: me ? me.id : 'me',
+                            bankId: b.id,
+                            bankName: b.name,
+                            questions: shuffledQs,
+                            count: shuffledQs.length,
+                            seconds: 25,
+                            status: 'live',
+                            index: 0,
+                            questionStartedAt: Date.now(),
+                            players: [
+                              { id: me ? me.id : 'me', name: me ? me.name : 'Talaba', avatar: me ? me.avatar : null, seen: Date.now() },
+                              { id: user.id, name: user.name, avatar: user.avatar ?? null, seen: Date.now() },
+                            ],
+                            answers: {},
+                            createdAt: Date.now(),
+                            updatedAt: Date.now(),
+                          };
+                          putRoom(newRoom);
+                          setLocation(`/battle/${roomCode}`);
+                        }}
+                        className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-[8px] bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/25 transition-all cursor-pointer active:scale-95 shadow-xs"
+                        title="Ushbu foydalanuvchini jangga chorlash"
                       >
-                        <Icon name="ri-time-line" className="text-xs" />
-                        <span>Oflayn</span>
-                      </span>
+                        <Icon name="ri-sword-line" className="text-xs" />
+                        <span>Jangga chorlash</span>
+                      </button>
                     )}
                   </div>
                 </div>
@@ -1466,18 +1583,51 @@ function LiveQuestion({ room, meId, host }: { room: Room; meId: string; host: bo
 
   if (!question) return null;
   const shown = mine?.picks ?? picks;
+  const isAnswered = Boolean(mine);
+  const isCorrect = Boolean(mine && mine.points > 0);
+  const isLastQuestion = room.index + 1 >= (room.questions ?? []).length;
+
+  const handleSinglePick = (index: number) => {
+    if (isAnswered) return;
+    const userPicks = [index];
+    answerRoom(meId, room.code, userPicks);
+    const correct = isCorrectPick(question, userPicks);
+    if (!correct) {
+      recordMistake(room.bankId ?? room.bankName, room.bankName, question, userPicks);
+      playSound('wrong');
+    } else {
+      playSound('correct');
+    }
+  };
+
+  const handleMultiSubmit = () => {
+    if (isAnswered || !picks.length) return;
+    answerRoom(meId, room.code, picks);
+    const correct = isCorrectPick(question, picks);
+    if (!correct) {
+      recordMistake(room.bankId ?? room.bankName, room.bankName, question, picks);
+      playSound('wrong');
+    } else {
+      playSound('correct');
+    }
+  };
 
   return (
-    <Panel className="p-4 sm:p-6 space-y-4 shadow-sm">
+    <Panel className="p-4 sm:p-6 space-y-4 shadow-sm !rounded-[16px]">
       <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-white/5 pb-2.5">
-        <p className="text-xs text-muted-foreground flex items-center gap-1.5 font-semibold">
-          <Icon name="ri-questionnaire-line" className="text-primary text-base" />
-          <span>Savol {room.index + 1} / {room.questions.length}</span>
-        </p>
-        <span className="text-[11px] px-2.5 py-0.5 rounded-[8px] bg-primary/10 text-primary font-bold">
+        <div className="flex items-center gap-2">
+          <span className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-primary/10 text-primary font-bold text-xs">
+            {room.index + 1}
+          </span>
+          <p className="text-xs text-muted-foreground font-bold">
+            Savol {room.index + 1} / {room.questions.length}
+          </p>
+        </div>
+        <span className="text-[11px] px-2.5 py-1 rounded-[8px] bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 font-bold border border-slate-200/60 dark:border-white/10">
           {multi ? 'Ko‘p javobli' : 'Bitta to‘g‘ri javob'}
         </span>
       </div>
+
       {question.image && (
         <img
           src={question.image}
@@ -1485,21 +1635,20 @@ function LiveQuestion({ room, meId, host }: { room: Room; meId: string; host: bo
           className="my-3 max-h-52 sm:max-h-72 w-full rounded-[10px] object-contain border border-slate-200/60 dark:border-white/10"
         />
       )}
+
       <h2 className="text-base sm:text-lg font-bold leading-relaxed text-slate-900 dark:text-white">
         {question.prompt}
       </h2>
+
+      {/* Answer Options */}
       <Choices
         question={question}
         picks={shown}
-        locked={!!mine}
+        locked={isAnswered}
         onPick={(index) => {
-          if (mine) return;
+          if (isAnswered) return;
           if (!multi) {
-            const userPicks = [index];
-            answerRoom(meId, room.code, userPicks);
-            if (!isCorrectPick(question, userPicks)) {
-              recordMistake(room.bankId ?? room.bankName, room.bankName, question, userPicks);
-            }
+            handleSinglePick(index);
             return;
           }
           setPicks((current) =>
@@ -1507,28 +1656,96 @@ function LiveQuestion({ room, meId, host }: { room: Room; meId: string; host: bo
           );
         }}
       />
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-200/70 dark:border-white/5">
-        <p className="text-xs text-muted-foreground font-medium">
-          {mine ? `+${mine.points} ball${mine.points >= 25 ? ' · birinchi javob!' : ''}` : 'Tezroq va to‘g‘ri javob bergan ko‘proq ball oladi'}
-        </p>
-        <div className="flex gap-2">
-          {multi && !mine && (
-            <Btn
-              className="py-2 px-4 text-xs sm:text-sm font-semibold !rounded-[10px]"
-              disabled={!picks.length}
-              onClick={() => {
-                answerRoom(meId, room.code, picks);
-                if (!isCorrectPick(question, picks)) {
-                  recordMistake(room.bankId ?? room.bankName, room.bankName, question, picks);
-                }
-              }}
+
+      {/* Immediate Answer Feedback Banner (Yashil to'g'ri / Qizil noto'g'ri) */}
+      {isAnswered && (
+        <div
+          className={`mt-4 p-4 rounded-[14px] border-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200 ${
+            isCorrect
+              ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-950 dark:text-emerald-100'
+              : 'border-rose-500/50 bg-rose-500/10 text-rose-950 dark:text-rose-100'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] text-white font-extrabold text-2xl shadow-md ${
+                isCorrect ? 'bg-emerald-600 shadow-emerald-600/30' : 'bg-rose-600 shadow-rose-600/30'
+              }`}
             >
-              Javobni yuborish
+              {isCorrect ? '✓' : '✕'}
+            </div>
+            <div>
+              <p
+                className={`text-sm sm:text-base font-extrabold leading-tight ${
+                  isCorrect ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'
+                }`}
+              >
+                {isCorrect
+                  ? `To‘g‘ri javob! ${mine.points >= 25 ? '⚡ Birinchi bo‘lib topdingiz (+25 ball)' : `+${mine.points} ball`}`
+                  : 'Noto‘g‘ri javob (0 ball)'}
+              </p>
+              <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                {isCorrect
+                  ? 'Barakalla! Keyingi savolga o‘tish uchun tugmani bosing.'
+                  : 'To‘g‘ri javob yuqorida yashil bilan belgilandi. Xatolar ro‘yxatingizga olindi.'}
+              </p>
+            </div>
+          </div>
+
+          {/* Keyingi savolga o'tish tugmasi */}
+          <button
+            type="button"
+            onClick={() => forceNext(meId, room.code)}
+            className={`w-full sm:w-auto h-11 px-6 rounded-[12px] font-extrabold text-xs sm:text-sm text-white shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95 shrink-0 ${
+              isCorrect
+                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-emerald-500/30'
+                : 'bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 shadow-slate-900/20'
+            }`}
+          >
+            <span>{isLastQuestion ? 'Natijalarni ko‘rish 🏆' : 'Keyingi savol ➔'}</span>
+          </button>
+        </div>
+      )}
+
+      {/* Multi submit button & bottom navigation */}
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-200/70 dark:border-white/5">
+        <p className="text-xs text-muted-foreground font-medium">
+          {!isAnswered
+            ? 'Birinchi to‘g‘ri javob bergan 25 ball, qolganlar 10 ball oladi.'
+            : isCorrect
+            ? 'Ball balansingizga qo‘shildi.'
+            : 'Xato tahlili xatolar bo‘limida saqlanadi.'}
+        </p>
+
+        <div className="flex gap-2">
+          {multi && !isAnswered && (
+            <Btn
+              className="py-2.5 px-5 text-xs sm:text-sm font-bold !rounded-[12px] bg-emerald-600 hover:bg-emerald-700 text-white"
+              disabled={!picks.length}
+              onClick={handleMultiSubmit}
+            >
+              Javobni tasdiqlash
             </Btn>
           )}
-          {host && (
-            <Btn kind="line" className="py-2 px-4 text-xs sm:text-sm font-semibold !rounded-[10px]" onClick={() => forceNext(meId, room.code)}>
-              Keyingisini ochish
+
+          {isAnswered && (
+            <button
+              type="button"
+              onClick={() => forceNext(meId, room.code)}
+              className="px-4 py-2 rounded-[10px] bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-sm"
+            >
+              <span>{isLastQuestion ? 'Natijalar' : 'Keyingisi'}</span>
+              <Icon name="ri-arrow-right-line" />
+            </button>
+          )}
+
+          {host && !isAnswered && (
+            <Btn
+              kind="line"
+              className="py-1.5 px-3 text-xs font-semibold !rounded-[8px]"
+              onClick={() => forceNext(meId, room.code)}
+            >
+              Savolni o‘tkazib yuborish
             </Btn>
           )}
         </div>
