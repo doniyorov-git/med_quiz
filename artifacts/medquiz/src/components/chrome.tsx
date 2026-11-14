@@ -161,13 +161,13 @@ export function Shell({ children }: { children: ReactNode }) {
       {!isBattleRoom && (
         <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 z-50">
         <div className="flex flex-col flex-grow bg-white/95 dark:bg-[#111827] border-r border-slate-200/80 dark:border-white/10">
-          <Link href="/dashboard" className="flex items-center gap-3 px-6 py-5 border-b border-slate-200/80 dark:border-white/10" data-testid="link-logo">
-            <div className="w-10 h-10 rounded-[10px] bg-gradient-to-br from-med-500 to-med-600 flex items-center justify-center shadow-md shadow-med-500/30">
+          <Link href="/dashboard" className="flex items-center gap-3 px-6 h-16 border-b border-slate-200/80 dark:border-white/10 shrink-0" data-testid="link-logo">
+            <div className="w-10 h-10 rounded-[10px] bg-gradient-to-br from-med-500 to-med-600 flex items-center justify-center shadow-md shadow-med-500/30 shrink-0">
               <span className="text-xl font-display font-bold text-white">M</span>
             </div>
             <div>
-              <h1 className="font-display font-bold text-lg text-slate-900 dark:text-white">MedQuiz</h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Tibbiy ta’lim</p>
+              <h1 className="font-display font-bold text-lg text-slate-900 dark:text-white leading-tight">MedQuiz</h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-none mt-0.5">Tibbiy ta’lim</p>
             </div>
           </Link>
           <nav className="flex min-h-0 flex-1 flex-col px-3 py-4 overflow-y-auto scrollbar-hide" aria-label="Asosiy">
@@ -256,8 +256,8 @@ export function Shell({ children }: { children: ReactNode }) {
 
       <div className={isBattleRoom ? 'min-h-screen w-full flex flex-col overflow-x-hidden' : 'min-w-0 flex-1 overflow-x-hidden lg:pl-64'}>
         {!isBattleRoom && (
-          <header className="sticky top-0 z-30 border-b border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-[#090d16]/95 backdrop-blur-xl shadow-xs transition-colors duration-200">
-            <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 lg:px-8">
+          <header className="sticky top-0 z-30 h-16 border-b border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-[#090d16]/95 backdrop-blur-xl shadow-xs transition-colors duration-200">
+            <div className="flex h-full items-center justify-between px-3 sm:px-4 lg:px-8">
               <div className="flex items-center gap-2 sm:gap-3">
                 <button
                   type="button"
@@ -267,10 +267,40 @@ export function Shell({ children }: { children: ReactNode }) {
                 >
                   <HiOutlineMenu className="h-5 w-5" />
                 </button>
-                <Link href="/dashboard" className="flex items-center gap-2 sm:gap-2.5" data-testid="link-header-logo">
+                {/* Mobile logo: hidden on desktop to avoid duplicate logo with sidebar */}
+                <Link href="/dashboard" className="flex lg:hidden items-center gap-2 sm:gap-2.5" data-testid="link-header-logo">
                   <span className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-gradient-to-br from-med-500 to-med-600 font-display text-lg font-bold text-white shadow-xs shrink-0">M</span>
                   <span className="font-display text-lg font-bold text-slate-900 dark:text-white">MedQuiz</span>
                 </Link>
+                {/* Desktop breadcrumb / Section title */}
+                <div className="hidden lg:flex items-center gap-2 text-xs font-semibold text-slate-400">
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    MedQuiz
+                  </span>
+                  <span>/</span>
+                  <span className="text-slate-800 dark:text-slate-200 font-bold text-sm">
+                    {location === '/dashboard'
+                      ? 'Boshqaruv'
+                      : location === '/banks'
+                      ? 'To‘plamlar'
+                      : location === '/battle'
+                      ? 'Battle'
+                      : location === '/friends'
+                      ? 'Do‘stlar'
+                      : location === '/leaderboard'
+                      ? 'Reyting'
+                      : location === '/achievements'
+                      ? 'Yutuqlar'
+                      : location === '/mistakes'
+                      ? 'Xatolarim'
+                      : location === '/profile'
+                      ? 'Profil'
+                      : location === '/settings'
+                      ? 'Sozlamalar'
+                      : 'Platforma'}
+                  </span>
+                </div>
               </div>
 
               <div className="flex items-center gap-1.5 sm:gap-2.5">
@@ -294,9 +324,27 @@ export function Shell({ children }: { children: ReactNode }) {
                 {/* InviteBell */}
                 <InviteBell />
 
-                <Link href="/profile" className="hidden lg:flex items-center gap-2.5 h-10 rounded-[10px] border border-slate-200/80 bg-slate-100/80 hover:bg-slate-200/60 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 px-2.5" data-testid="link-header-profile">
-                  <Avatar name={me?.name ?? ''} image={me?.avatar} rounded="rounded-[8px]" />
-                  <span className="text-xs font-semibold text-slate-900 dark:text-white truncate max-w-[100px]">{me?.name}</span>
+                {/* Desktop Profile Pill */}
+                <Link
+                  href="/profile"
+                  className="hidden lg:flex items-center gap-2 h-10 pl-1.5 pr-3 rounded-[10px] border border-slate-200/80 bg-slate-100/80 hover:bg-slate-200/60 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
+                  data-testid="link-header-profile"
+                  title="Profil sozlamalari"
+                >
+                  {me?.avatar ? (
+                    <img
+                      src={me.avatar}
+                      alt={me.name}
+                      className="h-7 w-7 rounded-[7px] object-cover shrink-0 shadow-xs"
+                    />
+                  ) : (
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-display text-xs font-bold shadow-xs">
+                      {(me?.name || 'M').trim()[0]?.toUpperCase()}
+                    </span>
+                  )}
+                  <span className="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[120px]">
+                    {me?.name || 'Talaba'}
+                  </span>
                 </Link>
               </div>
             </div>
@@ -573,11 +621,27 @@ function SearchSheet({ query, setQuery, onClose }: { query: string; setQuery: (v
   );
 }
 
-export function Avatar({ name, image, large = false, rounded = 'rounded-[10px]' }: { name?: string | null; image?: string | null; large?: boolean; rounded?: string }) {
-  const size = large ? 'h-16 w-16 text-xl' : 'h-10 w-10 text-sm';
-  if (image) return <img src={image} alt="" className={`${size} ${rounded} object-cover ring-2 ring-primary/30 shadow-xs`} />;
+export function Avatar({
+  name,
+  image,
+  size,
+  large = false,
+  rounded = 'rounded-[10px]',
+}: {
+  name?: string | null;
+  image?: string | null;
+  size?: string;
+  large?: boolean;
+  rounded?: string;
+}) {
+  const actualSize = size || (large ? 'h-16 w-16 text-xl' : 'h-10 w-10 text-sm');
+  if (image) return <img src={image} alt="" className={`${actualSize} ${rounded} object-cover shadow-xs shrink-0`} />;
   const letter = (name || 'M').trim()[0]?.toUpperCase() || 'M';
-  return <span className={`${size} inline-flex items-center justify-center ${rounded} bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-white/10 font-display font-bold text-slate-700 dark:text-slate-200 shadow-xs`}>{letter}</span>;
+  return (
+    <span className={`${actualSize} shrink-0 inline-flex items-center justify-center ${rounded} bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-display font-bold shadow-xs`}>
+      {letter}
+    </span>
+  );
 }
 
 export function Panel({ children, className = '' }: { children: ReactNode; className?: string }) {
