@@ -213,13 +213,13 @@ export function SettingsView({ onBack, onOpenEditProfile, initialSection = null 
   }, [searchQuery, searchIndex]);
 
   // Section items matching reference screenshot
-  const menuItems: { id: SettingsSection; label: string; icon: string; desc: string }[] = [
-    { id: 'account', label: 'Account', icon: 'ri-user-3-line', desc: 'Shaxsiy ma‘lumotlar va profil' },
-    { id: 'notifications', label: 'Notifications', icon: 'ri-notification-3-line', desc: 'Ovozlar va battle bildirishnomalari' },
-    { id: 'appearance', label: 'Appearance', icon: 'ri-eye-line', desc: 'Mavzu, shrift o‘lchami va kontrast' },
-    { id: 'security', label: 'Privacy & Security', icon: 'ri-lock-2-line', desc: 'Faol seanslar va xavfsizlik' },
-    { id: 'help', label: 'Help and Support', icon: 'ri-headphone-line', desc: 'FAQ, yo‘riqnoma va administrator' },
-    { id: 'about', label: 'About', icon: 'ri-information-line', desc: 'Versiya, ma‘lumotlar va litsenziya' },
+  const menuItems: { id: SettingsSection; label: string; icon: string }[] = [
+    { id: 'account', label: 'Account', icon: 'ri-user-line' },
+    { id: 'notifications', label: 'Notifications', icon: 'ri-notification-3-line' },
+    { id: 'appearance', label: 'Appearance', icon: 'ri-eye-line' },
+    { id: 'security', label: 'Privacy & Security', icon: 'ri-lock-2-line' },
+    { id: 'help', label: 'Help and Support', icon: 'ri-headphone-line' },
+    { id: 'about', label: 'About', icon: 'ri-question-line' },
   ];
 
   const currentTitle = me ? getMedicalTitle(me.xp || 0) : null;
@@ -326,25 +326,22 @@ export function SettingsView({ onBack, onOpenEditProfile, initialSection = null 
                   )}
                 </div>
               ) : (
-                /* The 6 Standard Settings Rows (Matching User Image) */
+                /* The 6 Standard Settings Rows (Matching User Image Exactly) */
                 <div className="rounded-[18px] border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#111827] divide-y divide-slate-100 dark:divide-white/5 overflow-hidden shadow-xs">
                   {menuItems.map((item) => (
                     <button
                       key={item.id}
                       type="button"
                       onClick={() => setActiveSection(item.id)}
-                      className="w-full flex items-center justify-between px-4 sm:px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-white/[0.03] transition-all text-left cursor-pointer active:scale-[0.99]"
+                      className="w-full flex items-center justify-between px-4 sm:px-6 py-4 hover:bg-slate-50/80 dark:hover:bg-white/[0.03] transition-all text-left cursor-pointer active:scale-[0.99]"
                     >
-                      <div className="flex items-center gap-3.5 min-w-0">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-200 border border-slate-200/70 dark:border-white/5">
-                          <Icon name={item.icon} className="text-lg" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{item.label}</p>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{item.desc}</p>
-                        </div>
+                      <div className="flex items-center gap-4 min-w-0">
+                        <Icon name={item.icon} className="text-xl text-slate-800 dark:text-slate-200 shrink-0" />
+                        <span className="text-sm sm:text-base font-medium text-slate-900 dark:text-white leading-tight">
+                          {item.label}
+                        </span>
                       </div>
-                      <Icon name="ri-arrow-right-s-line" className="text-slate-400 dark:text-slate-500 text-2xl shrink-0 ml-2" />
+                      <Icon name="ri-arrow-right-s-line" className="text-slate-400 dark:text-slate-500 text-xl shrink-0 ml-2" />
                     </button>
                   ))}
                 </div>

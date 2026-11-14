@@ -7,6 +7,7 @@ import { BattleVoiceChat } from '@/components/battle-voice-chat';
 import { Btn, Icon, Panel, fieldClass } from '@/components/chrome';
 import { Choices, Ring } from '@/components/choices';
 import { Dropdown } from '@/components/dropdown';
+import { CelebrationBadge, Trophy } from '@/components/result-card';
 import {
   answerRoom,
   beginLive,
@@ -1213,12 +1214,9 @@ export function BattleRoom() {
                 </span>
                 {ranked[0]?.id === me.id ? (
                   <div className="space-y-2">
-                    <div
-                      className="mx-auto my-2"
-                      dangerouslySetInnerHTML={{
-                        __html: `<lord-icon src="https://cdn.lordicon.com/lupuorrc.json" trigger="loop" colors="primary:#10b981,secondary:#f59e0b" style="width:120px;height:120px;margin:0 auto;display:block;"></lord-icon>`,
-                      }}
-                    />
+                    <div className="mx-auto my-3 flex items-center justify-center">
+                      <CelebrationBadge size={130} />
+                    </div>
                     <h2 className="text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">
                       Tabriklaymiz! Siz g‘alaba qozondingiz! 🏆🎉
                     </h2>
@@ -1228,12 +1226,9 @@ export function BattleRoom() {
                   </div>
                 ) : (
                   <div className="space-y-1">
-                    <div
-                      className="mx-auto my-2"
-                      dangerouslySetInnerHTML={{
-                        __html: `<lord-icon src="https://cdn.lordicon.com/fkmafinq.json" trigger="loop" colors="primary:#10b981,secondary:#64748b" style="width:90px;height:90px;margin:0 auto;display:block;"></lord-icon>`,
-                      }}
-                    />
+                    <div className="mx-auto my-3 flex items-center justify-center">
+                      <Trophy size={110} />
+                    </div>
                     <h2 className="text-xl font-bold text-slate-900 dark:text-white">Battle yakunlandi</h2>
                     <p className="text-xs text-slate-500">G‘olib: {ranked[0]?.name || 'Talaba'}</p>
                   </div>
@@ -1281,9 +1276,20 @@ export function BattleRoom() {
                   );
                 })}
               </div>
-              <div className="mt-6 flex justify-center">
-                <Link href="/battle" className="inline-flex items-center gap-2 btn-primary !rounded-[10px] text-xs font-semibold px-4 py-2.5">
-                  <Icon name="ri-refresh-line" /> Yangi battle boshlash
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[10px] border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 text-xs sm:text-sm font-bold shadow-xs transition-all active:scale-95 cursor-pointer"
+                >
+                  <Icon name="ri-home-5-line" className="text-base" />
+                  <span>Bosh sahifa</span>
+                </Link>
+                <Link
+                  href="/battle"
+                  className="inline-flex items-center gap-2 btn-primary !rounded-[10px] text-xs sm:text-sm font-bold px-4 py-2.5 shadow-md shadow-emerald-500/20 transition-all active:scale-95 cursor-pointer"
+                >
+                  <Icon name="ri-refresh-line" className="text-base" />
+                  <span>Yangi battle boshlash</span>
                 </Link>
               </div>
             </Panel>

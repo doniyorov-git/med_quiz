@@ -107,7 +107,12 @@ export function Profile() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [profileTab, setProfileTab] = useState<'settings' | 'sessions'>('settings');
+  const [profileTab, setProfileTab] = useState<'profile' | 'settings'>(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('tab=settings')) {
+      return 'settings';
+    }
+    return 'profile';
+  });
   const [sessions, setSessions] = useState<UserSession[]>(() => getInitialSessions(me?.id || 'guest'));
   const [sessionToast, setSessionToast] = useState('');
 
@@ -200,129 +205,168 @@ export function Profile() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-4 sm:space-y-6">
-      {/* Profile Header Card */}
-      <Panel className="p-4 sm:p-6 shadow-sm !rounded-[10px]">
-        <div>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex min-w-0 flex-1 items-center gap-3.5 sm:gap-5">
-              {/* Avatar (Direct gallery picker, rounded-[10px], NOT rounded-full) */}
-              <div className="relative shrink-0">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="sr-only"
-                  onChange={handleAvatarChange}
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="group flex h-20 w-20 sm:h-24 sm:w-24 cursor-pointer items-center justify-center overflow-hidden rounded-[10px] border-2 border-slate-200/90 bg-slate-100 text-slate-700 shadow-sm transition-all hover:opacity-95 dark:border-white/10 dark:bg-slate-800 dark:text-slate-200 active:scale-95"
-                  title="Galereyadan rasm tanlash"
-                >
-                  {me.avatar ? (
-                    <img src={me.avatar} alt={me.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center">
-                      <Icon name="ri-user-3-fill" className="text-3xl text-slate-500 dark:text-slate-400" />
-                      <span className="text-[10px] font-bold tracking-wider text-slate-500 dark:text-slate-400">{me.name.slice(0, 2).toUpperCase() || 'MQ'}</span>
+    <div className="mx-auto max-w-2xl space-y-4 sm:space-y-6">
+      {/* Top Segmented Controller: Profil VS Sozlamalar */}
+      <div className="flex items-center justify-center p-1 rounded-[14px] bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 max-w-sm mx-auto shadow-xs">
+        <button
+          type="button"
+          onClick={() => setProfileTab('profile')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-[10px] text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+            profileTab === 'profile'
+              ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-xs'
+              : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <Icon name="ri-user-3-line" className="text-base" /> Profil
+        </button>
+        <button
+          type="button"
+          onClick={() => setProfileTab('settings')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-[10px] text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+            profileTab === 'settings'
+              ? 'bg-white dark:bg-[#111827] text-emerald-600 dark:text-emerald-400 shadow-xs'
+              : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <Icon name="ri-settings-3-line" className="text-base" /> Sozlamalar
+        </button>
+      </div>
+
+      {profileTab === 'settings' ? (
+        <SettingsView onOpenEditProfile={() => setEditModalOpen(true)} />
+      ) : (
+        <>
+          {/* Profile Header Card */}
+          <Panel className="p-4 sm:p-6 shadow-sm !rounded-[10px]">
+            <div>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 flex-1 items-center gap-3.5 sm:gap-5">
+                  {/* Avatar (Direct gallery picker, rounded-[10px], NOT rounded-full) */}
+                  <div className="relative shrink-0">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={handleAvatarChange}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="group flex h-20 w-20 sm:h-24 sm:w-24 cursor-pointer items-center justify-center overflow-hidden rounded-[10px] border-2 border-slate-200/90 bg-slate-100 text-slate-700 shadow-sm transition-all hover:opacity-95 dark:border-white/10 dark:bg-slate-800 dark:text-slate-200 active:scale-95"
+                      title="Galereyadan rasm tanlash"
+                    >
+                      {me.avatar ? (
+                        <img src={me.avatar} alt={me.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center">
+                          <Icon name="ri-user-3-fill" className="text-3xl text-slate-500 dark:text-slate-400" />
+                          <span className="text-[10px] font-bold tracking-wider text-slate-500 dark:text-slate-400">{me.name.slice(0, 2).toUpperCase() || 'MQ'}</span>
+                        </div>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      title="Galereyadan rasm yuklash"
+                      aria-label="Galereyadan rasm yuklash"
+                      className="absolute -bottom-1 -right-1 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-[8px] bg-primary text-white shadow-md ring-2 ring-white transition-all hover:scale-110 active:scale-95 dark:ring-[#111827]"
+                    >
+                      <Icon name="ri-camera-fill" className="text-xs text-white" />
+                    </button>
+                  </div>
+
+                  {/* Identity */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h1 className="truncate text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl dark:text-white">{me.name}</h1>
+                      <span className="inline-flex items-center gap-1 rounded-[8px] bg-amber-500/15 border border-amber-500/25 px-2.5 py-1 text-xs font-bold text-amber-600 dark:text-amber-400">
+                        <Icon name="ri-fire-fill" /> {stats?.streak ?? 0} kun
+                      </span>
                     </div>
-                  )}
-                </button>
+                    <p className="truncate font-mono text-xs font-semibold text-primary sm:text-sm mt-0.5">@{me.username}</p>
+                  </div>
+                </div>
+
+                {/* Edit Profile Button */}
                 <button
                   type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  title="Galereyadan rasm yuklash"
-                  aria-label="Galereyadan rasm yuklash"
-                  className="absolute -bottom-1 -right-1 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-[8px] bg-primary text-white shadow-md ring-2 ring-white transition-all hover:scale-110 active:scale-95 dark:ring-[#111827]"
+                  onClick={() => setEditModalOpen(true)}
+                  className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 h-10 px-4 rounded-[10px] border border-slate-200/90 bg-slate-100/90 hover:bg-slate-200/70 text-sm font-bold text-slate-800 shadow-xs transition-all active:scale-95 sm:w-auto dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 dark:text-slate-100"
+                  data-testid="btn-open-edit-modal"
                 >
-                  <Icon name="ri-camera-fill" className="text-xs text-white" />
+                  <Icon name="ri-edit-line" className="text-emerald-600 dark:text-emerald-400" />
+                  <span>Tahrirlash</span>
                 </button>
               </div>
 
-              {/* Identity */}
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="truncate text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl dark:text-white">{me.name}</h1>
-                  <span className="inline-flex items-center gap-1 rounded-[8px] bg-amber-500/15 border border-amber-500/25 px-2.5 py-1 text-xs font-bold text-amber-600 dark:text-amber-400">
-                    <Icon name="ri-fire-fill" /> {stats?.streak ?? 0} kun
-                  </span>
+              {/* Title / Level / Points Badges - Prominently Visible & Bold */}
+              <div className="mt-4 flex flex-wrap items-center gap-2.5">
+                {/* Medical Title */}
+                <div className={`inline-flex items-center gap-2 rounded-[10px] border px-4 py-2.5 text-xs sm:text-sm font-extrabold shadow-xs ${currentTitle.color}`}>
+                  <Icon name={currentTitle.icon} className="text-base sm:text-lg" />
+                  <span>{currentTitle.title}</span>
                 </div>
-                <p className="truncate font-mono text-xs font-semibold text-primary sm:text-sm mt-0.5">@{me.username}</p>
+
+                {/* Level */}
+                <div className="inline-flex items-center gap-2 rounded-[10px] border border-slate-200/90 bg-slate-100/90 px-4 py-2.5 text-xs sm:text-sm font-extrabold text-slate-800 dark:border-white/10 dark:bg-white/10 dark:text-white shadow-xs">
+                  <Icon name="ri-medal-line" className="text-base sm:text-lg text-primary" />
+                  <span>Daraja {levelFromXp(xp)}</span>
+                </div>
+
+                {/* Points (XP) */}
+                <div className="inline-flex items-center gap-2 rounded-[10px] border border-amber-500/30 bg-amber-500/15 px-4 py-2.5 text-xs sm:text-sm font-extrabold text-amber-700 dark:text-amber-300 shadow-xs">
+                  <Icon name="ri-flashlight-fill" className="text-base sm:text-lg text-amber-500" />
+                  <span>{(xp ?? 0).toLocaleString()} XP</span>
+                </div>
+
+                {me.avatar && (
+                  <button
+                    type="button"
+                    onClick={() => updateMe({ avatar: null })}
+                    className="h-10 px-3 rounded-[10px] border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                    title="Rasmni o‘chirish"
+                  >
+                    <Icon name="ri-delete-bin-line" className="text-base" />
+                    <span>Rasmni o‘chirish</span>
+                  </button>
+                )}
+              </div>
+
+              {me.bio && <p className="mt-3 text-xs italic text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/5 p-2.5 rounded-[8px] border border-slate-200/60 dark:border-white/5">“{me.bio}”</p>}
+              {uploading && <p className="mt-2 animate-pulse text-xs text-primary font-bold">Galereyadan rasm yuklanmoqda...</p>}
+              {uploadError && <p className="mt-2 text-xs text-rose-500 font-semibold">{uploadError}</p>}
+
+              {/* Quick stats grid */}
+              <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
+                {[
+                  { label: 'Testlar', value: stats?.quizzes ?? 0, icon: 'ri-file-list-3-line', box: 'bg-emerald-50 border-emerald-100 dark:bg-emerald-500/10 dark:border-emerald-500/20', ic: 'text-emerald-600 dark:text-emerald-400', num: 'text-emerald-700 dark:text-emerald-300' },
+                  { label: 'G‘alabalar', value: stats?.battleWins ?? 0, icon: 'ri-trophy-line', box: 'bg-sky-50 border-sky-100 dark:bg-sky-500/10 dark:border-sky-500/20', ic: 'text-sky-600 dark:text-sky-400', num: 'text-sky-700 dark:text-sky-300' },
+                  { label: 'Streak', value: `${stats?.streak ?? 0} kun`, icon: 'ri-fire-fill', box: 'bg-amber-50 border-amber-100 dark:bg-amber-500/10 dark:border-amber-500/20', ic: 'text-amber-500', num: 'text-amber-700 dark:text-amber-300' },
+                ].map((c) => (
+                  <div key={c.label} className={`rounded-[10px] border p-2.5 text-center sm:p-3.5 ${c.box}`}>
+                    <Icon name={c.icon} className={`text-lg sm:text-xl ${c.ic}`} />
+                    <p className={`mt-1 text-base font-extrabold leading-none sm:text-xl ${c.num}`}>{c.value}</p>
+                    <p className="mt-1 text-[10px] font-semibold text-slate-500 sm:text-xs dark:text-slate-400">{c.label}</p>
+                  </div>
+                ))}
               </div>
             </div>
+          </Panel>
 
-            {/* Edit Profile Button */}
+          {/* Quick link to Settings from Profile */}
+          <div className="pt-1 flex justify-center">
             <button
               type="button"
-              onClick={() => setEditModalOpen(true)}
-              className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 h-10 px-4 rounded-[10px] border border-slate-200/90 bg-slate-100/90 hover:bg-slate-200/70 text-sm font-bold text-slate-800 shadow-xs transition-all active:scale-95 sm:w-auto dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 dark:text-slate-100"
-              data-testid="btn-open-edit-modal"
+              onClick={() => setProfileTab('settings')}
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-[12px] border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#111827] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 text-xs sm:text-sm font-bold shadow-xs transition-all active:scale-95 cursor-pointer"
             >
-              <Icon name="ri-edit-line" className="text-emerald-600 dark:text-emerald-400" />
-              <span>Tahrirlash</span>
+              <Icon name="ri-settings-3-line" className="text-base text-emerald-600 dark:text-emerald-400" />
+              <span>Barcha sozlamalarni ochish (iOS)</span>
             </button>
           </div>
-
-          {/* Title / Level / Points Badges - Prominently Visible & Bold (Kattaroq va yaqqol ko'rinadigan) */}
-          <div className="mt-4 flex flex-wrap items-center gap-2.5">
-            {/* Medical Title */}
-            <div className={`inline-flex items-center gap-2 rounded-[10px] border px-4 py-2.5 text-xs sm:text-sm font-extrabold shadow-xs ${currentTitle.color}`}>
-              <Icon name={currentTitle.icon} className="text-base sm:text-lg" />
-              <span>{currentTitle.title}</span>
-            </div>
-
-            {/* Level */}
-            <div className="inline-flex items-center gap-2 rounded-[10px] border border-slate-200/90 bg-slate-100/90 px-4 py-2.5 text-xs sm:text-sm font-extrabold text-slate-800 dark:border-white/10 dark:bg-white/10 dark:text-white shadow-xs">
-              <Icon name="ri-medal-line" className="text-base sm:text-lg text-primary" />
-              <span>Daraja {levelFromXp(xp)}</span>
-            </div>
-
-            {/* Points (XP) */}
-            <div className="inline-flex items-center gap-2 rounded-[10px] border border-amber-500/30 bg-amber-500/15 px-4 py-2.5 text-xs sm:text-sm font-extrabold text-amber-700 dark:text-amber-300 shadow-xs">
-              <Icon name="ri-flashlight-fill" className="text-base sm:text-lg text-amber-500" />
-              <span>{(xp ?? 0).toLocaleString()} XP</span>
-            </div>
-
-            {me.avatar && (
-              <button
-                type="button"
-                onClick={() => updateMe({ avatar: null })}
-                className="h-10 px-3 rounded-[10px] border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
-                title="Rasmni o‘chirish"
-              >
-                <Icon name="ri-delete-bin-line" className="text-base" />
-                <span>Rasmni o‘chirish</span>
-              </button>
-            )}
-          </div>
-
-          {me.bio && <p className="mt-3 text-xs italic text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/5 p-2.5 rounded-[8px] border border-slate-200/60 dark:border-white/5">“{me.bio}”</p>}
-          {uploading && <p className="mt-2 animate-pulse text-xs text-primary font-bold">Galereyadan rasm yuklanmoqda...</p>}
-          {uploadError && <p className="mt-2 text-xs text-rose-500 font-semibold">{uploadError}</p>}
-
-          {/* Quick stats grid */}
-          <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
-            {[
-              { label: 'Testlar', value: stats?.quizzes ?? 0, icon: 'ri-file-list-3-line', box: 'bg-emerald-50 border-emerald-100 dark:bg-emerald-500/10 dark:border-emerald-500/20', ic: 'text-emerald-600 dark:text-emerald-400', num: 'text-emerald-700 dark:text-emerald-300' },
-              { label: 'G‘alabalar', value: stats?.battleWins ?? 0, icon: 'ri-trophy-line', box: 'bg-sky-50 border-sky-100 dark:bg-sky-500/10 dark:border-sky-500/20', ic: 'text-sky-600 dark:text-sky-400', num: 'text-sky-700 dark:text-sky-300' },
-              { label: 'Streak', value: `${stats?.streak ?? 0} kun`, icon: 'ri-fire-fill', box: 'bg-amber-50 border-amber-100 dark:bg-amber-500/10 dark:border-amber-500/20', ic: 'text-amber-500', num: 'text-amber-700 dark:text-amber-300' },
-            ].map((c) => (
-              <div key={c.label} className={`rounded-[10px] border p-2.5 text-center sm:p-3.5 ${c.box}`}>
-                <Icon name={c.icon} className={`text-lg sm:text-xl ${c.ic}`} />
-                <p className={`mt-1 text-base font-extrabold leading-none sm:text-xl ${c.num}`}>{c.value}</p>
-                <p className="mt-1 text-[10px] font-semibold text-slate-500 sm:text-xs dark:text-slate-400">{c.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Panel>
-
-      {/* Target iOS-Style Settings Component (Matching User's Reference Screenshot) */}
-      <div className="pt-2">
-        <SettingsView onOpenEditProfile={() => setEditModalOpen(true)} />
-      </div>
+        </>
+      )}
 
       {/* Bottom Sheet Modal for Editing Personal Details */}
       {editModalOpen && (

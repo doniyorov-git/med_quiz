@@ -6,6 +6,7 @@ import { ResultCard, bigBtn, bigBtnLine } from '@/components/result-card';
 import { recordMistake, removeMistake } from '@/lib/model';
 import { isCorrectPick, shuffle } from '@/lib/parser';
 import { useBanks, useMistakes } from '@/lib/store';
+import { playSound } from '@/lib/sound';
 import type { MistakeItem, Question } from '@/lib/types';
 
 type Result = { item: MistakeItem; ok: boolean; picks: number[] };
@@ -194,21 +195,7 @@ export function MistakesPractice() {
               Qayta sozlash
             </button>
           }
-        >
-          {wrong.length > 0 && (
-            <div className="space-y-2">
-              <p className="px-1 text-xs font-bold uppercase tracking-wider text-rose-500">Yana xato qilganlaringiz</p>
-              {wrong.map((r) => (
-                <div key={r.item.id} className="rounded-[18px] border border-slate-200/80 bg-white p-3 text-sm shadow-xs dark:border-white/10 dark:bg-[#111827]">
-                  <p className="font-medium text-slate-900 dark:text-white">{r.item.prompt}</p>
-                  <p className="mt-1 text-xs text-green-600 dark:text-green-400">
-                    <Icon name="ri-check-line" /> {r.item.options.filter((o) => o.correct).map((o) => o.text).join('; ')}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </ResultCard>
+        />
       </div>
     );
   }
@@ -297,7 +284,15 @@ export function MistakesPractice() {
 
         <div className="mt-3 flex justify-end sm:mt-5">
           {!run.locked ? (
-            <Btn className="px-3.5 py-1.5 text-xs sm:text-sm" disabled={!run.picks.length} onClick={() => setRun({ ...run, locked: true })}>
+            <Btn
+              className="px-3.5 py-1.5 text-xs sm:text-sm"
+              disabled={!run.picks.length}
+              onClick={() => {
+                const ok = isCorrectPick(question, run.picks);
+                playSound(ok ? 'correct' : 'wrong');
+                setRun({ ...run, locked: true });
+              }}
+            >
               Tekshirish
             </Btn>
           ) : (

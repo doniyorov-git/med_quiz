@@ -7,6 +7,7 @@ import { ResultCard, bigBtn, bigBtnLine } from '@/components/result-card';
 import { recordDailyWorkoutProgress, recordSolo, recordMistake, toggleSaveQuestion, getMistakes } from '@/lib/model';
 import { cleanQuestion, isCorrectPick, shuffle } from '@/lib/parser';
 import { useBanks, useStore } from '@/lib/store';
+import { playSound } from '@/lib/sound';
 import type { OrderMode, Question } from '@/lib/types';
 
 type Run = {
@@ -184,28 +185,7 @@ export function Play() {
               To‘plamlarga qaytish
             </Link>
           }
-        >
-          <p className="mb-2 px-1 text-xs font-bold uppercase tracking-wider text-slate-400">{bank.name} · javoblar tahlili</p>
-          <div className="space-y-2">
-            {run.review.map((item, index) => (
-              <div
-                key={`${item.prompt}-${index}`}
-                className="rounded-[18px] border border-slate-200/80 bg-white p-3 text-sm shadow-xs dark:border-white/10 dark:bg-[#111827]"
-              >
-                <p
-                  className={
-                    item.ok
-                      ? 'flex items-start gap-1.5 font-medium text-green-700 dark:text-green-300'
-                      : 'flex items-start gap-1.5 font-medium text-rose-600 dark:text-rose-400'
-                  }
-                >
-                  <Icon name={item.ok ? 'ri-checkbox-circle-fill' : 'ri-close-circle-fill'} className="mt-0.5 text-base" />
-                  <span className="line-clamp-2">{item.prompt}</span>
-                </p>
-              </div>
-            ))}
-          </div>
-        </ResultCard>
+        />
       </div>
     );
   }
@@ -294,7 +274,16 @@ export function Play() {
         <Choices question={question} picks={run.picks} locked={run.locked} onPick={toggle} />
         <div className="mt-3 sm:mt-5 flex justify-end">
           {!run.locked ? (
-            <Btn className="py-1.5 px-3.5 text-xs sm:text-sm" testId="button-check" disabled={!run.picks.length} onClick={() => setRun({ ...run, locked: true })}>
+            <Btn
+              className="py-1.5 px-3.5 text-xs sm:text-sm"
+              testId="button-check"
+              disabled={!run.picks.length}
+              onClick={() => {
+                const ok = isCorrectPick(question, run.picks);
+                playSound(ok ? 'correct' : 'wrong');
+                setRun({ ...run, locked: true });
+              }}
+            >
               Tekshirish
             </Btn>
           ) : (

@@ -39,6 +39,57 @@ export function Trophy({ size = 150, className = '' }: { size?: number; classNam
   );
 }
 
+/** Instant vector celebration badge with party popper, star rays and confetti (0ms network delay). */
+export function CelebrationBadge({ size = 120, className = '' }: { size?: number; className?: string }) {
+  return (
+    <div className={`relative inline-flex items-center justify-center ${className}`} style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg" className="overflow-visible animate-in zoom-in duration-300">
+        <defs>
+          <linearGradient id="partyCone" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#10b981" />
+            <stop offset="100%" stopColor="#059669" />
+          </linearGradient>
+          <linearGradient id="partyGold" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#fbbf24" />
+            <stop offset="100%" stopColor="#f59e0b" />
+          </linearGradient>
+        </defs>
+
+        {/* Pulsing ambient glow */}
+        <circle cx="70" cy="70" r="48" fill="#10b981" opacity="0.14" className="animate-pulse" />
+
+        {/* Floating confetti dots */}
+        <circle cx="28" cy="38" r="4" fill="#f59e0b" />
+        <circle cx="112" cy="35" r="3.5" fill="#38bdf8" />
+        <circle cx="20" cy="72" r="3.5" fill="#ec4899" />
+        <circle cx="118" cy="75" r="4" fill="#a855f7" />
+        <circle cx="46" cy="22" r="3.5" fill="#10b981" />
+        <circle cx="95" cy="24" r="3.5" fill="#f43f5e" />
+
+        {/* Streamers */}
+        <path d="M25 50 Q36 40 30 26" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <path d="M110 52 Q122 42 116 26" stroke="#38bdf8" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        <path d="M68 20 Q76 8 86 14" stroke="#ec4899" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+
+        {/* Party popper cone centered inside container */}
+        <g transform="translate(70, 78) rotate(-14) translate(-70, -78)">
+          <path d="M48 96 L70 46 L92 96 Z" fill="url(#partyCone)" stroke="#047857" strokeWidth="2.5" strokeLinejoin="round" />
+          <path d="M57 76 L83 76" stroke="#fbbf24" strokeWidth="4" strokeLinecap="round" />
+          <path d="M62 64 L78 64" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" opacity="0.85" />
+          <path d="M70 44 L70 26" stroke="#f59e0b" strokeWidth="3.5" strokeLinecap="round" />
+          <path d="M64 45 L50 32" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" />
+          <path d="M76 45 L90 32" stroke="#ec4899" strokeWidth="3" strokeLinecap="round" />
+        </g>
+
+        {/* Sparkling stars */}
+        <path d="M70 10 L72.5 17 L79 19.5 L72.5 22 L70 29 L67.5 22 L61 19.5 L67.5 17 Z" fill="#fbbf24" />
+        <path d="M102 48 L104 52.5 L108.5 54.5 L104 56.5 L102 61 L100 56.5 L95.5 54.5 L100 52.5 Z" fill="#fbbf24" />
+        <path d="M38 48 L40 52.5 L44.5 54.5 L40 56.5 L38 61 L36 56.5 L31.5 54.5 L36 52.5 Z" fill="#38bdf8" />
+      </svg>
+    </div>
+  );
+}
+
 /** Coin chip: "2185 XP" reward pill in medical theme. */
 export function XpChip({ value, label = 'XP' }: { value: number | string; label?: string }) {
   return (
@@ -58,6 +109,7 @@ function verdict(percent: number) {
 
 /**
  * Result Card with Trophy, celebration animations and medical theme.
+ * Illustration is strictly contained INSIDE the card (no floating outside).
  */
 export function ResultCard({
   percent,
@@ -78,32 +130,31 @@ export function ResultCard({
 }) {
   const v = verdict(percent);
   return (
-    <div className="pop-in relative mx-auto max-w-md pt-24">
-      {/* Top illustration: Lordicon celebration for 100% or SVG trophy */}
-      <div className="absolute left-1/2 top-0 z-10 -translate-x-1/2">
-        {percent >= 80 ? (
-          <div
-            className="trophy-bob"
-            dangerouslySetInnerHTML={{
-              __html: `<lord-icon src="https://cdn.lordicon.com/lupuorrc.json" trigger="loop" colors="primary:#10b981,secondary:#f59e0b" style="width:150px;height:150px;display:block;margin:0 auto;filter:drop-shadow(0 12px 20px rgba(16,185,129,0.35));"></lord-icon>`,
-            }}
-          />
-        ) : (
-          <Trophy size={160} className="trophy-bob drop-shadow-[0_14px_18px_rgba(16,185,129,0.25)]" />
-        )}
-      </div>
-
-      <div className="relative overflow-hidden rounded-[24px] border border-slate-200/90 bg-white px-5 pb-5 pt-24 text-center shadow-lg dark:border-white/10 dark:bg-[#111827]">
+    <div className="pop-in relative mx-auto max-w-md w-full">
+      <div className="relative overflow-hidden rounded-[24px] border border-slate-200/90 bg-white px-5 pb-6 pt-6 text-center shadow-xl dark:border-white/10 dark:bg-[#111827]">
         <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-emerald-500/10 blur-3xl" />
 
+        {/* Celebration Illustration strictly INSIDE the card container */}
+        <div className="mx-auto mb-3 flex items-center justify-center">
+          {percent >= 80 ? (
+            <CelebrationBadge size={120} />
+          ) : (
+            <Trophy size={110} className="trophy-bob drop-shadow-[0_12px_16px_rgba(16,185,129,0.25)]" />
+          )}
+        </div>
+
         {percent === 100 && (
-          <div className="mb-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 font-bold text-xs">
+          <div className="mb-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 font-bold text-xs">
             <span>🎉 Mukammal g‘alaba!</span>
           </div>
         )}
 
-        <h1 className="relative font-display text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">{v.title}</h1>
-        <p className="relative mx-auto mt-1.5 max-w-xs text-sm text-slate-500 dark:text-slate-400">{v.text}</p>
+        <h1 className="relative font-display text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+          {v.title}
+        </h1>
+        <p className="relative mx-auto mt-1.5 max-w-xs text-sm text-slate-500 dark:text-slate-400">
+          {v.text}
+        </p>
 
         <div className="relative mt-4 grid grid-cols-2 gap-2.5">
           <div className="rounded-[14px] bg-slate-50 px-3 py-3 border border-slate-100 dark:border-white/5 dark:bg-white/5">
@@ -114,7 +165,9 @@ export function ResultCard({
             <p className="text-[11px] font-semibold text-slate-500">to‘g‘ri javob</p>
           </div>
           <div className="rounded-[14px] bg-emerald-50 px-3 py-3 border border-emerald-100 dark:border-emerald-900/30 dark:bg-emerald-500/10">
-            <p className="text-2xl font-extrabold tabular-nums text-emerald-600 dark:text-emerald-400">{percent}%</p>
+            <p className="text-2xl font-extrabold tabular-nums text-emerald-600 dark:text-emerald-400">
+              {percent}%
+            </p>
             <p className="text-[11px] font-semibold text-slate-500">aniqlik</p>
           </div>
         </div>
