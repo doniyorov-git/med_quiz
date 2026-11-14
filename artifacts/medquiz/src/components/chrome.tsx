@@ -69,7 +69,7 @@ const sideNav: { href: string; labelKey: TranslationKey; defaultLabel: string; i
   { href: '/battle', labelKey: 'nav_battle', defaultLabel: 'Battle', icon: HiOutlineLightningBolt },
   { href: '/leaderboard', labelKey: 'nav_leaderboard', defaultLabel: 'Reyting', icon: HiOutlineChartSquareBar },
   { href: '/achievements', labelKey: 'nav_achievements', defaultLabel: 'Yutuqlar', icon: HiOutlineStar },
-  { href: '/settings', labelKey: 'nav_settings' as TranslationKey, defaultLabel: 'Sozlamalar', icon: HiOutlineCog },
+  { href: '/profile', labelKey: 'nav_profile' as TranslationKey, defaultLabel: 'Profil', icon: HiOutlineUser },
 ];
 
 const mobileNav: { href: string; labelKey: TranslationKey; defaultLabel: string; icon: string; active: string }[] = [
@@ -145,8 +145,6 @@ export function Shell({ children }: { children: ReactNode }) {
 
   useEffect(() => setOpen(false), [location]);
 
-  const myTitle = getMedicalTitle(stats?.xp ?? 0);
-
   const itemClass = (href: string) =>
     `flex items-center gap-3 px-4 py-3 rounded-[10px] font-medium transition-all duration-200 ${
       isActive(location, href)
@@ -157,84 +155,94 @@ export function Shell({ children }: { children: ReactNode }) {
   const isBattleRoom = location.startsWith('/battle/') && location !== '/battle';
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col bg-slate-50/50 dark:bg-[#090d16] text-slate-900 dark:text-white">
+      {/* 1. SINGLE FULL-WIDTH TOP HEADER - Unbroken line runs 100% from left to right */}
       {!isBattleRoom && (
-        <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 z-50">
-        <div className="flex flex-col flex-grow bg-white/95 dark:bg-[#111827] border-r border-slate-200/80 dark:border-white/10">
-          <Link href="/dashboard" className="flex items-center gap-3 px-6 h-16 border-b border-slate-200/80 dark:border-white/10 shrink-0" data-testid="link-logo">
-            <div className="w-10 h-10 rounded-[10px] bg-gradient-to-br from-med-500 to-med-600 flex items-center justify-center shadow-md shadow-med-500/30 shrink-0">
-              <span className="text-xl font-display font-bold text-white">M</span>
-            </div>
-            <div>
-              <h1 className="font-display font-bold text-lg text-slate-900 dark:text-white leading-tight">MedQuiz</h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-none mt-0.5">Tibbiy ta’lim</p>
-            </div>
-          </Link>
-          <nav className="flex min-h-0 flex-1 flex-col px-3 py-4 overflow-y-auto scrollbar-hide" aria-label="Asosiy">
-            <div className="space-y-1">
-              {sideNav.map((item) => {
-                const label = t(item.labelKey) || item.defaultLabel;
-                return (
-                  <Link key={item.href} href={item.href} className={itemClass(item.href)} data-testid={`link-nav-${item.defaultLabel}`}>
-                    <item.icon className="w-5 h-5" />
-                    <span>{label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-            <div className="mt-auto pt-4">
-              <SideDock xp={stats?.xp ?? 0} streak={stats?.streak ?? 0} quizzes={stats?.quizzes ?? 0} />
-            </div>
-          </nav>
-          <div className="p-4 border-t border-slate-200/80 dark:border-white/10">
-            <div className="mb-2.5">
-              <ThemeSwitch />
-            </div>
-            <Link href="/profile" className={`flex items-center gap-3 p-3 rounded-[10px] transition-all ${isActive(location, '/profile') ? 'bg-med-500/10' : 'hover:bg-slate-100 dark:hover:bg-white/5'}`}>
-              <Avatar name={me?.name ?? ''} image={me?.avatar} />
-              <div className="min-w-0 flex-1">
-                <p className="font-semibold truncate text-slate-900 dark:text-white">{me?.name}</p>
-                <p className="text-xs text-slate-500 truncate flex items-center gap-1 font-medium">
-                  <Icon name={myTitle.icon} className="text-sm text-primary" />
-                  <span>{myTitle.title}</span>
-                </p>
-              </div>
-            </Link>
-            <div className="mt-3 flex items-center gap-2">
-              <Link href="/profile" className="flex flex-1 items-center justify-center rounded-[10px] px-3 py-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white" aria-label="Sozlamalar">
-                <HiOutlineCog className="h-5 w-5" />
-              </Link>
-              <button type="button" onClick={leave} className="flex flex-1 items-center justify-center rounded-[10px] px-3 py-2 text-slate-500 hover:bg-rose-500/10 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400" aria-label="Chiqish" data-testid="button-leave-side">
-                <HiOutlineLogout className="h-5 w-5" />
+        <header className="sticky top-0 z-40 h-16 w-full border-b border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-[#0e1422]/95 backdrop-blur-xl shadow-xs transition-colors shrink-0">
+          <div className="flex h-full w-full items-center justify-between px-3 sm:px-6">
+            <div className="flex items-center gap-3">
+              {/* Mobile hamburger menu button */}
+              <button
+                type="button"
+                className="flex lg:hidden items-center justify-center h-10 w-10 rounded-[10px] border border-slate-200/80 bg-slate-100/80 hover:bg-slate-200/60 text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 cursor-pointer"
+                aria-label="Menyu"
+                onClick={() => setOpen(true)}
+              >
+                <HiOutlineMenu className="h-5 w-5" />
               </button>
+
+              {/* The ONLY Logo in the entire app: always at top left */}
+              <Link href="/dashboard" className="flex items-center gap-3 select-none" data-testid="link-logo">
+                <div className="w-10 h-10 rounded-[10px] bg-gradient-to-br from-med-500 to-med-600 flex items-center justify-center shadow-md shadow-med-500/30 shrink-0">
+                  <span className="text-xl font-display font-bold text-white">M</span>
+                </div>
+                <div>
+                  <h1 className="font-display font-bold text-lg text-slate-900 dark:text-white leading-tight">MedQuiz</h1>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-none mt-0.5 hidden sm:block">Tibbiy ta’lim</p>
+                </div>
+              </Link>
+            </div>
+
+            {/* Right: Search, Language, Invites, Profile Pill */}
+            <div className="flex items-center gap-1.5 sm:gap-2.5">
+              {/* Search input */}
+              <div className="group flex items-center h-10 rounded-[10px] border border-slate-200/80 bg-slate-100/80 px-2.5 sm:px-3 hover:bg-slate-200/60 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 transition-colors">
+                <HiOutlineSearch className="h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white shrink-0 mr-1.5 sm:mr-2" />
+                <input
+                  value={query}
+                  onChange={(event) => { setQuery(event.target.value); setSearchOpen(true); }}
+                  onFocus={() => setSearchOpen(true)}
+                  placeholder="Qidirish..."
+                  className="w-16 sm:w-28 md:w-44 bg-transparent text-xs sm:text-sm text-slate-800 dark:text-slate-200 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                  data-testid="input-search"
+                />
+                <kbd className="hidden rounded-[6px] border border-slate-200 bg-white dark:border-white/10 dark:bg-[#1f2937] px-1.5 py-0.5 text-[10px] text-slate-500 md:inline ml-1.5">⌘K</kbd>
+              </div>
+
+              {/* Language Switcher */}
+              <LanguageSwitcher />
+
+              {/* InviteBell */}
+              <InviteBell />
+
+              {/* Profile Pill */}
+              <Link
+                href="/profile"
+                className="flex items-center gap-2 h-10 pl-1.5 pr-3 rounded-[10px] border border-slate-200/80 bg-slate-100/80 hover:bg-slate-200/60 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
+                data-testid="link-header-profile"
+                title="Profil"
+              >
+                {me?.avatar ? (
+                  <img
+                    src={me.avatar}
+                    alt={me.name}
+                    className="h-7 w-7 rounded-[7px] object-cover shrink-0 shadow-xs"
+                  />
+                ) : (
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-display text-xs font-bold shadow-xs">
+                    {(me?.name || 'M').trim()[0]?.toUpperCase()}
+                  </span>
+                )}
+                <span className="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[120px]">
+                  {me?.name || 'Talaba'}
+                </span>
+              </Link>
             </div>
           </div>
-        </div>
-      </aside>
+        </header>
       )}
 
-      {open && !isBattleRoom && <button type="button" className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs lg:hidden" aria-label="Menyuni yopish" onClick={() => setOpen(false)} />}
-      {open && !isBattleRoom && (
-        <aside className="fixed inset-y-0 left-0 z-50 w-72 border-r border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#111827] shadow-2xl lg:hidden">
-          <div className="flex h-full flex-col">
-            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-white/10 px-4 py-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-gradient-to-br from-med-500 to-med-600 text-white shadow-md">
-                  <span className="font-display text-xl font-bold">M</span>
-                </div>
-                <span className="font-display text-lg font-bold text-slate-900 dark:text-white">MedQuiz</span>
-              </div>
-              <button type="button" className="rounded-[10px] p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5" onClick={() => setOpen(false)} aria-label="Yopish">
-                <HiOutlineX className="h-6 w-6" />
-              </button>
-            </div>
-            <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-4">
+      {/* 2. BODY CONTENT: Sidebar on Left + Main Content on Right */}
+      <div className="flex flex-1 min-h-0">
+        {!isBattleRoom && (
+          <aside className="hidden lg:flex lg:flex-col lg:w-64 border-r border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-[#111827] shrink-0 sticky top-16 h-[calc(100vh-4rem)]">
+            <nav className="flex min-h-0 flex-1 flex-col px-3 py-4 overflow-y-auto scrollbar-hide" aria-label="Asosiy">
               <div className="space-y-1">
                 {sideNav.map((item) => {
                   const label = t(item.labelKey) || item.defaultLabel;
                   return (
-                    <Link key={item.href} href={item.href} className={itemClass(item.href)}>
-                      <item.icon className="h-5 w-5" />
+                    <Link key={item.href} href={item.href} className={itemClass(item.href)} data-testid={`link-nav-${item.defaultLabel}`}>
+                      <item.icon className="w-5 h-5 shrink-0" />
                       <span>{label}</span>
                     </Link>
                   );
@@ -244,113 +252,67 @@ export function Shell({ children }: { children: ReactNode }) {
                 <SideDock xp={stats?.xp ?? 0} streak={stats?.streak ?? 0} quizzes={stats?.quizzes ?? 0} />
               </div>
             </nav>
-            <div className="border-t border-slate-200/80 dark:border-white/10 p-4 space-y-3">
+            <div className="p-3 border-t border-slate-200/80 dark:border-white/10 space-y-2">
               <ThemeSwitch />
-              <button type="button" onClick={leave} className="flex w-full items-center justify-center gap-2 rounded-[10px] px-4 py-2.5 text-rose-600 hover:bg-rose-500/10 dark:text-rose-400 font-semibold text-xs border border-rose-500/20">
-                <HiOutlineLogout className="h-5 w-5" /> {t('nav_logout')}
+              <button
+                type="button"
+                onClick={leave}
+                className="flex w-full items-center justify-center gap-2 rounded-[8px] px-3 py-2 text-rose-600 hover:bg-rose-500/10 dark:text-rose-400 font-semibold text-xs border border-rose-500/20 transition-colors"
+                data-testid="button-leave-side"
+              >
+                <HiOutlineLogout className="h-4 w-4" />
+                <span>{t('nav_logout')}</span>
               </button>
             </div>
-          </div>
-        </aside>
-      )}
+          </aside>
+        )}
 
-      <div className={isBattleRoom ? 'min-h-screen w-full flex flex-col overflow-x-hidden' : 'min-w-0 flex-1 overflow-x-hidden lg:pl-64'}>
-        {!isBattleRoom && (
-          <header className="sticky top-0 z-30 h-16 border-b border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-[#090d16]/95 backdrop-blur-xl shadow-xs transition-colors duration-200">
-            <div className="flex h-full items-center justify-between px-3 sm:px-4 lg:px-8">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <button
-                  type="button"
-                  className="flex items-center justify-center h-10 w-10 rounded-[10px] border border-slate-200/80 bg-slate-100/80 hover:bg-slate-200/60 text-slate-600 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 dark:text-slate-300 lg:hidden shrink-0 cursor-pointer"
-                  aria-label="Menyu"
-                  onClick={() => setOpen(true)}
-                >
-                  <HiOutlineMenu className="h-5 w-5" />
-                </button>
-                {/* Mobile logo: hidden on desktop to avoid duplicate logo with sidebar */}
-                <Link href="/dashboard" className="flex lg:hidden items-center gap-2 sm:gap-2.5" data-testid="link-header-logo">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-gradient-to-br from-med-500 to-med-600 font-display text-lg font-bold text-white shadow-xs shrink-0">M</span>
+        {/* Mobile Slide-out Drawer */}
+        {open && !isBattleRoom && (
+          <button type="button" className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs lg:hidden" aria-label="Menyuni yopish" onClick={() => setOpen(false)} />
+        )}
+        {open && !isBattleRoom && (
+          <aside className="fixed inset-y-0 left-0 z-50 w-72 border-r border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#111827] shadow-2xl lg:hidden">
+            <div className="flex h-full flex-col">
+              <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-white/10 px-4 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-gradient-to-br from-med-500 to-med-600 text-white shadow-md">
+                    <span className="font-display text-xl font-bold">M</span>
+                  </div>
                   <span className="font-display text-lg font-bold text-slate-900 dark:text-white">MedQuiz</span>
-                </Link>
-                {/* Desktop breadcrumb / Section title */}
-                <div className="hidden lg:flex items-center gap-2 text-xs font-semibold text-slate-400">
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    MedQuiz
-                  </span>
-                  <span>/</span>
-                  <span className="text-slate-800 dark:text-slate-200 font-bold text-sm">
-                    {location === '/dashboard'
-                      ? 'Boshqaruv'
-                      : location === '/banks'
-                      ? 'To‘plamlar'
-                      : location === '/battle'
-                      ? 'Battle'
-                      : location === '/friends'
-                      ? 'Do‘stlar'
-                      : location === '/leaderboard'
-                      ? 'Reyting'
-                      : location === '/achievements'
-                      ? 'Yutuqlar'
-                      : location === '/mistakes'
-                      ? 'Xatolarim'
-                      : location === '/profile'
-                      ? 'Profil'
-                      : location === '/settings'
-                      ? 'Sozlamalar'
-                      : 'Platforma'}
-                  </span>
                 </div>
+                <button type="button" className="rounded-[10px] p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5" onClick={() => setOpen(false)} aria-label="Yopish">
+                  <HiOutlineX className="h-6 w-6" />
+                </button>
               </div>
-
-              <div className="flex items-center gap-1.5 sm:gap-2.5">
-                {/* Search input with exact matching h-10 */}
-                <div className="group flex items-center h-10 rounded-[10px] border border-slate-200/80 bg-slate-100/80 px-2.5 sm:px-3 hover:bg-slate-200/60 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 transition-colors">
-                  <HiOutlineSearch className="h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white shrink-0 mr-1.5 sm:mr-2" />
-                  <input
-                    value={query}
-                    onChange={(event) => { setQuery(event.target.value); setSearchOpen(true); }}
-                    onFocus={() => setSearchOpen(true)}
-                    placeholder="Qidirish..."
-                    className="w-16 sm:w-28 md:w-44 bg-transparent text-xs sm:text-sm text-slate-800 dark:text-slate-200 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                    data-testid="input-search"
-                  />
-                  <kbd className="hidden rounded-[6px] border border-slate-200 bg-white dark:border-white/10 dark:bg-[#1f2937] px-1.5 py-0.5 text-[10px] text-slate-500 md:inline ml-1.5">⌘K</kbd>
+              <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-4">
+                <div className="space-y-1">
+                  {sideNav.map((item) => {
+                    const label = t(item.labelKey) || item.defaultLabel;
+                    return (
+                      <Link key={item.href} href={item.href} className={itemClass(item.href)}>
+                        <item.icon className="h-5 w-5" />
+                        <span>{label}</span>
+                      </Link>
+                    );
+                  })}
                 </div>
-
-                {/* Language Switcher */}
-                <LanguageSwitcher />
-
-                {/* InviteBell */}
-                <InviteBell />
-
-                {/* Desktop Profile Pill */}
-                <Link
-                  href="/profile"
-                  className="hidden lg:flex items-center gap-2 h-10 pl-1.5 pr-3 rounded-[10px] border border-slate-200/80 bg-slate-100/80 hover:bg-slate-200/60 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
-                  data-testid="link-header-profile"
-                  title="Profil sozlamalari"
-                >
-                  {me?.avatar ? (
-                    <img
-                      src={me.avatar}
-                      alt={me.name}
-                      className="h-7 w-7 rounded-[7px] object-cover shrink-0 shadow-xs"
-                    />
-                  ) : (
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-display text-xs font-bold shadow-xs">
-                      {(me?.name || 'M').trim()[0]?.toUpperCase()}
-                    </span>
-                  )}
-                  <span className="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[120px]">
-                    {me?.name || 'Talaba'}
-                  </span>
-                </Link>
+                <div className="mt-auto pt-4">
+                  <SideDock xp={stats?.xp ?? 0} streak={stats?.streak ?? 0} quizzes={stats?.quizzes ?? 0} />
+                </div>
+              </nav>
+              <div className="border-t border-slate-200/80 dark:border-white/10 p-4 space-y-3">
+                <ThemeSwitch />
+                <button type="button" onClick={leave} className="flex w-full items-center justify-center gap-2 rounded-[10px] px-4 py-2.5 text-rose-600 hover:bg-rose-500/10 dark:text-rose-400 font-semibold text-xs border border-rose-500/20">
+                  <HiOutlineLogout className="h-5 w-5" /> {t('nav_logout')}
+                </button>
               </div>
             </div>
-          </header>
+          </aside>
         )}
-        <main className={isBattleRoom ? 'flex-1 w-full p-0 flex flex-col' : 'px-4 py-6 pb-24 lg:px-8 lg:py-8 lg:pb-8'}>
+
+        {/* Main Content Area */}
+        <main className={isBattleRoom ? 'flex-1 w-full p-0 flex flex-col' : 'flex-1 min-w-0 p-4 lg:p-6 pb-24 lg:pb-8 overflow-x-hidden'}>
           {children}
         </main>
       </div>

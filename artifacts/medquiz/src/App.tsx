@@ -38,7 +38,7 @@ function Pages() {
       <Route path="/mistakes"><Guard><MistakesPage /></Guard></Route>
       <Route path="/leaderboard"><Guard><Leaderboard /></Guard></Route>
       <Route path="/profile"><Guard><Profile /></Guard></Route>
-      <Route path="/settings"><Guard><SettingsPage /></Guard></Route>
+      <Route path="/settings"><Redirect to="/profile" /></Route>
       <Route path="/achievements"><Guard><Achievements /></Guard></Route>
       <Route>
         <div className="grid min-h-[100dvh] place-items-center px-6">
