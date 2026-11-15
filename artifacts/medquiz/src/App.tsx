@@ -13,6 +13,7 @@ import { MistakesPractice } from '@/pages/mistakes-practice';
 import { Play } from '@/pages/play';
 import { Profile } from '@/pages/profile';
 import { SettingsPage } from '@/pages/settings-page';
+import { SupportPage } from '@/pages/support';
 import { Welcome } from '@/pages/welcome';
 import type { ReactNode } from 'react';
 
@@ -40,6 +41,7 @@ function Pages() {
       <Route path="/profile"><Guard><Profile /></Guard></Route>
       <Route path="/settings"><Redirect to="/profile" /></Route>
       <Route path="/achievements"><Guard><Achievements /></Guard></Route>
+      <Route path="/support"><Guard><SupportPage /></Guard></Route>
       <Route>
         <div className="grid min-h-[100dvh] place-items-center px-6">
           <div className="text-center">

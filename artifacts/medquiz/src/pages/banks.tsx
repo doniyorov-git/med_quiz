@@ -11,7 +11,7 @@ import {
   HiOutlineX,
 } from 'react-icons/hi';
 import { Btn, Icon, Panel, fieldClass } from '@/components/chrome';
-import { createBank, deleteBank, getBankSchedule, saveQuestionsToSubject } from '@/lib/model';
+import { createBank, deleteBank, getBankSchedule, parseDateSafe, saveQuestionsToSubject } from '@/lib/model';
 import { cleanQuestion, parseQuizText, extractTextFromFile } from '@/lib/parser';
 import { useBanks } from '@/lib/store';
 import { ExamCalendarModal } from '@/components/exam-calendar-modal';
@@ -28,6 +28,7 @@ export function Banks() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [risen, setRisen] = useState(false);
   const [calendarBank, setCalendarBank] = useState<Bank | null>(null);
+  const [, setScheduleVersion] = useState(0);
   const [deleteRisen, setDeleteRisen] = useState(false);
   const [fan, setFan] = useState('');
   const [rawText, setRawText] = useState('');
@@ -176,8 +177,11 @@ export function Banks() {
           {banks.map((bank) => {
             const playableCount = (bank.questions ?? []).filter((q) => cleanQuestion(q)).length;
             const schedule = getBankSchedule(bank.id);
-            const daysLeft = schedule?.examDate
-              ? Math.max(0, Math.ceil((new Date(schedule.examDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+            const targetTime = schedule?.examDate ? parseDateSafe(schedule.examDate).getTime() : null;
+            const nowTime = new Date();
+            nowTime.setHours(0, 0, 0, 0);
+            const daysLeft = targetTime !== null
+              ? Math.max(0, Math.ceil((targetTime - nowTime.getTime()) / (1000 * 60 * 60 * 24)))
               : null;
             return (
               <div
@@ -483,6 +487,7 @@ export function Banks() {
         <ExamCalendarModal
           bank={calendarBank}
           onClose={() => setCalendarBank(null)}
+          onScheduleChange={() => setScheduleVersion((v) => v + 1)}
         />
       )}
     </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { useEffect, useState, useRef, useMemo, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useLocation } from 'wouter';
 import {
@@ -17,13 +17,14 @@ import {
   HiOutlineMenu,
   HiOutlineSearch,
   HiOutlineStar,
+  HiOutlineSupport,
   HiOutlineUser,
   HiOutlineX,
   HiUser,
 } from 'react-icons/hi';
 import { HiOutlineBell } from 'react-icons/hi';
 import { useBanks, useInvites, useOnline, useStatsMap, useStore } from '@/lib/store';
-import { getMedicalTitle, joinRoom, respondInvite } from '@/lib/model';
+import { getMedicalTitle, joinRoom, respondInvite, getBankSchedule, parseDateSafe } from '@/lib/model';
 import { ThemeSwitch } from '@/components/theme-toggle';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { useI18n, type TranslationKey } from '@/lib/i18n';
@@ -69,6 +70,7 @@ const sideNav: { href: string; labelKey: TranslationKey; defaultLabel: string; i
   { href: '/battle', labelKey: 'nav_battle', defaultLabel: 'Battle', icon: HiOutlineLightningBolt },
   { href: '/leaderboard', labelKey: 'nav_leaderboard', defaultLabel: 'Reyting', icon: HiOutlineChartSquareBar },
   { href: '/achievements', labelKey: 'nav_achievements', defaultLabel: 'Yutuqlar', icon: HiOutlineStar },
+  { href: '/support', labelKey: 'nav_support' as TranslationKey, defaultLabel: 'Qo‘llab-quvvatlash', icon: HiOutlineSupport },
   { href: '/profile', labelKey: 'nav_profile' as TranslationKey, defaultLabel: 'Profil', icon: HiOutlineUser },
 ];
 
@@ -409,55 +411,66 @@ export function GlobalInvitePopup() {
   if (!activeInvite || !me) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[160] w-[calc(100%-1.5rem)] max-w-lg px-2 pointer-events-auto animate-in slide-in-from-top-6 duration-300">
       <div
         role="alertdialog"
         aria-modal="true"
         aria-label="Battle taklifi"
-        className="relative w-full max-w-sm overflow-hidden rounded-[10px] border-2 border-primary/40 bg-white dark:bg-[#111827] p-5 sm:p-6 shadow-2xl animate-in zoom-in-95 duration-200 text-slate-900 dark:text-white"
+        className="relative overflow-hidden rounded-2xl border-2 border-primary/50 bg-white/95 dark:bg-[#111827]/95 p-4 sm:p-5 shadow-2xl backdrop-blur-xl ring-4 ring-primary/10 text-slate-900 dark:text-white"
       >
-        {/* Pulsing battle icon */}
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[10px] bg-primary/10 text-primary ring-4 ring-primary/15 animate-bounce">
-          <Icon name="ri-sword-line" className="text-3xl" />
-        </div>
+        <div className="flex items-start gap-3.5">
+          {/* Pulsing icon */}
+          <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-emerald-600 text-white shadow-md shadow-primary/20">
+            <Icon name="ri-sword-fill" className="text-2xl animate-pulse" />
+            <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500"></span>
+            </span>
+          </div>
 
-        <div className="mt-4 text-center">
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-primary">
-            Jonli chaqiruv
-          </span>
-          <h3 className="mt-1.5 font-display text-lg sm:text-xl font-bold">
-            Battle taklifi keldi!
-          </h3>
-          <p className="mt-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
-            <strong className="text-slate-900 dark:text-white font-bold">{activeInvite.fromName}</strong> sizni tibbiy bellashuvga chorlamoqda!
-          </p>
-        </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-extrabold uppercase tracking-wider">
+                <Icon name="ri-broadcast-fill" className="text-xs" /> Jonli Battle Chaqiruvi
+              </span>
+              <button
+                type="button"
+                onClick={() => respondInvite(activeInvite.id, 'rejected')}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg cursor-pointer"
+                title="Yopish"
+              >
+                <Icon name="ri-close-line" className="text-lg" />
+              </button>
+            </div>
 
-        {/* Room / Bank info box */}
-        <div className="mt-4 rounded-[10px] border border-slate-200/90 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-3 text-center">
-          <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Test mavzusi:</p>
-          <p className="text-sm font-bold text-primary mt-0.5 line-clamp-1">
-            {activeInvite.bankName}
-          </p>
-          <div className="mt-1.5 flex items-center justify-center gap-1 text-[11px] text-slate-500 font-mono">
-            <span>Xona kodi:</span>
-            <span className="font-bold tracking-wider text-slate-800 dark:text-slate-200">{activeInvite.roomCode}</span>
+            <p className="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
+              {activeInvite.fromName} sizni bellashuvga chaqirdi!
+            </p>
+
+            <div className="mt-1 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
+              <span className="font-semibold text-primary">«{activeInvite.bankName}»</span>
+              <span>•</span>
+              <span className="font-mono text-[11px] bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded">
+                Kodi: {activeInvite.roomCode}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Action Buttons: Qabul qilish & Rad etish */}
-        <div className="mt-5 grid grid-cols-2 gap-2.5">
+        {/* Action buttons: Qabul qilish & Rad etish */}
+        <div className="mt-4 pt-3 border-t border-slate-200/80 dark:border-white/10 flex items-center justify-end gap-2.5">
           <button
             type="button"
-            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-[10px] bg-slate-100 hover:bg-rose-50 hover:text-rose-600 dark:bg-white/5 dark:hover:bg-rose-950/30 dark:hover:text-rose-400 text-slate-700 dark:text-slate-300 text-xs sm:text-sm font-bold transition-all border border-slate-200 dark:border-white/10 active:scale-95"
+            className="flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30 dark:hover:text-rose-400 text-slate-600 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer active:scale-95"
             onClick={() => respondInvite(activeInvite.id, 'rejected')}
           >
             <Icon name="ri-close-line" className="text-base" />
             <span>Rad etish</span>
           </button>
+
           <button
             type="button"
-            className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-[10px] bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold transition-all shadow-md shadow-emerald-600/20 active:scale-95"
+            className="flex items-center justify-center gap-1.5 py-2 px-5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition-all shadow-md shadow-emerald-600/30 cursor-pointer active:scale-95"
             onClick={() => {
               respondInvite(activeInvite.id, 'accepted');
               joinRoom(me, activeInvite.roomCode);
@@ -477,82 +490,186 @@ export function GlobalInvitePopup() {
 function InviteBell() {
   const { me } = useStore();
   const invites = useInvites();
+  const banks = useBanks();
   const [, setLocation] = useLocation();
   const [open, setOpen] = useState(false);
-  const [risen, setRisen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
   const incoming = invites.filter((invite) => invite.toId === me?.id && invite.status === 'pending');
 
   useEffect(() => {
-    if (!open) {
-      setRisen(false);
-      return;
-    }
-    const frame = requestAnimationFrame(() => setRisen(true));
-    return () => cancelAnimationFrame(frame);
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [open]);
 
+  const upcomingExams = useMemo(() => {
+    const list: { bankName: string; bankId: string; daysLeft: number }[] = [];
+    for (const b of banks) {
+      const sch = getBankSchedule(b.id);
+      if (sch?.examDate) {
+        const target = parseDateSafe(sch.examDate).getTime();
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        const diffDays = Math.max(0, Math.ceil((target - now.getTime()) / (1000 * 60 * 60 * 24)));
+        if (diffDays <= 7) {
+          list.push({ bankName: b.name, bankId: b.id, daysLeft: diffDays });
+        }
+      }
+    }
+    return list;
+  }, [banks]);
+
+  const totalBadges = incoming.length + upcomingExams.length;
+
   return (
-    <>
+    <div ref={containerRef} className="relative">
       <button
         type="button"
         className="relative flex items-center justify-center h-10 w-10 rounded-[10px] border border-slate-200/80 bg-slate-100/80 hover:bg-slate-200/60 text-slate-600 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 dark:text-slate-300 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
-        aria-label="Takliflar"
+        aria-label="Bildirishnomalar"
         data-testid="button-invites"
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => setOpen((v) => !v)}
       >
         <Icon name="ri-notification-3-line" className="text-lg" />
-        {incoming.length > 0 && (
+        {totalBadges > 0 && (
           <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-500 text-[9px] font-bold text-white shadow-xs animate-pulse">
-            {incoming.length}
+            {totalBadges}
           </span>
         )}
       </button>
-      {open && createPortal(
-        <div className="fixed inset-0 z-[80] flex items-end">
-          <button type="button" className="absolute inset-0 bg-black/50 backdrop-blur-xs" aria-label="Takliflarni yopish" onClick={() => setOpen(false)} />
-          <div
-            role="dialog"
-            aria-label="Takliflar"
-            className="relative z-10 max-h-[80vh] w-full overflow-y-auto rounded-t-[10px] border border-slate-200/80 bg-white dark:border-white/10 dark:bg-[#111827] pb-safe shadow-2xl backdrop-blur-xl"
-            style={{ transform: risen ? 'translateY(0)' : 'translateY(100%)', transition: 'transform 280ms ease-out' }}
-          >
-            <div className="mx-auto mt-3 h-1.5 w-12 rounded-[10px] bg-slate-300 dark:bg-white/15" />
-            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-white/10 px-4 py-3">
-              <p className="font-display font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
-                <Icon name="ri-notification-3-line" className="text-primary" /> Takliflar
+
+      {open && (
+        <div className="absolute right-0 top-12 z-50 w-80 sm:w-96 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[#111827]/95 animate-in fade-in zoom-in-95 duration-150">
+          <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-white/10 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Icon name="ri-notification-3-fill" className="text-sm" />
+              </span>
+              <p className="font-bold text-sm text-slate-900 dark:text-white">
+                Bildirishnomalar
               </p>
-              <button type="button" onClick={() => setOpen(false)} className="rounded-[10px] p-1 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white" aria-label="Yopish">
-                <Icon name="ri-close-line" className="text-xl" />
-              </button>
             </div>
-            {!incoming.length && <p className="px-4 py-6 text-sm text-slate-500 text-center">Yangi taklif yo‘q</p>}
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
+              {totalBadges} ta
+            </span>
+          </div>
+
+          <div className="max-h-[70vh] overflow-y-auto divide-y divide-slate-100 dark:divide-white/5">
+            {/* Battle Chaqiruvlari */}
             {incoming.map((invite) => (
-              <div key={invite.id} className="border-b border-slate-200/80 dark:border-white/10 px-4 py-3" data-testid={`invite-${invite.id}`}>
-                <p className="text-sm text-slate-800 dark:text-slate-200"><span className="font-semibold">{invite.fromName}</span> sizni «{invite.bankName}» battleiga chaqirdi.</p>
-                <div className="mt-3 flex gap-2">
-                  <Btn
-                    className="px-3 py-2 text-xs !rounded-[10px]"
-                    testId={`button-accept-${invite.id}`}
-                    onClick={() => {
-                      respondInvite(invite.id, 'accepted');
-                      if (me) joinRoom(me, invite.roomCode);
-                      setOpen(false);
-                      setLocation(`/battle/${invite.roomCode}`);
-                    }}
-                  >
-                    <Icon name="ri-check-line" className="mr-1" /> Qabul
-                  </Btn>
-                  <Btn kind="line" className="px-3 py-2 text-xs !rounded-[10px]" testId={`button-reject-${invite.id}`} onClick={() => respondInvite(invite.id, 'rejected')}>
-                    <Icon name="ri-close-line" className="mr-1" /> Rad
-                  </Btn>
+              <div key={invite.id} className="p-3.5 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+                <div className="flex items-start gap-2.5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-emerald-600 text-white shadow-xs">
+                    <Icon name="ri-sword-fill" className="text-base" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-[10px] font-extrabold text-primary uppercase tracking-wider">
+                        Battle Taklifi
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-400">
+                        {invite.roomCode}
+                      </span>
+                    </div>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white mt-0.5 truncate">
+                      {invite.fromName}
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                      «{invite.bankName}» bo‘yicha bellashuvga chaqirdi
+                    </p>
+                    <div className="mt-2.5 flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="flex-1 flex items-center justify-center gap-1 py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-xs active:scale-95 transition-all cursor-pointer"
+                        onClick={() => {
+                          respondInvite(invite.id, 'accepted');
+                          if (me) joinRoom(me, invite.roomCode);
+                          setOpen(false);
+                          setLocation(`/battle/${invite.roomCode}`);
+                        }}
+                      >
+                        <Icon name="ri-check-line" />
+                        <span>Qabul qilish</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="flex-1 flex items-center justify-center gap-1 py-1.5 px-3 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 text-slate-600 dark:text-slate-300 font-bold text-xs active:scale-95 transition-all cursor-pointer"
+                        onClick={() => respondInvite(invite.id, 'rejected')}
+                      >
+                        <Icon name="ri-close-line" />
+                        <span>Rad etish</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
+
+            {/* Imtihon Eslatmalari */}
+            {upcomingExams.map((exam) => (
+              <div key={exam.bankId} className="p-3.5 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors">
+                <div className="flex items-start gap-2.5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                    <Icon name="ri-calendar-check-fill" className="text-base" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[10px] font-extrabold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                      Imtihon Eslatmasi
+                    </span>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white mt-0.5 truncate">
+                      {exam.bankName}
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Imtihongacha <strong className="text-amber-600 dark:text-amber-400">{exam.daysLeft === 0 ? "Bugun!" : `${exam.daysLeft} kun qoldi`}</strong>
+                    </p>
+                    <Link
+                      href={`/play/${exam.bankId}`}
+                      onClick={() => setOpen(false)}
+                      className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline"
+                    >
+                      <span>Mashqni boshlash</span>
+                      <Icon name="ri-arrow-right-line" />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Empty state */}
+            {totalBadges === 0 && (
+              <div className="p-8 text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-slate-500 mb-2">
+                  <Icon name="ri-notification-off-line" className="text-2xl" />
+                </div>
+                <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Yangi bildirishnomalar yo‘q
+                </p>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Battle takliflari va imtihon eslatmalari shu yerda ko‘rinadi
+                </p>
+              </div>
+            )}
           </div>
-        </div>,
-        document.body,
+
+          <div className="border-t border-slate-100 dark:border-white/5 p-2.5 bg-slate-50/50 dark:bg-white/[0.02]">
+            <Link
+              href="/support"
+              onClick={() => setOpen(false)}
+              className="flex items-center justify-center gap-1.5 py-1 text-xs font-semibold text-primary hover:underline"
+            >
+              <Icon name="ri-customer-service-2-line" />
+              <span>Yordam va qo‘llab-quvvatlash chati</span>
+            </Link>
+          </div>
+        </div>
       )}
-    </>
+    </div>
   );
 }
 

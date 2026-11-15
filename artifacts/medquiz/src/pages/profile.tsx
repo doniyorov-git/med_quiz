@@ -171,7 +171,7 @@ export function Profile() {
       </div>
 
       {/* 2. Tezkor Bo‘limlar (Quick Access Tiles) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <Link
           href="/mistakes"
           className="p-4 rounded-[14px] border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#111827] hover:border-emerald-500/40 transition-all shadow-xs group"
@@ -220,6 +220,24 @@ export function Profile() {
             Kursdoshlar va Do‘stlar
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">Talabalar bilan bellashish va muloqot</p>
+        </Link>
+
+        <Link
+          href="/support"
+          className="p-4 rounded-[14px] border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#111827] hover:border-emerald-500/40 transition-all shadow-xs group"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="flex h-9 w-9 items-center justify-center rounded-[8px] bg-purple-500/10 text-purple-600 dark:text-purple-400 text-lg">
+              <Icon name="ri-customer-service-2-line" />
+            </span>
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              24/7 Onlayn
+            </span>
+          </div>
+          <h3 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-emerald-600 transition-colors">
+            Qo‘llab-quvvatlash
+          </h3>
+          <p className="text-xs text-slate-500 mt-0.5">Jonli yordam chati va texnik ko‘mak</p>
         </Link>
       </div>
 

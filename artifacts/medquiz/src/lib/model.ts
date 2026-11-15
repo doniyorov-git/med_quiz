@@ -52,8 +52,40 @@ const emptyStats = (me: Me): Stats => ({
   claimedRooms: [],
 });
 
+export function parseDateSafe(input: string | Date | number | null | undefined): Date {
+  if (!input) return new Date();
+  if (input instanceof Date) return isNaN(input.getTime()) ? new Date() : input;
+  if (typeof input === 'number') return new Date(input);
+  const str = String(input).trim();
+  const match = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (match) {
+    const y = parseInt(match[1], 10);
+    const m = parseInt(match[2], 10) - 1;
+    const d = parseInt(match[3], 10);
+    const date = new Date(y, m, d);
+    if (!isNaN(date.getTime())) return date;
+  }
+  const parsed = new Date(str);
+  return isNaN(parsed.getTime()) ? new Date() : parsed;
+}
+
+export function formatDateSafe(
+  input: string | Date | number | null | undefined,
+  options?: Intl.DateTimeFormatOptions
+): string {
+  const d = parseDateSafe(input);
+  return d.toLocaleDateString('uz-UZ', options || {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
 export function dayKey(date = new Date()): string {
-  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 const WEEKDAYS = ['Ya', 'Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh'];
@@ -1185,14 +1217,17 @@ export function setBankExamDate(
   totalQuestions: number
 ): BankExamSchedule {
   const existing = getBankSchedule(bankId);
-  const now = Date.now();
-  const target = new Date(examDate).getTime();
-  const daysDiff = Math.max(1, Math.ceil((target - now) / (1000 * 60 * 60 * 24)));
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const target = parseDateSafe(examDate);
+  target.setHours(0, 0, 0, 0);
+  const diffMs = target.getTime() - now.getTime();
+  const daysDiff = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
   const dailyTarget = Math.max(5, Math.ceil(totalQuestions / daysDiff));
 
   // Build daily workout slots
   const workouts: Record<string, DailyWorkout> = { ...(existing?.workouts || {}) };
-  const cursor = new Date();
+  const cursor = new Date(now);
   for (let i = 0; i <= daysDiff; i++) {
     const d = new Date(cursor);
     d.setDate(cursor.getDate() + i);
@@ -1209,8 +1244,8 @@ export function setBankExamDate(
   const schedule: BankExamSchedule = {
     bankId,
     examDate,
-    createdAt: existing?.createdAt || now,
-    updatedAt: now,
+    createdAt: existing?.createdAt || Date.now(),
+    updatedAt: Date.now(),
     workouts,
   };
 

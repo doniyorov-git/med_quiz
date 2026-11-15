@@ -26,6 +26,7 @@ export const translations = {
     nav_mistakes: 'Xatolarim',
     nav_achievements: 'Yutuqlar',
     nav_settings: 'Sozlamalar',
+    nav_support: 'Qo‘llab-quvvatlash',
     nav_logout: 'Chiqish',
     nav_home: 'Asosiy',
 
@@ -115,6 +116,7 @@ export const translations = {
     nav_mistakes: 'Мои ошибки',
     nav_achievements: 'Достижения',
     nav_settings: 'Настройки',
+    nav_support: 'Поддержка',
     nav_logout: 'Выйти',
     nav_home: 'Главная',
 
@@ -204,6 +206,7 @@ export const translations = {
     nav_mistakes: 'My Mistakes',
     nav_achievements: 'Achievements',
     nav_settings: 'Settings',
+    nav_support: 'Support',
     nav_logout: 'Sign Out',
     nav_home: 'Home',
 
