@@ -69,105 +69,99 @@ export function Profile() {
   return (
     <div className="mx-auto max-w-3xl space-y-4 sm:space-y-6">
       {/* 1. Profile Header Card */}
-      <div className="rounded-[16px] border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#111827] shadow-sm overflow-hidden">
-        {/* Decorative Top Banner */}
-        <div className="h-28 sm:h-36 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 relative" />
-
-        {/* Profile Content */}
-        <div className="px-5 pb-5 sm:px-6 sm:pb-6 relative">
-          {/* Avatar & Edit button row */}
-          <div className="flex items-end justify-between -mt-12 sm:-mt-14 mb-4">
-            <div className="relative">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                onChange={handleAvatarChange}
-              />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="group relative flex h-20 w-20 sm:h-24 sm:w-24 cursor-pointer items-center justify-center overflow-hidden rounded-full border-4 border-white dark:border-[#111827] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-md transition-all active:scale-95"
-                title="Galereyadan rasm tanlash"
-              >
-                {me.avatar ? (
-                  <img src={me.avatar} alt={me.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
-                ) : (
-                  <div className="flex flex-col items-center justify-center font-bold text-xl sm:text-2xl text-emerald-600 dark:text-emerald-400">
-                    {me.name.slice(0, 2).toUpperCase() || 'MQ'}
-                  </div>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                title="Rasm yuklash"
-                className="absolute bottom-0 right-0 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-emerald-600 text-white shadow-md ring-2 ring-white dark:ring-[#111827] transition-all hover:scale-110 active:scale-95"
-              >
-                <Icon name="ri-camera-fill" className="text-xs text-white" />
-              </button>
-            </div>
-
-            {/* Edit Profile Button */}
+      <div className="rounded-[16px] border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#111827] shadow-sm p-5 sm:p-6">
+        {/* Avatar & Edit button row */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="relative">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              onChange={handleAvatarChange}
+            />
             <button
               type="button"
-              onClick={() => setEditModalOpen(true)}
-              className="inline-flex items-center gap-1.5 h-9 px-4 rounded-[10px] border border-slate-200 dark:border-white/10 bg-slate-100/90 hover:bg-slate-200/70 text-xs sm:text-sm font-bold text-slate-800 dark:bg-white/5 dark:hover:bg-white/10 dark:text-white transition-all active:scale-95 cursor-pointer shadow-xs"
+              onClick={() => fileInputRef.current?.click()}
+              className="group relative flex h-20 w-20 sm:h-24 sm:w-24 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-sm transition-all active:scale-95"
+              title="Galereyadan rasm tanlash"
             >
-              <Icon name="ri-edit-line" className="text-emerald-600 dark:text-emerald-400 text-base" />
-              <span>Tahrirlash</span>
+              {me.avatar ? (
+                <img src={me.avatar} alt={me.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+              ) : (
+                <div className="flex flex-col items-center justify-center font-bold text-xl sm:text-2xl text-emerald-600 dark:text-emerald-400">
+                  {me.name.slice(0, 2).toUpperCase() || 'MQ'}
+                </div>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              title="Rasm yuklash"
+              className="absolute bottom-0 right-0 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-emerald-600 text-white shadow-md ring-2 ring-white dark:ring-[#111827] transition-all hover:scale-110 active:scale-95"
+            >
+              <Icon name="ri-camera-fill" className="text-xs text-white" />
             </button>
           </div>
 
-          {/* User Identity */}
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">{me.name}</h1>
-              <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-bold">
-                @{me.username}
-              </span>
-            </div>
+          {/* Edit Profile Button */}
+          <button
+            type="button"
+            onClick={() => setEditModalOpen(true)}
+            className="inline-flex items-center gap-1.5 h-9 px-4 rounded-[10px] border border-slate-200 dark:border-white/10 bg-slate-100/90 hover:bg-slate-200/70 text-xs sm:text-sm font-bold text-slate-800 dark:bg-white/5 dark:hover:bg-white/10 dark:text-white transition-all active:scale-95 cursor-pointer shadow-xs"
+          >
+            <Icon name="ri-edit-line" className="text-emerald-600 dark:text-emerald-400 text-base" />
+            <span>Tahrirlash</span>
+          </button>
+        </div>
 
-            <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              {me.university || 'Tibbiyot Universiteti'} {me.faculty ? `· ${me.faculty}` : ''}
-            </p>
-
-            {me.bio && (
-              <p className="mt-2.5 text-xs italic text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-white/[0.03] p-2.5 rounded-[8px] border border-slate-200/60 dark:border-white/5">
-                “{me.bio}”
-              </p>
-            )}
-
-            {uploading && <p className="mt-2 animate-pulse text-xs text-emerald-600 font-bold">Rasm yuklanmoqda...</p>}
-            {uploadError && <p className="mt-2 text-xs text-rose-500 font-semibold">{uploadError}</p>}
+        {/* User Identity */}
+        <div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">{me.name}</h1>
+            <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+              @{me.username}
+            </span>
           </div>
 
-          {/* 4 Metric Stats Grid */}
-          <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <div className="p-3 rounded-[12px] bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 text-center">
-              <Icon name="ri-file-list-3-line" className="text-lg text-emerald-600 dark:text-emerald-400 mx-auto" />
-              <p className="mt-1 text-lg sm:text-xl font-bold text-slate-900 dark:text-white">{stats?.quizzes ?? 0}</p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Testlar</p>
-            </div>
+          <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+            {me.university || 'Tibbiyot Universiteti'} {me.faculty ? `· ${me.faculty}` : ''}
+          </p>
 
-            <div className="p-3 rounded-[12px] bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 text-center">
-              <Icon name="ri-trophy-line" className="text-lg text-sky-600 dark:text-sky-400 mx-auto" />
-              <p className="mt-1 text-lg sm:text-xl font-bold text-slate-900 dark:text-white">{stats?.battleWins ?? 0}</p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">G‘alabalar</p>
-            </div>
+          {me.bio && (
+            <p className="mt-2.5 text-xs italic text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-white/[0.03] p-2.5 rounded-[8px] border border-slate-200/60 dark:border-white/5">
+              “{me.bio}”
+            </p>
+          )}
 
-            <div className="p-3 rounded-[12px] bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 text-center">
-              <Icon name="ri-fire-fill" className="text-lg text-amber-500 mx-auto" />
-              <p className="mt-1 text-lg sm:text-xl font-bold text-slate-900 dark:text-white">{stats?.streak ?? 0} kun</p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Streak</p>
-            </div>
+          {uploading && <p className="mt-2 animate-pulse text-xs text-emerald-600 font-bold">Rasm yuklanmoqda...</p>}
+          {uploadError && <p className="mt-2 text-xs text-rose-500 font-semibold">{uploadError}</p>}
+        </div>
 
-            <div className="p-3 rounded-[12px] bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 text-center">
-              <Icon name="ri-flashlight-fill" className="text-lg text-indigo-500 mx-auto" />
-              <p className="mt-1 text-lg sm:text-xl font-bold text-slate-900 dark:text-white">{(xp).toLocaleString()}</p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Ball (XP)</p>
-            </div>
+        {/* 4 Metric Stats Grid */}
+        <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div className="p-3 rounded-[12px] bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 text-center">
+            <Icon name="ri-file-list-3-line" className="text-lg text-emerald-600 dark:text-emerald-400 mx-auto" />
+            <p className="mt-1 text-lg sm:text-xl font-bold text-slate-900 dark:text-white">{stats?.quizzes ?? 0}</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Testlar</p>
+          </div>
+
+          <div className="p-3 rounded-[12px] bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 text-center">
+            <Icon name="ri-trophy-line" className="text-lg text-sky-600 dark:text-sky-400 mx-auto" />
+            <p className="mt-1 text-lg sm:text-xl font-bold text-slate-900 dark:text-white">{stats?.battleWins ?? 0}</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">G‘alabalar</p>
+          </div>
+
+          <div className="p-3 rounded-[12px] bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 text-center">
+            <Icon name="ri-fire-fill" className="text-lg text-amber-500 mx-auto" />
+            <p className="mt-1 text-lg sm:text-xl font-bold text-slate-900 dark:text-white">{stats?.streak ?? 0} kun</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Streak</p>
+          </div>
+
+          <div className="p-3 rounded-[12px] bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 text-center">
+            <Icon name="ri-flashlight-fill" className="text-lg text-indigo-500 mx-auto" />
+            <p className="mt-1 text-lg sm:text-xl font-bold text-slate-900 dark:text-white">{(xp).toLocaleString()}</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Ball (XP)</p>
           </div>
         </div>
       </div>

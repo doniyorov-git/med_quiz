@@ -240,15 +240,15 @@ export function MistakesPage() {
         </div>
 
         {/* Search & Quick Filter */}
-        <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-white/5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-md">
+        <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-white/5 flex items-center justify-between gap-2 sm:gap-3">
+          <div className="relative flex-1 min-w-0">
             <Icon name="ri-search-line" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Savollar ichidan qidirish..."
-              className="w-full pl-9 pr-4 py-2 rounded-[10px] border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111827] text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-emerald-500"
+              className="w-full h-10 pl-9 pr-3 py-2 rounded-[10px] border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111827] text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-emerald-500"
             />
           </div>
 
@@ -256,14 +256,14 @@ export function MistakesPage() {
             <button
               type="button"
               onClick={() => setOnlySaved(!onlySaved)}
-              className={`inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-[10px] text-xs font-semibold border transition-all cursor-pointer ${
+              className={`shrink-0 h-10 inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 rounded-[10px] text-xs font-semibold border transition-all cursor-pointer whitespace-nowrap ${
                 onlySaved
                   ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                   : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              <Icon name={onlySaved ? 'ri-bookmark-fill' : 'ri-bookmark-line'} className="text-sm" />
-              <span>Faqat saqlanganlar</span>
+              <Icon name={onlySaved ? 'ri-bookmark-fill' : 'ri-bookmark-line'} className="text-sm shrink-0" />
+              <span><span className="hidden sm:inline">Faqat </span>saqlanganlar</span>
             </button>
           )}
         </div>
