@@ -50,7 +50,7 @@ function Pages() {
       <Route path="/profile"><Guard><Profile /></Guard></Route>
       <Route path="/settings"><Redirect to="/profile" /></Route>
       <Route path="/achievements"><Guard><Achievements /></Guard></Route>
-      <Route path="/admin"><Guard><AdminPage /></Guard></Route>
+      <Route path="/admin"><AdminPage /></Route>
       <Route path="/support">{me ? (me.isBlocked ? <BlockedAccountScreen me={me} /> : <SupportPage />) : <Redirect to="/" />}</Route>
       <Route>
         <div className="grid min-h-[100dvh] place-items-center px-6">
