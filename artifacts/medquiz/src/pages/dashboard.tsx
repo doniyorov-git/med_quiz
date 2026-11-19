@@ -117,57 +117,63 @@ export function Dashboard() {
       </div>
 
       {/* Feature links */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <Link href="/banks" className="group">
-          <div className="glass-card-hover h-full p-5 sm:p-6 !rounded-[10px]">
-            <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-[10px] bg-gradient-to-br from-violet-500 to-purple-600 shadow-md shadow-violet-500/25 transition-transform duration-300 group-hover:scale-105">
-              <HiOutlineLightningBolt className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
+          <div className="glass-card-hover h-full p-2.5 sm:p-6 !rounded-[10px] flex flex-col justify-between">
+            <div>
+              <div className="flex h-9 w-9 sm:h-14 sm:w-14 items-center justify-center rounded-[8px] sm:rounded-[10px] bg-gradient-to-br from-violet-500 to-purple-600 shadow-md shadow-violet-500/25 transition-transform duration-300 group-hover:scale-105">
+                <HiOutlineLightningBolt className="h-5 w-5 sm:h-7 sm:w-7 text-white" />
+              </div>
+              <h3 className="mt-2 sm:mt-4 font-display text-xs sm:text-xl font-bold text-slate-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors truncate">
+                {t('nav_banks')}
+              </h3>
+              <p className="mt-0.5 sm:mt-1 text-[10px] sm:text-sm text-slate-500 dark:text-slate-400 line-clamp-1 sm:line-clamp-none">
+                O‘z .txt savollaringizni yuklang va tahrirlang
+              </p>
             </div>
-            <h3 className="mt-4 font-display text-lg sm:text-xl font-bold text-slate-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
-              {t('nav_banks')}
-            </h3>
-            <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              O‘z .txt savollaringizni yuklang va tahrirlang
-            </p>
-            <div className="mt-4 flex items-center gap-2 text-xs sm:text-sm font-semibold text-violet-600 dark:text-violet-400">
+            <div className="mt-2 sm:mt-4 flex items-center gap-1 sm:gap-2 text-[10px] sm:text-sm font-semibold text-violet-600 dark:text-violet-400">
               <span>Boshlash</span>
-              <HiOutlineArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              <HiOutlineArrowRight className="h-3 w-3 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-1" />
             </div>
           </div>
         </Link>
 
         <Link href="/battle" className="group" data-testid="link-dashboard-battle">
-          <div className="glass-card-hover h-full p-5 sm:p-6 !rounded-[10px]">
-            <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-[10px] bg-gradient-to-br from-rose-500 to-pink-600 shadow-md shadow-rose-500/25 transition-transform duration-300 group-hover:scale-105">
-              <HiOutlinePlay className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
+          <div className="glass-card-hover h-full p-2.5 sm:p-6 !rounded-[10px] flex flex-col justify-between">
+            <div>
+              <div className="flex h-9 w-9 sm:h-14 sm:w-14 items-center justify-center rounded-[8px] sm:rounded-[10px] bg-gradient-to-br from-rose-500 to-pink-600 shadow-md shadow-rose-500/25 transition-transform duration-300 group-hover:scale-105">
+                <HiOutlinePlay className="h-5 w-5 sm:h-7 sm:w-7 text-white" />
+              </div>
+              <h3 className="mt-2 sm:mt-4 font-display text-xs sm:text-xl font-bold text-slate-900 dark:text-white group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors truncate">
+                Battle
+              </h3>
+              <p className="mt-0.5 sm:mt-1 text-[10px] sm:text-sm text-slate-500 dark:text-slate-400 line-clamp-1 sm:line-clamp-none">
+                Havola yoki onlayn taklif bilan bellashing
+              </p>
             </div>
-            <h3 className="mt-4 font-display text-lg sm:text-xl font-bold text-slate-900 dark:text-white group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">
-              Battle
-            </h3>
-            <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              Havola yoki onlayn taklif bilan bellashing
-            </p>
-            <div className="mt-4 flex items-center gap-2 text-xs sm:text-sm font-semibold text-rose-600 dark:text-rose-400">
+            <div className="mt-2 sm:mt-4 flex items-center gap-1 sm:gap-2 text-[10px] sm:text-sm font-semibold text-rose-600 dark:text-rose-400">
               <span>Boshlash</span>
-              <HiOutlineArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              <HiOutlineArrowRight className="h-3 w-3 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-1" />
             </div>
           </div>
         </Link>
 
         <Link href="/friends" className="group" data-testid="link-dashboard-friends">
-          <div className="glass-card-hover h-full p-5 sm:p-6 !rounded-[10px]">
-            <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-[10px] bg-gradient-to-br from-emerald-500 to-teal-600 shadow-md shadow-emerald-500/25 transition-transform duration-300 group-hover:scale-105">
-              <Icon name="ri-user-heart-line" className="text-2xl text-white" />
+          <div className="glass-card-hover h-full p-2.5 sm:p-6 !rounded-[10px] flex flex-col justify-between">
+            <div>
+              <div className="flex h-9 w-9 sm:h-14 sm:w-14 items-center justify-center rounded-[8px] sm:rounded-[10px] bg-gradient-to-br from-emerald-500 to-teal-600 shadow-md shadow-emerald-500/25 transition-transform duration-300 group-hover:scale-105">
+                <Icon name="ri-user-heart-line" className="text-lg sm:text-2xl text-white" />
+              </div>
+              <h3 className="mt-2 sm:mt-4 font-display text-xs sm:text-xl font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">
+                {t('nav_friends')}
+              </h3>
+              <p className="mt-0.5 sm:mt-1 text-[10px] sm:text-sm text-slate-500 dark:text-slate-400 line-clamp-1 sm:line-clamp-none">
+                Kursdoshlarni topish va do‘stlar tarmog‘i
+              </p>
             </div>
-            <h3 className="mt-4 font-display text-lg sm:text-xl font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-              {t('nav_friends')}
-            </h3>
-            <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              Kursdoshlarni topish va do‘stlar tarmog‘i
-            </p>
-            <div className="mt-4 flex items-center gap-2 text-xs sm:text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+            <div className="mt-2 sm:mt-4 flex items-center gap-1 sm:gap-2 text-[10px] sm:text-sm font-semibold text-emerald-600 dark:text-emerald-400">
               <span>Ochish</span>
-              <HiOutlineArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              <HiOutlineArrowRight className="h-3 w-3 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-1" />
             </div>
           </div>
         </Link>
