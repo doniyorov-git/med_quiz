@@ -112,13 +112,6 @@ export function AiExplanationModal({
               <p className="text-[11px] text-slate-500 dark:text-slate-400">Patofiziologik asos, differensial tahlil va mnemonika</p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors cursor-pointer"
-          >
-            <Icon name="ri-close-line" className="text-lg" />
-          </button>
         </div>
 
         {/* Content Body */}

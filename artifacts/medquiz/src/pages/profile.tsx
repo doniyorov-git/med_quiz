@@ -83,11 +83,11 @@ export function Profile() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="group relative flex h-20 w-20 sm:h-24 sm:w-24 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-sm transition-all active:scale-95"
+              className="group relative flex h-20 w-20 sm:h-24 sm:w-24 cursor-pointer items-center justify-center overflow-hidden rounded-[20px] border-2 border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-sm transition-all active:scale-95"
               title="Galereyadan rasm tanlash"
             >
               {me.avatar ? (
-                <img src={me.avatar} alt={me.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+                <img src={me.avatar} alt={me.name} className="h-full w-full object-cover rounded-[20px] transition-transform group-hover:scale-105" />
               ) : (
                 <div className="flex flex-col items-center justify-center font-bold text-xl sm:text-2xl text-emerald-600 dark:text-emerald-400">
                   {me.name.slice(0, 2).toUpperCase() || 'MQ'}
@@ -98,7 +98,7 @@ export function Profile() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               title="Rasm yuklash"
-              className="absolute bottom-0 right-0 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-emerald-600 text-white shadow-md ring-2 ring-white dark:ring-[#111827] transition-all hover:scale-110 active:scale-95"
+              className="absolute -bottom-1 -right-1 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-[8px] bg-emerald-600 text-white shadow-md ring-2 ring-white dark:ring-[#111827] transition-all hover:scale-110 active:scale-95"
             >
               <Icon name="ri-camera-fill" className="text-xs text-white" />
             </button>
@@ -396,7 +396,7 @@ export function Profile() {
             className="relative z-10 w-full max-w-lg overflow-hidden rounded-t-[16px] sm:rounded-[14px] border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#111827] shadow-2xl transition-all duration-200 max-h-[90vh] flex flex-col"
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-white/10 px-5 py-3.5 shrink-0">
+            <div className="flex items-center border-b border-slate-200/80 dark:border-white/10 px-5 py-3.5 shrink-0">
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                   <Icon name="ri-user-settings-line" className="text-base" />
@@ -405,14 +405,6 @@ export function Profile() {
                   Shaxsiy ma‘lumotlarni tahrirlash
                 </h3>
               </div>
-              <button
-                type="button"
-                onClick={() => setEditModalOpen(false)}
-                className="p-1.5 rounded-[8px] text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
-                aria-label="Yopish"
-              >
-                <Icon name="ri-close-line" className="text-lg" />
-              </button>
             </div>
 
             {/* Form */}
@@ -461,9 +453,9 @@ export function Profile() {
               {/* Avatar trigger */}
               <div className="p-3 rounded-[10px] bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-sm text-slate-600 dark:text-slate-300 shrink-0">
+                  <div className="h-10 w-10 rounded-[20px] overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-sm text-slate-600 dark:text-slate-300 shrink-0">
                     {me.avatar ? (
-                      <img src={me.avatar} alt="" className="h-full w-full object-cover" />
+                      <img src={me.avatar} alt="" className="h-full w-full object-cover rounded-[20px]" />
                     ) : (
                       me.name.slice(0, 2).toUpperCase()
                     )}

@@ -60,16 +60,6 @@ export function AlertModal({
       }}
     >
       <div className="relative flex flex-col w-full max-w-sm sm:max-w-md rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#111827] shadow-2xl text-slate-900 dark:text-white overflow-hidden p-6 text-center animate-in zoom-in-95 duration-150">
-        {/* Close Button top-right */}
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-4 right-4 h-8 w-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer transition-colors"
-          title="Yopish"
-        >
-          <Icon name="ri-close-line" className="text-lg" />
-        </button>
-
         {/* Top Centered Icon */}
         <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border ${resolvedIconBg} ${resolvedIconColor} mb-4 shadow-xs`}>
           <Icon name={defaultIcon} className="text-2xl sm:text-3xl" />
