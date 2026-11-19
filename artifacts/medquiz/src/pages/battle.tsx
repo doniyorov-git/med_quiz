@@ -229,11 +229,11 @@ export function BattleLobby() {
 
   return (
     <div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
         {/* Card 1: Xona yaratish */}
         <button
           type="button"
-          className="group relative overflow-hidden rounded-[16px] border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent p-4 text-left hover:border-emerald-500/60 transition-all shadow-sm active:scale-95 cursor-pointer"
+          className="group relative overflow-hidden rounded-[16px] border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent p-3 sm:p-4 text-left hover:border-emerald-500/60 transition-all shadow-sm active:scale-95 cursor-pointer"
           data-testid="button-open-create-room"
           onClick={() => {
             setError('');
@@ -241,21 +241,25 @@ export function BattleLobby() {
           }}
         >
           <div className="flex items-center justify-between">
-            <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-emerald-600 text-white shadow-md shadow-emerald-600/30">
-              <Icon name="ri-sword-line" className="text-xl" />
+            <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-[10px] sm:rounded-[12px] bg-emerald-600 text-white shadow-md shadow-emerald-600/30">
+              <Icon name="ri-sword-line" className="text-lg sm:text-xl" />
             </div>
             <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
               Yangi
             </span>
           </div>
-          <h2 className="mt-3 font-bold text-sm sm:text-base text-slate-900 dark:text-white">Xona yaratish</h2>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">To‘plam, soni va vaqtni tanlash</p>
+          <h2 className="mt-2.5 sm:mt-3 font-bold text-xs sm:text-base text-slate-900 dark:text-white truncate">
+            Xona yaratish
+          </h2>
+          <p className="mt-0.5 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 line-clamp-1 sm:line-clamp-none">
+            To‘plam, soni va vaqt
+          </p>
         </button>
 
         {/* Card 2: Kod bilan qo‘shilish */}
         <button
           type="button"
-          className="group relative overflow-hidden rounded-[16px] border border-teal-500/30 bg-gradient-to-br from-teal-500/10 via-teal-500/5 to-transparent p-4 text-left hover:border-teal-500/60 transition-all shadow-sm active:scale-95 cursor-pointer"
+          className="group relative overflow-hidden rounded-[16px] border border-teal-500/30 bg-gradient-to-br from-teal-500/10 via-teal-500/5 to-transparent p-3 sm:p-4 text-left hover:border-teal-500/60 transition-all shadow-sm active:scale-95 cursor-pointer"
           data-testid="button-open-join-room"
           onClick={() => {
             setJoinError('');
@@ -263,78 +267,19 @@ export function BattleLobby() {
           }}
         >
           <div className="flex items-center justify-between">
-            <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-teal-600 text-white shadow-md shadow-teal-600/30">
-              <Icon name="ri-key-line" className="text-xl" />
+            <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-[10px] sm:rounded-[12px] bg-teal-600 text-white shadow-md shadow-teal-600/30">
+              <Icon name="ri-key-line" className="text-lg sm:text-xl" />
             </div>
             <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/25">
               {active ? 'Ochiq' : 'Ulanish'}
             </span>
           </div>
-          <h2 className="mt-3 font-bold text-sm sm:text-base text-slate-900 dark:text-white">Kod bilan kirish</h2>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            {active ? `Ochiq xona: ${active.code}` : 'Do‘st xonasi kodi va link'}
+          <h2 className="mt-2.5 sm:mt-3 font-bold text-xs sm:text-base text-slate-900 dark:text-white truncate">
+            Kod bilan kirish
+          </h2>
+          <p className="mt-0.5 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 line-clamp-1 sm:line-clamp-none">
+            {active ? `Ochiq xona: ${active.code}` : 'Do‘st xonasi kodi'}
           </p>
-        </button>
-
-        {/* Card 3: Tezkor AI Bot Jangi */}
-        <button
-          type="button"
-          className="group relative overflow-hidden rounded-[16px] border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 via-cyan-500/5 to-transparent p-4 text-left hover:border-cyan-500/60 transition-all shadow-sm active:scale-95 cursor-pointer"
-          onClick={() => {
-            if (!banks.length) {
-              setSheet('create');
-              return;
-            }
-            const b = selectedBank || banks[0];
-            const cleanQs = (b.questions || []).filter(cleanQuestion);
-            if (!cleanQs.length) {
-              setSheet('create');
-              return;
-            }
-            const botList = [
-              { name: 'Dr. Jasur Mansurov', avatar: null },
-              { name: 'Madina Rahimova (Magistr)', avatar: null },
-              { name: 'Shaxzod Aliyev (Nevrolog)', avatar: null },
-              { name: 'Dr. Farrux Zokirov', avatar: null },
-            ];
-            const pickedBot = botList[Math.floor(Math.random() * botList.length)];
-            const botId = `user-seed-bot-${Date.now().toString(36)}`;
-            const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-            const shuffledQs = [...cleanQs].sort(() => 0.5 - Math.random()).slice(0, 10);
-            
-            const newRoom: Room = {
-              code: roomCode,
-              hostId: me ? me.id : 'me',
-              bankId: b.id,
-              bankName: b.name,
-              questions: shuffledQs,
-              count: shuffledQs.length,
-              seconds: 25,
-              status: 'live',
-              index: 0,
-              questionStartedAt: Date.now(),
-              players: [
-                { id: me ? me.id : 'me', name: me ? me.name : 'Talaba', avatar: me ? me.avatar : null, seen: Date.now() },
-                { id: botId, name: pickedBot.name, avatar: pickedBot.avatar, seen: Date.now() },
-              ],
-              answers: {},
-              createdAt: Date.now(),
-              updatedAt: Date.now(),
-            };
-            putRoom(newRoom);
-            setLocation(`/battle/${roomCode}`);
-          }}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-gradient-to-tr from-cyan-600 to-blue-600 text-white shadow-md shadow-cyan-600/30">
-              <Icon name="ri-robot-line" className="text-xl" />
-            </div>
-            <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/25">
-              AI Duel
-            </span>
-          </div>
-          <h2 className="mt-3 font-bold text-sm sm:text-base text-slate-900 dark:text-white">Tezkor Bot Jangi</h2>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Kutmasdan darhol AI bilan bellashuv</p>
         </button>
       </div>
 
