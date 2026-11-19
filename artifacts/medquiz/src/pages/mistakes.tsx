@@ -5,6 +5,7 @@ import { useMistakes, useBanks } from '@/lib/store';
 import { removeMistake, toggleSaveQuestion, clearMistakesForBank } from '@/lib/model';
 import { isDueForReview, formatReviewCountdown } from '@/lib/srs';
 import { AiExplanationModal } from '@/components/ai-explanation-modal';
+import { AlertModal } from '@/components/alert-modal';
 import type { MistakeItem } from '@/lib/types';
 
 export function MistakesPage() {
@@ -44,6 +45,7 @@ export function MistakesPage() {
   }, [banks, mistakes]);
 
   const [selectedTab, setSelectedTab] = useState<string>(getInitialTab);
+  const [clearBankConfirm, setClearBankConfirm] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -117,11 +119,7 @@ export function MistakesPage() {
             {filteredMistakes.length > 0 && selectedTab !== 'all' && selectedTab !== 'saved' && (
               <button
                 type="button"
-                onClick={() => {
-                  if (window.confirm('Bu fan bo‘yicha xatolarni tozalashni xohlaysizmi?')) {
-                    clearMistakesForBank(selectedTab);
-                  }
-                }}
+                onClick={() => setClearBankConfirm(true)}
                 className="px-3 py-1.5 rounded-[8px] text-xs font-semibold text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors cursor-pointer"
               >
                 Fanni tozalash
@@ -446,6 +444,21 @@ export function MistakesPage() {
           pickedIndices={explainingItem.pickedIndices}
         />
       )}
+
+      {/* Fanni tozalash Alert Modali */}
+      <AlertModal
+        isOpen={clearBankConfirm}
+        onClose={() => setClearBankConfirm(false)}
+        onConfirm={() => {
+          clearMistakesForBank(selectedTab);
+          setClearBankConfirm(false);
+        }}
+        variant="warning"
+        title="Xatolarni tozalash"
+        description="Tanlangan fan bo‘yicha to‘plangan barcha xatolarni o‘chirmoqchimisiz? Ushbu amaldan so‘ng xatolar ro‘yxati bo‘shaydi."
+        confirmText="Tozalash"
+        cancelText="Bekor qilish"
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { Link, useLocation } from 'wouter';
 import { Icon, Avatar } from '@/components/chrome';
+import { AlertModal } from '@/components/alert-modal';
 import { useStore } from '@/lib/store';
 
 interface FileAttachment {
@@ -104,6 +105,7 @@ function playMessageBeep() {
 export function SupportPage() {
   const { me } = useStore();
   const [, setLocation] = useLocation();
+  const [clearChatConfirm, setClearChatConfirm] = useState(false);
 
   const [messages, setMessages] = useState<SupportMessage[]>(() => {
     try {
@@ -327,12 +329,15 @@ export function SupportPage() {
   };
 
   const handleClearChat = () => {
-    if (confirm('Rostdan ham yordam chati yozishmalarini tozalamoqchimisiz?')) {
-      setMessages(INITIAL_MESSAGES);
-      try {
-        localStorage.removeItem(STORAGE_KEY);
-      } catch {}
-    }
+    setClearChatConfirm(true);
+  };
+
+  const executeClearChat = () => {
+    setMessages(INITIAL_MESSAGES);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {}
+    setClearChatConfirm(false);
   };
 
   return (
@@ -669,6 +674,18 @@ export function SupportPage() {
           </div>
         </div>
       )}
+
+      {/* Chatni tozalash Alert Modali */}
+      <AlertModal
+        isOpen={clearChatConfirm}
+        onClose={() => setClearChatConfirm(false)}
+        onConfirm={executeClearChat}
+        variant="warning"
+        title="Yozishmalarni tozalash"
+        description="Rostdan ham qo‘llab-quvvatlash chati yozishmalarini tozalamoqchimisiz? Barcha xabarlar o‘chiriladi."
+        confirmText="Tozalash"
+        cancelText="Bekor qilish"
+      />
     </div>
   );
 }

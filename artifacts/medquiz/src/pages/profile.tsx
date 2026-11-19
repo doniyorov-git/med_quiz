@@ -5,6 +5,7 @@ import { fileToImage } from '@/lib/images';
 import { useStatsMap, useStore, useMistakes } from '@/lib/store';
 import { useI18n, LANGUAGES } from '@/lib/i18n';
 import { buyStreakFreeze } from '@/lib/model';
+import { AlertModal } from '@/components/alert-modal';
 
 export function Profile() {
   const { me, updateMe, leave, theme, setTheme } = useStore();
@@ -70,9 +71,7 @@ export function Profile() {
       {/* 1. Profile Header Card */}
       <div className="rounded-[16px] border border-slate-200/90 dark:border-white/10 bg-white dark:bg-[#111827] shadow-sm overflow-hidden">
         {/* Decorative Top Banner */}
-        <div className="h-28 sm:h-36 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 relative">
-          <div className="absolute inset-0 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] opacity-15" />
-        </div>
+        <div className="h-28 sm:h-36 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 relative" />
 
         {/* Profile Content */}
         <div className="px-5 pb-5 sm:px-6 sm:pb-6 relative">
@@ -505,108 +504,30 @@ export function Profile() {
         </div>
       )}
 
-      {/* 4. MedCoins Do'koni Modali */}
-      {shopModalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
-        >
-          <div className="relative flex flex-col w-full max-w-lg rounded-[16px] border border-amber-500/30 bg-white dark:bg-[#111827] shadow-2xl text-slate-900 dark:text-white overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-white/10 px-5 py-4 bg-gradient-to-r from-amber-500/10 to-transparent">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-md shadow-amber-500/25">
-                  <Icon name="ri-shopping-bag-3-fill" className="text-lg" />
-                </div>
-                <div>
-                  <h2 className="font-bold text-base sm:text-lg">MedCoins Do‘koni</h2>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Mavjud balans: <strong className="text-amber-600 dark:text-amber-400">{stats?.coins ?? 20} MedCoins</strong>
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShopModalOpen(false)}
-                className="h-8 w-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
-              >
-                <Icon name="ri-close-line" className="text-lg" />
-              </button>
-            </div>
-
-            {/* Shop items */}
-            <div className="p-5 space-y-4">
-              {shopMessage && (
-                <div
-                  className={`p-3 rounded-xl border text-xs font-semibold ${
-                    shopMessage.ok
-                      ? 'border-emerald-500/30 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300'
-                      : 'border-rose-500/30 bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300'
-                  }`}
-                >
-                  {shopMessage.text}
-                </div>
-              )}
-
-              {/* Item 1: Streak Freeze */}
-              <div className="flex items-center justify-between gap-3 p-4 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/25 text-xl">
-                    <Icon name="ri-snowy-fill" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                      <span>Streak Freeze (Muzlatgich)</span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
-                        {stats?.streakFreezes ?? 1} ta mavjud
-                      </span>
-                    </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      Agar 1 kun kirmay qolsangiz, streak olovingiz o‘chmaydi. Avtomatik 1 ta sarflanadi.
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    const res = buyStreakFreeze(me);
-                    setShopMessage({ text: res.message, ok: res.ok });
-                  }}
-                  className="shrink-0 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs shadow-md shadow-amber-500/20 active:scale-95 transition-all cursor-pointer whitespace-nowrap"
-                >
-                  15 MedCoins
-                </button>
-              </div>
-
-              {/* Item 2: MedCoins Qanday olinadi? */}
-              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3.5 space-y-1 text-xs text-slate-600 dark:text-slate-400">
-                <p className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                  <Icon name="ri-information-line" className="text-sm" />
-                  <span>MedCoins qanday to‘planadi?</span>
-                </p>
-                <ul className="list-disc pl-4 space-y-0.5 pt-1 text-[11px]">
-                  <li>Har bir to‘g‘ri javob uchun: <strong>+1 MedCoin</strong></li>
-                  <li>100% mukammal test yechganda: <strong>+5 MedCoins bonus</strong></li>
-                  <li>Battle jangida g‘alaba qozonganda: <strong>+10 MedCoins bonus</strong></li>
-                </ul>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="border-t border-slate-200/80 dark:border-white/10 p-3 bg-slate-50/70 dark:bg-white/[0.02] flex justify-end">
-              <button
-                type="button"
-                onClick={() => setShopModalOpen(false)}
-                className="px-4 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
-              >
-                Yopish
-              </button>
+      {/* 4. MedCoins Do'koni Alert Modali */}
+      <AlertModal
+        isOpen={shopModalOpen}
+        onClose={() => setShopModalOpen(false)}
+        icon="ri-shopping-bag-3-fill"
+        variant="warning"
+        badge="Tez kunda"
+        title="MedCoins Do‘koni"
+        description={
+          <div className="space-y-3 text-center">
+            <p className="text-slate-700 dark:text-slate-300">
+              Do‘kon tez orada ishga tushiriladi! Hozirda qiziqarli tibbiy mukofotlar, streak muzlatish va noyob profil unvonlari tayyorlanmoqda.
+            </p>
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300">
+              <span className="font-bold">Mavjud balansingiz:</span>{' '}
+              <span className="font-extrabold text-amber-600 dark:text-amber-400">{stats?.coins ?? 20} MedCoins</span>
+              <p className="font-normal text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                Testlar yechish va battle janglarida yutib yangi MedCoins to‘plashda davom eting!
+              </p>
             </div>
           </div>
-        </div>
-      )}
+        }
+        cancelText="Tushundim"
+      />
     </div>
   );
 }

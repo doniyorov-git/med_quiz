@@ -12,6 +12,7 @@ import {
 import { Btn, Field, Icon, fieldClass } from '@/components/chrome';
 import { ImageField } from '@/components/image-field';
 import { AuscultationPlayer } from '@/components/audio-player';
+import { AlertModal } from '@/components/alert-modal';
 import { deleteBank, renameBank, replaceQuestions } from '@/lib/model';
 import { blankQuestion, cleanQuestion, parseQuizText, serializeQuiz, uid, extractTextFromFile } from '@/lib/parser';
 import { useBanks } from '@/lib/store';
@@ -23,6 +24,7 @@ export function Editor() {
   const banks = useBanks();
   const bank = banks.find((item) => item.id === params.id);
   const [open, setOpen] = useState<string | null>(bank?.questions[0]?.id ?? null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [error, setError] = useState('');
   const [justSaved, setJustSaved] = useState<string | null>(null);
 
@@ -165,12 +167,7 @@ export function Editor() {
 
           <button
             type="button"
-            onClick={() => {
-              if (window.confirm(`«${bank.name}» to‘plamini o‘chirishni xohlaysizmi?`)) {
-                deleteBank(bank.id);
-                setLocation('/banks');
-              }
-            }}
+            onClick={() => setDeleteConfirmOpen(true)}
             className="flex items-center justify-center gap-1.5 h-10 px-3 rounded-[10px] bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/25 text-xs font-bold transition-all active:scale-95 cursor-pointer"
           >
             <Icon name="ri-delete-bin-line" className="text-base" />
@@ -440,6 +437,30 @@ export function Editor() {
           );
         })}
       </div>
+
+      {/* Testni o'chirish Alert Modali */}
+      <AlertModal
+        isOpen={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        onConfirm={() => {
+          deleteBank(bank.id);
+          setLocation('/banks');
+        }}
+        variant="danger"
+        title="To‘plamni o‘chirish"
+        description={
+          <div className="space-y-1.5 text-center">
+            <p className="font-semibold text-slate-800 dark:text-slate-200">
+              «{bank.name}» test to‘plamini o‘chirishni tasdiqlaysizmi?
+            </p>
+            <p className="text-slate-500 dark:text-slate-400 text-xs">
+              Bu amal to‘plamdagi barcha ({(bank.questions ?? []).length} ta) savollarni butunlay o‘chirib yuboradi va uni ortga qaytarib bo‘lmaydi.
+            </p>
+          </div>
+        }
+        confirmText="O‘chirish"
+        cancelText="Bekor qilish"
+      />
     </div>
   );
 }

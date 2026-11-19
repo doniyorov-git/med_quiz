@@ -15,6 +15,7 @@ import {
 } from 'react-icons/hi';
 import { deleteBank, getMedicalTitle, levelFromXp, recentAccuracy } from '@/lib/model';
 import { Icon } from '@/components/chrome';
+import { AlertModal } from '@/components/alert-modal';
 import { cleanQuestion } from '@/lib/parser';
 import { useBanks, useMistakes, useStatsMap, useStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
@@ -62,6 +63,7 @@ function DashBanner() {
 
 export function Dashboard() {
   const { me } = useStore();
+  const [bankToDelete, setBankToDelete] = useState<{ id: string; name: string } | null>(null);
   const banks = useBanks();
   const mistakes = useMistakes();
   const { t } = useI18n();
@@ -249,12 +251,8 @@ export function Dashboard() {
                       </Link>
                       <button
                         type="button"
-                        onClick={() => {
-                          if (window.confirm(`«${bank.name}» to‘plamini o‘chirishni tasdiqlaysizmi?`)) {
-                            deleteBank(bank.id);
-                          }
-                        }}
-                        className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                        onClick={() => setBankToDelete({ id: bank.id, name: bank.name })}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                         title="O‘chirish"
                       >
                         <HiOutlineTrash className="h-4 w-4" />
@@ -292,6 +290,34 @@ export function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Testni o'chirish Alert Modali */}
+      <AlertModal
+        isOpen={Boolean(bankToDelete)}
+        onClose={() => setBankToDelete(null)}
+        onConfirm={() => {
+          if (bankToDelete) {
+            deleteBank(bankToDelete.id);
+            setBankToDelete(null);
+          }
+        }}
+        variant="danger"
+        title="To‘plamni o‘chirish"
+        description={
+          bankToDelete ? (
+            <div className="space-y-1.5 text-center">
+              <p className="font-semibold text-slate-800 dark:text-slate-200">
+                «{bankToDelete.name}» test to‘plamini o‘chirishni tasdiqlaysizmi?
+              </p>
+              <p className="text-slate-500 dark:text-slate-400 text-xs">
+                Bu amal to‘plamni butunlay o‘chirib yuboradi va uni ortga qaytarib bo‘lmaydi.
+              </p>
+            </div>
+          ) : ''
+        }
+        confirmText="O‘chirish"
+        cancelText="Bekor qilish"
+      />
     </div>
   );
 }

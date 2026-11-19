@@ -15,6 +15,7 @@ import { createBank, deleteBank, getBankSchedule, parseDateSafe, saveQuestionsTo
 import { cleanQuestion, parseQuizText, extractTextFromFile } from '@/lib/parser';
 import { useBanks } from '@/lib/store';
 import { ExamCalendarModal } from '@/components/exam-calendar-modal';
+import { AlertModal } from '@/components/alert-modal';
 import { useI18n } from '@/lib/i18n';
 import type { Bank } from '@/lib/types';
 
@@ -26,6 +27,7 @@ export function Banks() {
   const [, setLocation] = useLocation();
   const [open, setOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [bankToDelete, setBankToDelete] = useState<Bank | null>(null);
   const [risen, setRisen] = useState(false);
   const [calendarBank, setCalendarBank] = useState<Bank | null>(null);
   const [, setScheduleVersion] = useState(0);
@@ -266,11 +268,7 @@ export function Banks() {
                     className="inline-flex items-center justify-center h-9 w-9 rounded-[10px] text-slate-400 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 transition-colors active:scale-95 cursor-pointer"
                     data-testid={`button-delete-bank-${bank.id}`}
                     title={t('banks_delete_btn')}
-                    onClick={() => {
-                      if (window.confirm(`«${bank.name}» to‘plamini o‘chirishni tasdiqlaysizmi?`)) {
-                        deleteBank(bank.id);
-                      }
-                    }}
+                    onClick={() => setBankToDelete(bank)}
                   >
                     <Icon name="ri-delete-bin-line text-base" />
                   </button>
@@ -469,7 +467,7 @@ export function Banks() {
                       type="button"
                       className="inline-flex items-center gap-1 rounded-[10px] bg-rose-500/15 px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-300 hover:bg-rose-500/25 transition-colors"
                       data-testid={`button-sheet-delete-${bank.id}`}
-                      onClick={() => deleteBank(bank.id)}
+                      onClick={() => setBankToDelete(bank)}
                     >
                       <HiOutlineTrash className="h-4 w-4" />
                       O‘chirish
@@ -490,6 +488,34 @@ export function Banks() {
           onScheduleChange={() => setScheduleVersion((v) => v + 1)}
         />
       )}
+
+      {/* Testni o'chirish Alert Modali */}
+      <AlertModal
+        isOpen={Boolean(bankToDelete)}
+        onClose={() => setBankToDelete(null)}
+        onConfirm={() => {
+          if (bankToDelete) {
+            deleteBank(bankToDelete.id);
+            setBankToDelete(null);
+          }
+        }}
+        variant="danger"
+        title="To‘plamni o‘chirish"
+        description={
+          bankToDelete ? (
+            <div className="space-y-1.5 text-center">
+              <p className="font-semibold text-slate-800 dark:text-slate-200">
+                «{bankToDelete.name}» test to‘plamini o‘chirishni tasdiqlaysizmi?
+              </p>
+              <p className="text-slate-500 dark:text-slate-400 text-xs">
+                Bu amal to‘plamdagi barcha ({(bankToDelete.questions ?? []).length} ta) savollarni butunlay o‘chirib yuboradi va uni ortga qaytarib bo‘lmaydi.
+              </p>
+            </div>
+          ) : ''
+        }
+        confirmText="O‘chirish"
+        cancelText="Bekor qilish"
+      />
     </div>
   );
 }
