@@ -22,7 +22,7 @@ export function LanguageSwitcher({ className = '' }: { className?: string }) {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex items-center justify-center gap-1.5 h-10 px-3 rounded-[10px] border border-slate-200/80 bg-slate-100/80 hover:bg-slate-200/60 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
+        className="flex items-center justify-center gap-1 sm:gap-1.5 h-10 px-2 sm:px-3 rounded-[10px] border border-slate-200/80 bg-slate-100/80 hover:bg-slate-200/60 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
         title="Tilni tanlash / Сменить язык / Change language"
         data-testid="button-language-switcher"
       >
@@ -30,7 +30,7 @@ export function LanguageSwitcher({ className = '' }: { className?: string }) {
         <span className="font-bold text-[12px] uppercase tracking-wider">{currentLanguage.code}</span>
         <Icon
           name="ri-arrow-down-s-line"
-          className={`text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`text-slate-400 transition-transform duration-200 hidden sm:inline-block ${open ? 'rotate-180' : ''}`}
         />
       </button>
 

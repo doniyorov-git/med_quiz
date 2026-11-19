@@ -161,12 +161,12 @@ export function Shell({ children }: { children: ReactNode }) {
       {/* 1. SINGLE FULL-WIDTH TOP HEADER - Unbroken line runs 100% from left to right */}
       {!isBattleRoom && (
         <header className="sticky top-0 z-40 h-16 w-full border-b border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-[#0e1422]/95 backdrop-blur-xl shadow-xs transition-colors shrink-0">
-          <div className="flex h-full w-full items-center justify-between px-3 sm:px-6">
-            <div className="flex items-center gap-3">
+          <div className="flex h-full w-full items-center justify-between px-2 sm:px-6">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               {/* Mobile hamburger menu button */}
               <button
                 type="button"
-                className="flex lg:hidden items-center justify-center h-10 w-10 rounded-[10px] border border-slate-200/80 bg-slate-100/80 hover:bg-slate-200/60 text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 cursor-pointer"
+                className="flex lg:hidden items-center justify-center h-10 w-10 rounded-[10px] border border-slate-200/80 bg-slate-100/80 hover:bg-slate-200/60 text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 cursor-pointer shrink-0"
                 aria-label="Menyu"
                 onClick={() => setOpen(true)}
               >
@@ -174,28 +174,39 @@ export function Shell({ children }: { children: ReactNode }) {
               </button>
 
               {/* The ONLY Logo in the entire app: always at top left */}
-              <Link href="/dashboard" className="flex items-center gap-3 select-none" data-testid="link-logo">
-                <div className="w-10 h-10 rounded-[10px] bg-gradient-to-br from-med-500 to-med-600 flex items-center justify-center shadow-md shadow-med-500/30 shrink-0">
-                  <span className="text-xl font-display font-bold text-white">M</span>
+              <Link href="/dashboard" className="flex items-center gap-2 sm:gap-3 select-none shrink-0" data-testid="link-logo">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-[10px] bg-gradient-to-br from-med-500 to-med-600 flex items-center justify-center shadow-md shadow-med-500/30 shrink-0">
+                  <span className="text-lg sm:text-xl font-display font-bold text-white">M</span>
                 </div>
-                <div>
-                  <h1 className="font-display font-bold text-lg text-slate-900 dark:text-white leading-tight">MedQuiz</h1>
+                <div className="flex flex-col">
+                  <h1 className="font-display font-bold text-base sm:text-lg text-slate-900 dark:text-white leading-tight">MedQuiz</h1>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-none mt-0.5 hidden sm:block">Tibbiy ta’lim</p>
                 </div>
               </Link>
             </div>
 
             {/* Right: Search, Language, Invites, Profile Pill */}
-            <div className="flex items-center gap-1.5 sm:gap-2.5">
-              {/* Search input */}
-              <div className="group flex items-center h-10 rounded-[10px] border border-slate-200/80 bg-slate-100/80 px-2.5 sm:px-3 hover:bg-slate-200/60 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 transition-colors">
+            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+              {/* Search button on mobile (< sm) */}
+              <button
+                type="button"
+                onClick={() => setSearchOpen(true)}
+                className="flex sm:hidden items-center justify-center h-10 w-10 rounded-[10px] border border-slate-200/80 bg-slate-100/80 hover:bg-slate-200/60 text-slate-600 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 dark:text-slate-300 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
+                title="Qidirish"
+                aria-label="Qidirish"
+              >
+                <HiOutlineSearch className="h-5 w-5" />
+              </button>
+
+              {/* Search input on tablet/desktop (sm+) */}
+              <div className="hidden sm:flex group items-center h-10 rounded-[10px] border border-slate-200/80 bg-slate-100/80 px-2.5 sm:px-3 hover:bg-slate-200/60 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 transition-colors">
                 <HiOutlineSearch className="h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white shrink-0 mr-1.5 sm:mr-2" />
                 <input
                   value={query}
                   onChange={(event) => { setQuery(event.target.value); setSearchOpen(true); }}
                   onFocus={() => setSearchOpen(true)}
                   placeholder="Qidirish..."
-                  className="w-16 sm:w-28 md:w-44 bg-transparent text-xs sm:text-sm text-slate-800 dark:text-slate-200 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                  className="w-20 sm:w-28 md:w-44 bg-transparent text-xs sm:text-sm text-slate-800 dark:text-slate-200 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   data-testid="input-search"
                 />
                 <kbd className="hidden rounded-[6px] border border-slate-200 bg-white dark:border-white/10 dark:bg-[#1f2937] px-1.5 py-0.5 text-[10px] text-slate-500 md:inline ml-1.5">⌘K</kbd>
@@ -207,10 +218,10 @@ export function Shell({ children }: { children: ReactNode }) {
               {/* InviteBell */}
               <InviteBell />
 
-              {/* Profile Pill */}
+              {/* Profile Pill: Compact avatar on mobile, expanded with name on sm+ */}
               <Link
                 href="/profile"
-                className="flex items-center gap-2 h-10 pl-1.5 pr-3 rounded-[10px] border border-slate-200/80 bg-slate-100/80 hover:bg-slate-200/60 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
+                className="flex items-center gap-2 h-10 p-1 sm:pl-1.5 sm:pr-3 rounded-[10px] border border-slate-200/80 bg-slate-100/80 hover:bg-slate-200/60 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
                 data-testid="link-header-profile"
                 title="Profil"
               >
@@ -218,14 +229,14 @@ export function Shell({ children }: { children: ReactNode }) {
                   <img
                     src={me.avatar}
                     alt={me.name}
-                    className="h-7 w-7 rounded-[7px] object-cover shrink-0 shadow-xs"
+                    className="h-8 w-8 sm:h-7 sm:w-7 rounded-[7px] object-cover shrink-0 shadow-xs"
                   />
                 ) : (
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-display text-xs font-bold shadow-xs">
+                  <span className="flex h-8 w-8 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-[7px] bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-display text-xs font-bold shadow-xs">
                     {(me?.name || 'M').trim()[0]?.toUpperCase()}
                   </span>
                 )}
-                <span className="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[120px]">
+                <span className="hidden sm:inline text-xs font-bold text-slate-900 dark:text-white truncate max-w-[120px]">
                   {me?.name || 'Talaba'}
                 </span>
               </Link>
