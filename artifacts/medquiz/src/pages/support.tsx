@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
-import { Link, useLocation } from 'wouter';
-import { Icon, Avatar } from '@/components/chrome';
+import { useLocation } from 'wouter';
+import { Icon } from '@/components/chrome';
 import { AlertModal } from '@/components/alert-modal';
 import { useStore } from '@/lib/store';
 
@@ -15,61 +15,32 @@ interface SupportMessage {
   id: string;
   sender: 'user' | 'support';
   senderName: string;
-  avatar?: string;
+  avatar?: string | null;
   text?: string;
   file?: FileAttachment;
   time: string;
-  actions?: { label: string; link?: string; external?: boolean }[];
+  options?: { label: string; query: string }[];
+  choices?: string[];
+  summaryCard?: { title: string; items: { label: string; value: string }[] };
+  actions?: { label: string; link?: string; external?: boolean; primary?: boolean }[];
 }
 
-const STORAGE_KEY = 'medquiz_support_chat_messages_v2';
+const STORAGE_KEY = 'medquiz_support_chat_messages_v3';
 
 const INITIAL_MESSAGES: SupportMessage[] = [
   {
-    id: 'm-welcome-1',
+    id: 'm-welcome',
     sender: 'support',
-    senderName: 'MedQuiz Yordamchi (Shifokor-maslahatchi)',
-    text: 'Assalomu alaykum! MedQuiz tibbiy qo‘llab-quvvatlash markaziga xush kelibsiz! 🩺\n\nBiz sizga test to‘plamlarini yuklash, xatoliklar, do‘stlar bilan jonli Battle yoki imtihon kalendari bo‘yicha har qanday masalada yordam beramiz.\n\nFayllar (skrinshotlar, Word, PDF yoki matnli testlar) yuborishingiz ham mumkin!',
+    senderName: 'Assistant',
+    text: 'Assalomu alaykum! MedQuiz yordamchisiga xush kelibsiz. Qaysi masala bo‘yicha yordam beray?',
     time: 'Bugun, hozir',
-    actions: [
-      { label: '📚 To‘plam yuklash' },
-      { label: '⚔️ Battle qoidalari' },
-      { label: '📅 Imtihon kalendari' },
+    options: [
+      { label: 'Word yoki PDF dan test yuklash', query: 'Word yoki PDF dan test yuklash' },
+      { label: 'Do‘stlar bilan jonli Battle rejimi', query: 'Battle qanday o‘ynaladi?' },
+      { label: 'Imtihon taqvimi va kunlik me’yor', query: 'Imtihon kalendari qanday ishlaydi?' },
+      { label: 'Test savolida xatolik haqida xabar', query: 'Savolda xatolik topsam nima qilaman?' },
+      { label: 'Jonli administrator bilan bog‘lanish', query: 'Administrator bilan bog‘lanish' },
     ],
-  },
-  {
-    id: 'm-welcome-2',
-    sender: 'support',
-    senderName: 'MedQuiz Yordamchi (Shifokor-maslahatchi)',
-    text: 'Savolingizni yozing yoki quyidagi skкрепka (📎) tugmasi orqali rasm/hujjat ilova qiling. Bir necha soniyada batafsil javob beramiz!',
-    time: 'Bugun, hozir',
-  },
-];
-
-const QUICK_TOPICS = [
-  {
-    query: 'Word (.docx) yoki PDF fayldan testlarni qanday yuklayman?',
-    short: '📄 Word/PDF dan test yuklash',
-  },
-  {
-    query: 'Battle qanday o‘ynaladi va do‘stlarni qanday taklif qilaman?',
-    short: '⚔️ Battle va chaqiruvlar',
-  },
-  {
-    query: 'Imtihon kalendari va kunlik me’yor qanday hisoblanadi?',
-    short: '📅 Imtihon taqvimi',
-  },
-  {
-    query: 'Test savolida xatolik topsam nima qilishim kerak?',
-    short: '❌ Savoldagi xatoliklar',
-  },
-  {
-    query: 'XP ballari, streak va reyting o‘rinlari qanday beriladi?',
-    short: '🏆 XP va Reyting',
-  },
-  {
-    query: 'Administrator yoki shifokor bilan bevosita bog‘lanish',
-    short: '👨‍⚕️ Jonli admin bilan aloqa',
   },
 ];
 
@@ -91,14 +62,14 @@ function playMessageBeep() {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(587.33, now); // D5
-    osc.frequency.exponentialRampToValueAtTime(880, now + 0.12); // A5
-    gain.gain.setValueAtTime(0.12, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+    osc.frequency.setValueAtTime(659.25, now); // E5
+    osc.frequency.exponentialRampToValueAtTime(880, now + 0.1); // A5
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.start(now);
-    osc.stop(now + 0.28);
+    osc.stop(now + 0.22);
   } catch {}
 }
 
@@ -106,6 +77,8 @@ export function SupportPage() {
   const { me } = useStore();
   const [, setLocation] = useLocation();
   const [clearChatConfirm, setClearChatConfirm] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [messages, setMessages] = useState<SupportMessage[]>(() => {
     try {
@@ -120,8 +93,8 @@ export function SupportPage() {
 
   const [input, setInput] = useState('');
   const [selectedFile, setSelectedFile] = useState<FileAttachment | null>(null);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -145,8 +118,8 @@ export function SupportPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 15 * 1024 * 1024) {
-      alert('Fayl hajmi 15 MB dan oshmasligi kerak!');
+    if (file.size > 25 * 1024 * 1024) {
+      alert('Fayl hajmi 25 MB dan oshmasligi kerak!');
       return;
     }
 
@@ -162,7 +135,6 @@ export function SupportPage() {
       });
     };
     reader.readAsDataURL(file);
-    // Reset file input value so same file can be chosen again
     e.target.value = '';
   };
 
@@ -170,15 +142,28 @@ export function SupportPage() {
     userQuery: string,
     hasFile: boolean,
     fileName?: string
-  ): { text: string; actions?: SupportMessage['actions'] } => {
+  ): {
+    text: string;
+    choices?: string[];
+    summaryCard?: SupportMessage['summaryCard'];
+    actions?: SupportMessage['actions'];
+  } => {
     const q = userQuery.toLowerCase();
 
     if (hasFile) {
       return {
-        text: `📎 **Faylingiz qabul qilindi!** («${fileName}»)\n\nShifokor-moderatorlarimiz ushbu faylni tekshirib chiqishmoqda. Agar savolda xatolik bo‘lsa, u tahrirlanadi. Agar yangi test bazasi yuborgan bo‘lsangiz, tizimga yuklanishi bo‘yicha tez orada natija ko‘rsatiladi.\n\nQo‘shimcha ma’lumot kerak bo‘lsa, bevosita administrator bilan bog‘lanishingiz mumkin.`,
+        text: `Faylingiz muvaffaqiyatli qabul qilindi. Shifokor-moderatorlarimiz uni tekshirishni boshladi.`,
+        summaryCard: {
+          title: 'Qabul qilingan hujjat',
+          items: [
+            { label: 'Fayl', value: fileName || 'Hujjat' },
+            { label: 'Holat', value: 'Ko‘rib chiqilmoqda' },
+            { label: 'Bo‘lim', value: 'MedQuiz Moderatsiya' },
+          ],
+        },
         actions: [
-          { label: 'To‘plamlarga o‘tish', link: '/banks' },
-          { label: 'Admin Telegram (@medquiz_admin)', link: 'https://t.me/medquiz_uz', external: true },
+          { label: 'Bekor qilish', link: '/support' },
+          { label: 'Telegram admin', link: 'https://t.me/medquiz_uz', external: true, primary: true },
         ],
       };
     }
@@ -192,10 +177,19 @@ export function SupportPage() {
       q.includes('to‘plam')
     ) {
       return {
-        text: `📄 **Word (.docx), PDF yoki TXT dan test yuklash bo‘yicha qo‘llanma:**\n\n1. «To‘plamlar» bo‘limiga o‘ting va «+ Yangi to‘plam» tugmasini bosing.\n2. «Fayl yuklash» yorlig‘ini tanlang va kompyuteringizdan *.docx, *.pdf yoki *.txt faylini tanlang.\n3. MedQuiz avtomatik ravishda savollarni, 4 ta variant (A, B, C, D) va to‘g‘ri javoblarni ajratib oladi.\n\n💡 **Fayl formati talabi:**\nHar bir savoldan keyin variantlar joylashsin. To‘g‘ri javob oldiga yulduzcha (\`*\`), plyus (\`+\`) yoki qalin shrift (bold) qo‘yilgan bo‘lsa, tizim uni 100% aniqlik bilan to‘g‘ri javob deb tanlaydi!`,
+        text: `Word (.docx), PDF yoki TXT fayllardan testlarni avtomatik yuklash mumkin:`,
+        summaryCard: {
+          title: 'Yuklash qoidalari',
+          items: [
+            { label: 'Format', value: '.docx, .pdf, .txt' },
+            { label: 'To‘g‘ri javob', value: 'Oldiga «*» yoki «+» belgisi' },
+            { label: 'Variantlar', value: 'Kamida 2 ta (A, B, C, D)' },
+          ],
+        },
+        choices: ['To‘plam ochish', 'Namuna yuklash', 'Format qoidalari'],
         actions: [
-          { label: 'To‘plamlarga o‘tish', link: '/banks' },
-          { label: 'Admin Telegram orqali yordam', link: 'https://t.me/medquiz_uz', external: true },
+          { label: 'Yopish', link: '/support' },
+          { label: 'To‘plamlarga o‘tish', link: '/banks', primary: true },
         ],
       };
     }
@@ -208,10 +202,18 @@ export function SupportPage() {
       q.includes('chaqir')
     ) {
       return {
-        text: `⚔️ **Do‘stlar bilan jonli Battle rejimi:**\n\n1. **Xona yaratish:** «Battle» bo‘limiga kiring, to‘plamni tanlang va «Xona yaratish» tugmasini bosing. Sizga 6 harfli maxsus kod beriladi (masalan, \`DFMXMF\`).\n2. **Do‘stni taklif qilish:** Kursdoshlar ro‘yxatidan do‘stingiz yonidagi «Battle» tugmasini bosing. Agar do‘stingiz onlayn bo‘lsa, uning ekranining **yuqorisida maxsus modal oyna** chiqadi va u «Qabul qilish» tugmasini bosib darhol sizga qo‘shiladi!\n3. **Jonli bellashuv:** Ikkalangizga ham bir xil savol beriladi. Kim tez va to‘g‘ri topsa, shuncha ko‘p ball oladi. Emotikonlar va ovozli aloqa (Voice Chat) ham mavjud!`,
+        text: `Do‘stlaringiz bilan jonli musobaqa (Battle) o‘tkazish bo‘yicha ko‘rsatma:`,
+        summaryCard: {
+          title: 'Battle parametrlari',
+          items: [
+            { label: 'Rejim', value: 'Klassik, Sudden Death, Speed Run' },
+            { label: 'Chaqiruv', value: 'Onlayn modal bildirishnoma' },
+            { label: 'Mukofot', value: '+10 MedCoins g‘olibga' },
+          ],
+        },
         actions: [
-          { label: 'Battle xonasiga o‘tish', link: '/battle' },
           { label: 'Do‘stlar ro‘yxati', link: '/friends' },
+          { label: 'Battle boshlash', link: '/battle', primary: true },
         ],
       };
     }
@@ -225,8 +227,19 @@ export function SupportPage() {
       q.includes('reja')
     ) {
       return {
-        text: `📅 **Imtihon kalendari va kunlik o‘quv rejasi:**\n\n• «To‘plamlar» sahifasida har bir fan kartochkasida kalendar belgisi bor.\n• Kalendarga kirib, istalgan kelgusi sanani bosib, «Ushbu sanani imtihon kuni deb belgilash» tugmasini bossangiz, tizim imtihongacha qolgan kunlarni hisoblab chiqadi.\n• **Kunlik me’yor (Spaced Repetition):** Jami savollar soni qolgan kunlarga teng taqsimlanadi. Har kuni belgilangan normani bajarsangiz, imtihongacha barcha savollarni 100% puxta o‘zlashtirasiz!`,
-        actions: [{ label: 'To‘plamlar va Kalendar', link: '/banks' }],
+        text: `Imtihon kalendari Spaced Repetition (SRS) orqali kunlik savollar me’yorini avtomatik taqsimlaydi:`,
+        summaryCard: {
+          title: 'O‘quv rejasi',
+          items: [
+            { label: 'Algoritm', value: 'SM-2 Intervalli takrorlash' },
+            { label: 'Imtihon sanasi', value: 'To‘plamlar sahifasidan' },
+            { label: 'Bildirishnoma', value: 'Tepada qo‘ng‘iroqcha' },
+          ],
+        },
+        actions: [
+          { label: 'Ortga', link: '/support' },
+          { label: 'Kalendarga o‘tish', link: '/banks', primary: true },
+        ],
       };
     }
 
@@ -237,89 +250,90 @@ export function SupportPage() {
       q.includes('shikoyat')
     ) {
       return {
-        text: `❌ **Test savolidagi xatoliklar bo‘yicha:**\n\n• Test yechayotganda yoki yechib bo‘lgach, siz noto‘g‘ri deb bilgan savolingiz bo‘lsa, savol ostidagi «Xatolik haqida xabar berish» tugmasini bosing.\n• Barcha adashgan savollaringiz avtomatik tarzda «Xatolarim» bo‘limiga saqlanadi.\n• U yerdan istalgan vaqtda faqat adashgan savollaringiz bo‘yicha qayta mashq qilishingiz mumkin!`,
+        text: `Test savolidagi xatolik bo‘yicha: Test yechayotganda bayroqcha yoki shikoyat tugmasini bossangiz, savol adashganlar bankiga saqlanadi.`,
+        summaryCard: {
+          title: 'Xatolik tekshiruvi',
+          items: [
+            { label: 'Bo‘lim', value: 'Xatolarim banki' },
+            { label: 'AI Tahlil', value: 'Patofiziologik asos' },
+          ],
+        },
         actions: [
-          { label: 'Xatolarim bo‘limi', link: '/mistakes' },
-          { label: 'Adminga xatolikni yuborish (Telegram)', link: 'https://t.me/medquiz_uz', external: true },
-        ],
-      };
-    }
-
-    if (
-      q.includes('xp') ||
-      q.includes('ball') ||
-      q.includes('reyting') ||
-      q.includes('streak') ||
-      q.includes('unvon')
-    ) {
-      return {
-        text: `🏆 **XP, Reyting va Darajalar tizimi:**\n\n• **Har bir to‘g‘ri javob uchun:** +10 XP\n• **100% mukammal test uchun:** +50 XP qo‘shimcha bonus\n• **Battle g‘alabasi uchun:** +50 XP\n• **Har kungi doimiy o‘qish (Streak):** Har kuni kamida 1 marta test yechsangiz, streak kunchalari oshib boradi va qo‘shimcha ballar beriladi.\n• Barcha to‘plangan XP reytingingizni oshiradi va PesHQadamlar jadvalida yuqoriga ko‘taradi!`,
-        actions: [
-          { label: 'Reyting jadvali', link: '/leaderboard' },
-          { label: 'Mening yutuqlarim', link: '/achievements' },
+          { label: 'Xatolarim', link: '/mistakes' },
+          { label: 'Adminga yozish', link: 'https://t.me/medquiz_uz', external: true, primary: true },
         ],
       };
     }
 
     if (
       q.includes('admin') ||
-      q.includes('aloqa') ||
-      q.includes('telegram') ||
+      q.includes('bog‘lanish') ||
       q.includes('telefon') ||
-      q.includes('bog‘lanish')
+      q.includes('aloqa')
     ) {
       return {
-        text: `👨‍⚕️ **Administrator va Texnik Qo‘llab-quvvatlash bilan aloqa:**\n\n• **Telegram yordam:** [@medquiz_admin](https://t.me/medquiz_uz)\n• **Rasmiy kanal:** [@medquiz_official](https://t.me/medquiz_uz)\n• **Ish vaqti:** 24/7 (tibbiyot talabalari va foydalanuvchilar uchun uzluksiz)\n• **Murojaatlar:** Yangi test bazalarini qo‘shish, mualliflik savollarini kiritish yoki takliflar bo‘yicha Telegram orqali yozishingiz mumkin.`,
-        actions: [{ label: 'Telegramda yozish', link: 'https://t.me/medquiz_uz', external: true }],
+        text: `MedQuiz ma’muriyati va shifokor-maslahatchilar bilan Telegram orqali to‘g‘ridan-to‘g‘ri bog‘lanishingiz mumkin.`,
+        summaryCard: {
+          title: 'Aloqa markazi',
+          items: [
+            { label: 'Telegram', value: '@medquiz_uz' },
+            { label: 'Vaqt', value: '24/7 doimiy aloqa' },
+            { label: 'Kafolat', value: '10 daqiqa ichida javob' },
+          ],
+        },
+        actions: [
+          { label: 'Bekor qilish', link: '/support' },
+          { label: 'Telegram ochish', link: 'https://t.me/medquiz_uz', external: true, primary: true },
+        ],
       };
     }
 
     return {
-      text: `Rahmat! Savolingiz qabul qilindi. 🩺\n\n«${userQuery}» masalasi bo‘yicha:\nMedQuiz platformasida barcha funksiyalar tibbiyot talabalari imtihonlarga oson, samarali va do‘stlar bilan qiziqarli tayyorlanishi uchun yaratilgan.\n\nAgar bu bo‘yicha qo‘shimcha tushuntirish kerak bo‘lsa, quyidagi tugmalar orqali tegishli bo‘limga o‘tishingiz yoki to‘g‘ridan-to‘g‘ri Telegram orqali admin bilan bog‘lanishingiz mumkin.`,
+      text: `Savolingiz qabul qilindi. Sizga qanday qo‘shimcha yordam bera olaman?`,
+      choices: ['Test yuklash', 'Battle qoidalari', 'Imtihon rejasi', 'Admin aloqa'],
       actions: [
-        { label: 'To‘plamlar', link: '/banks' },
-        { label: 'Battle o‘ynash', link: '/battle' },
-        { label: 'Telegramda yozish', link: 'https://t.me/medquiz_uz', external: true },
+        { label: 'Bosh sahifa', link: '/dashboard' },
+        { label: 'Telegram yordam', link: 'https://t.me/medquiz_uz', external: true, primary: true },
       ],
     };
   };
 
-  const handleSend = (textToSend?: string) => {
-    const raw = (textToSend !== undefined ? textToSend : input).trim();
-    if (!raw && !selectedFile) return;
-
-    const filePayload = selectedFile || undefined;
+  const handleSend = (overrideText?: string) => {
+    const textToSend = (overrideText ?? input).trim();
+    if (!textToSend && !selectedFile) return;
 
     const userMsg: SupportMessage = {
       id: `u-${Date.now()}`,
       sender: 'user',
-      senderName: me?.name || 'Talaba',
-      avatar: me?.avatar || undefined,
-      text: raw || (filePayload ? `[Yuborilgan fayl: ${filePayload.name}]` : undefined),
-      file: filePayload,
-      time: new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }),
+      senderName: me?.name || 'Siz',
+      avatar: me?.avatar,
+      text: textToSend,
+      file: selectedFile || undefined,
+      time: 'Hozir',
     };
 
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
+    const hadFile = Boolean(selectedFile);
+    const fileName = selectedFile?.name;
     setSelectedFile(null);
+
     setIsTyping(true);
 
-    const replyDelay = 700 + Math.random() * 400;
+    const replyDelay = Math.min(1000, 450 + textToSend.length * 8);
 
     setTimeout(() => {
-      const { text: answerText, actions } = generateAnswer(
-        raw,
-        !!filePayload,
-        filePayload?.name
-      );
+      const answer = generateAnswer(textToSend, hadFile, fileName);
+
       const botMsg: SupportMessage = {
-        id: `s-${Date.now()}`,
+        id: `bot-${Date.now()}`,
         sender: 'support',
-        senderName: 'MedQuiz Qo‘llab-quvvatlash',
-        text: answerText,
-        time: new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }),
-        actions,
+        senderName: 'Assistant',
+        text: answer.text,
+        summaryCard: answer.summaryCard,
+        choices: answer.choices,
+        actions: answer.actions,
+        time: 'Hozir',
       };
 
       setMessages((prev) => [...prev, botMsg]);
@@ -340,210 +354,256 @@ export function SupportPage() {
     setClearChatConfirm(false);
   };
 
+  const filteredMessages = useMemo(() => {
+    if (!searchQuery.trim()) return messages;
+    const sq = searchQuery.toLowerCase();
+    return messages.filter(
+      (m) =>
+        (m.text && m.text.toLowerCase().includes(sq)) ||
+        (m.file && m.file.name.toLowerCase().includes(sq))
+    );
+  }, [messages, searchQuery]);
+
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-white overflow-hidden">
-      {/* 1. TOP HEADER: [← Ortga] + Qo'llab-quvvatlash markazi */}
-      <header className="sticky top-0 z-30 flex items-center justify-between px-3 sm:px-6 py-3 border-b border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-[#0e1422]/95 backdrop-blur-md shadow-xs shrink-0">
-        <div className="flex items-center gap-2 sm:gap-3.5 min-w-0">
-          {/* Ortga qaytish tugmasi */}
-          <button
-            type="button"
-            onClick={handleBack}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-2xs active:scale-95 shrink-0"
-            title="Ortga qaytish"
-          >
-            <Icon name="ri-arrow-left-line" className="text-base sm:text-lg" />
-            <span>Ortga</span>
-          </button>
+    <div className="fixed inset-0 z-50 flex flex-col bg-[#f4f5f7] dark:bg-[#0b0f19] text-slate-900 dark:text-white overflow-hidden font-sans">
+      {/* 1. TOP HEADER: Exact clean redesign like the image */}
+      <header className="sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6 py-3.5 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-b border-slate-200/60 dark:border-white/5 shrink-0">
+        {/* Left: Back chevron button */}
+        <button
+          type="button"
+          onClick={handleBack}
+          className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
+          title="Ortga"
+          aria-label="Ortga"
+        >
+          <Icon name="ri-arrow-left-s-line" className="text-2xl" />
+        </button>
 
-          <div className="h-6 w-px bg-slate-200 dark:bg-white/10 shrink-0" />
-
-          {/* Qo'llab-quvvatlash markazi yozuvi */}
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="relative shrink-0">
-              <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-emerald-600 text-white shadow-md shadow-primary/20">
-                <Icon name="ri-customer-service-2-fill" className="text-lg sm:text-xl" />
-              </div>
-              <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-white dark:border-[#0e1422]"></span>
-              </span>
-            </div>
-
-            <div className="min-w-0">
-              <h1 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
-                Qo‘llab-quvvatlash markazi
-              </h1>
-              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1.5 truncate">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                <span>24/7 Onlayn • Jonli yordam</span>
-              </p>
-            </div>
-          </div>
+        {/* Center: Title "Support Assistant" */}
+        <div className="text-center">
+          <h1 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight">
+            Support Assistant
+          </h1>
         </div>
 
-        {/* O'ng tomon: Telegram va Chat tozalash */}
-        <div className="flex items-center gap-2 shrink-0">
-          <a
-            href="https://t.me/medquiz_uz"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 text-xs font-bold border border-sky-500/25 transition-colors"
-            title="Telegramda administrator bilan bog‘lanish"
+        {/* Right: Search icon & Clear options */}
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setSearchOpen((v) => !v)}
+            className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors cursor-pointer ${
+              searchOpen
+                ? 'bg-slate-100 dark:bg-white/10 text-emerald-600 dark:text-emerald-400'
+                : 'hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200'
+            }`}
+            title="Xabarlarni qidirish"
+            aria-label="Qidirish"
           >
-            <Icon name="ri-telegram-fill" className="text-sm sm:text-base text-sky-500" />
-            <span className="hidden sm:inline">Telegram admin</span>
-          </a>
+            <Icon name="ri-search-line" className="text-lg" />
+          </button>
 
           <button
             type="button"
             onClick={handleClearChat}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors cursor-pointer"
+            className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-rose-50 dark:hover:bg-rose-950/20 text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
             title="Chat tarixini tozalash"
+            aria-label="Tozalash"
           >
             <Icon name="ri-delete-bin-line" className="text-base" />
           </button>
         </div>
       </header>
 
-      {/* 2. TEZKOR SAVOLLAR (FAQ CHIPSLAR) */}
-      <div className="flex items-center gap-2 overflow-x-auto border-b border-slate-200/80 bg-slate-50/70 px-4 py-2 text-xs no-scrollbar dark:border-white/10 dark:bg-white/[0.02] shrink-0">
-        <span className="shrink-0 font-bold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          Tezkor savollar:
-        </span>
-        {QUICK_TOPICS.map((topic, i) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => handleSend(topic.query)}
-            className="shrink-0 rounded-full border border-slate-200/90 bg-white px-3 py-1 font-medium text-slate-700 hover:border-primary hover:text-primary dark:border-white/10 dark:bg-[#111827] dark:text-slate-300 dark:hover:border-primary transition-colors cursor-pointer shadow-2xs"
-          >
-            {topic.short}
-          </button>
-        ))}
-      </div>
+      {/* Optional Search Bar dropdown */}
+      {searchOpen && (
+        <div className="px-4 py-2.5 bg-white dark:bg-[#111827] border-b border-slate-200/60 dark:border-white/5 animate-in slide-in-from-top-2 duration-150 shrink-0">
+          <div className="relative max-w-xl mx-auto flex items-center">
+            <Icon name="ri-search-line" className="absolute left-3 text-slate-400 text-sm" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Xabarlardan qidirish..."
+              autoFocus
+              className="w-full h-9 pl-9 pr-8 rounded-full bg-slate-100 dark:bg-white/5 text-xs sm:text-sm text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-emerald-500"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-white"
+              >
+                <Icon name="ri-close-circle-fill" className="text-sm" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
-      {/* 3. ASOSIY FULLSCREEN XABARLAR MAYDONI */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-slate-50/40 dark:bg-[#070b14]/50">
-        <div className="max-w-4xl mx-auto w-full space-y-4">
-          {messages.map((msg) => {
+      {/* 2. CHAT MESSAGES AREA: Exactly styled like the "After" mockup */}
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-5">
+        <div className="max-w-xl mx-auto w-full space-y-5">
+          {/* Date Label: "Nov 28" / localized current date */}
+          <div className="text-center pt-1 pb-1">
+            <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 select-none">
+              {new Date().toLocaleDateString('uz-UZ', { month: 'short', day: 'numeric' })}
+            </span>
+          </div>
+
+          {filteredMessages.map((msg) => {
             const isUser = msg.sender === 'user';
 
-            return (
-              <div
-                key={msg.id}
-                className={`flex items-start gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
-              >
-                {/* Avatar */}
-                {isUser ? (
-                  <Avatar name={msg.senderName} image={msg.avatar} size="w-9 h-9" />
-                ) : (
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-emerald-600 text-white shadow-xs">
-                    <Icon name="ri-stethoscope-fill" className="text-lg" />
-                  </div>
-                )}
-
-                {/* Message Bubble Container */}
-                <div
-                  className={`max-w-[88%] sm:max-w-[75%] rounded-2xl p-4 text-xs sm:text-sm leading-relaxed shadow-xs ${
-                    isUser
-                      ? 'bg-med-600 text-white rounded-tr-none'
-                      : 'bg-white text-slate-800 border border-slate-200/80 dark:bg-[#111827] dark:text-slate-200 dark:border-white/10 rounded-tl-none'
-                  }`}
-                >
-                  {/* Sender Title and Time */}
-                  <div
-                    className={`flex items-center justify-between gap-3 pb-1.5 mb-1.5 border-b text-[11px] ${
-                      isUser
-                        ? 'border-white/20 text-emerald-100'
-                        : 'border-slate-100 dark:border-white/5 text-slate-500 dark:text-slate-400 font-semibold'
-                    }`}
-                  >
-                    <span>{msg.senderName}</span>
-                    <span className="opacity-75">{msg.time}</span>
-                  </div>
-
-                  {/* Agar xabarda Fayl (Rasm yoki Hujjat) biriktirilgan bo'lsa */}
-                  {msg.file && (
-                    <div className="mb-3">
-                      {msg.file.type === 'image' ? (
-                        <div className="relative group overflow-hidden rounded-xl border border-white/20 max-w-sm">
+            if (isUser) {
+              return (
+                /* User Message: Clean white bubble, right-aligned */
+                <div key={msg.id} className="flex justify-end">
+                  <div className="max-w-[85%] sm:max-w-[75%] rounded-2xl bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white p-3.5 sm:p-4 shadow-xs border border-slate-200/60 dark:border-white/5 text-xs sm:text-sm leading-relaxed space-y-2">
+                    {/* File Attachment */}
+                    {msg.file && (
+                      <div className="overflow-hidden rounded-xl border border-slate-100 dark:border-white/10">
+                        {msg.file.type === 'image' ? (
                           <img
                             src={msg.file.dataUrl}
                             alt={msg.file.name}
                             className="max-h-60 w-auto rounded-lg object-cover cursor-pointer hover:opacity-95 transition-opacity"
                             onClick={() => setPreviewImage(msg.file!.dataUrl)}
                           />
-                          <div className="mt-1 flex items-center justify-between text-[11px] opacity-80">
-                            <span className="truncate max-w-[200px]">{msg.file.name}</span>
-                            <span>{formatFileSize(msg.file.size)}</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div
-                          className={`flex items-center gap-3 p-3 rounded-xl border ${
-                            isUser
-                              ? 'bg-white/10 border-white/20 text-white'
-                              : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-800 dark:text-white'
-                          }`}
-                        >
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/20 text-primary">
-                            <Icon name="ri-file-text-line" className="text-2xl" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="font-bold text-xs truncate">{msg.file.name}</p>
-                            <p className="text-[10px] opacity-75">{formatFileSize(msg.file.size)}</p>
-                          </div>
-                          <a
-                            href={msg.file.dataUrl}
-                            download={msg.file.name}
-                            className={`p-2 rounded-lg transition-colors ${
-                              isUser
-                                ? 'bg-white/20 hover:bg-white/30 text-white'
-                                : 'bg-primary/10 hover:bg-primary/20 text-primary'
-                            }`}
-                            title="Yuklab olish"
-                          >
-                            <Icon name="ri-download-2-line" className="text-base" />
-                          </a>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Xabar matni */}
-                  {msg.text && (
-                    <div className="whitespace-pre-wrap space-y-2">
-                      {msg.text}
-                    </div>
-                  )}
-
-                  {/* Qo'shimcha tezkor harakat tugmalari */}
-                  {msg.actions && msg.actions.length > 0 && (
-                    <div className="mt-3.5 pt-2.5 border-t border-slate-100 dark:border-white/5 flex flex-wrap gap-2">
-                      {msg.actions.map((act, idx) =>
-                        act.external ? (
-                          <a
-                            key={idx}
-                            href={act.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold border border-primary/20 transition-colors"
-                          >
-                            <Icon name="ri-external-link-line" />
-                            <span>{act.label}</span>
-                          </a>
                         ) : (
-                          <Link
+                          <div className="flex items-center gap-2.5 p-2.5 bg-slate-50 dark:bg-white/5 text-xs">
+                            <Icon name="ri-file-text-line" className="text-lg text-emerald-500" />
+                            <span className="truncate flex-1 font-semibold">{msg.file.name}</span>
+                            <span className="text-[10px] text-slate-400">{formatFileSize(msg.file.size)}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {msg.text && <p className="font-medium whitespace-pre-wrap">{msg.text}</p>}
+                  </div>
+                </div>
+              );
+            }
+
+            /* Assistant Message: Robot avatar on left, "Assistant" label on top, clean white card */
+            return (
+              <div key={msg.id} className="flex items-end gap-2.5 group">
+                {/* Robot Avatar (exactly like the image) */}
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-200/80 dark:bg-white/10 border border-slate-300/60 dark:border-white/10 text-slate-700 dark:text-slate-200 shadow-2xs overflow-hidden mb-1">
+                  <span className="text-lg select-none">🤖</span>
+                </div>
+
+                <div className="flex-1 max-w-[88%] sm:max-w-[82%] space-y-1.5">
+                  {/* Subtle "Assistant" label */}
+                  <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 ml-1 block">
+                    Assistant
+                  </span>
+
+                  {/* Main Bubble Card */}
+                  <div className="rounded-3xl bg-white dark:bg-[#151c2c] text-slate-900 dark:text-slate-100 p-4 sm:p-5 shadow-xs border border-slate-200/60 dark:border-white/5 text-xs sm:text-sm leading-relaxed space-y-3">
+                    {/* Text */}
+                    {msg.text && (
+                      <p className="font-medium whitespace-pre-wrap text-slate-800 dark:text-slate-200">
+                        {msg.text}
+                      </p>
+                    )}
+
+                    {/* Interactive Option Cards (with chevron >, exactly like the mockup: "New bicycle >") */}
+                    {msg.options && msg.options.length > 0 && (
+                      <div className="space-y-1.5 pt-1">
+                        {msg.options.map((opt, idx) => (
+                          <button
                             key={idx}
-                            href={act.link || '/'}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold border border-primary/20 transition-colors"
+                            type="button"
+                            onClick={() => handleSend(opt.query)}
+                            className="w-full flex items-center justify-between p-3 rounded-2xl bg-slate-50 hover:bg-slate-100/90 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200/60 dark:border-white/5 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 transition-all cursor-pointer text-left active:scale-[0.99]"
                           >
-                            <Icon name="ri-arrow-right-line" />
-                            <span>{act.label}</span>
-                          </Link>
-                        )
-                      )}
+                            <span>{opt.label}</span>
+                            <Icon name="ri-arrow-right-s-line" className="text-base text-slate-400 shrink-0" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Inline choice pills (like $50 $100 $300 in the mockup) */}
+                    {msg.choices && msg.choices.length > 0 && (
+                      <div className="flex items-center gap-2 flex-wrap pt-1">
+                        {msg.choices.map((ch, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => handleSend(ch)}
+                            className="px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200/80 dark:border-white/5 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all active:scale-95 cursor-pointer"
+                          >
+                            {ch}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Summary Detail Card (like the nested card in the mockup: Amount, From, To) */}
+                    {msg.summaryCard && (
+                      <div className="rounded-2xl border border-slate-200/70 dark:border-white/5 bg-slate-50/80 dark:bg-white/[0.02] p-3.5 space-y-1.5 text-xs">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                          {msg.summaryCard.title}
+                        </span>
+                        {msg.summaryCard.items.map((it, idx) => (
+                          <div key={idx} className="flex items-center justify-between py-0.5">
+                            <span className="text-slate-500 dark:text-slate-400">{it.label}:</span>
+                            <span className="font-bold text-slate-800 dark:text-slate-200">{it.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action Pill Buttons beneath the bubble:
+                      Exact recreation of [ Cancel ] and bright lime-green [ Confirm ] from the mockup! */}
+                  {msg.actions && msg.actions.length > 0 && (
+                    <div className="flex items-center gap-2 pt-1">
+                      {msg.actions.map((act, idx) => {
+                        const isPrimary = act.primary || idx === msg.actions!.length - 1;
+
+                        const buttonClasses = isPrimary
+                          ? 'px-6 py-2.5 rounded-full bg-[#ccff00] hover:bg-[#bbf000] text-slate-900 font-extrabold text-xs shadow-xs transition-all active:scale-95 cursor-pointer text-center'
+                          : 'px-5 py-2.5 rounded-full bg-white dark:bg-[#151c2c] hover:bg-slate-100 dark:hover:bg-white/5 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-300 font-bold text-xs transition-all active:scale-95 cursor-pointer text-center';
+
+                        if (act.external) {
+                          return (
+                            <a
+                              key={idx}
+                              href={act.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={buttonClasses}
+                            >
+                              {act.label}
+                            </a>
+                          );
+                        }
+
+                        if (act.link) {
+                          return (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => setLocation(act.link!)}
+                              className={buttonClasses}
+                            >
+                              {act.label}
+                            </button>
+                          );
+                        }
+
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => handleSend(act.label)}
+                            className={buttonClasses}
+                          >
+                            {act.label}
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -553,17 +613,14 @@ export function SupportPage() {
 
           {/* Typing Indicator */}
           {isTyping && (
-            <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-emerald-600 text-white shadow-xs">
-                <Icon name="ri-stethoscope-fill" className="text-lg" />
+            <div className="flex items-end gap-2.5 animate-in fade-in duration-150">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-200/80 dark:bg-white/10 text-slate-700 dark:text-slate-200 shadow-2xs overflow-hidden mb-1">
+                <span className="text-lg select-none">🤖</span>
               </div>
-              <div className="rounded-2xl rounded-tl-none border border-slate-200/80 bg-white p-3.5 text-xs text-slate-500 shadow-xs dark:border-white/10 dark:bg-[#111827] dark:text-slate-400 flex items-center gap-2">
-                <span className="font-semibold text-primary">MedQuiz Support yozmoqda</span>
-                <div className="flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]"></span>
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]"></span>
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce"></span>
-                </div>
+              <div className="rounded-3xl bg-white dark:bg-[#151c2c] p-3.5 shadow-xs border border-slate-200/60 dark:border-white/5 flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce [animation-delay:-0.3s]"></span>
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce [animation-delay:-0.15s]"></span>
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce"></span>
               </div>
             </div>
           )}
@@ -572,34 +629,34 @@ export function SupportPage() {
         </div>
       </div>
 
-      {/* 4. FOOTER INPUT VA FAYL BIRIKTIRISH MAYDONI */}
-      <footer className="border-t border-slate-200/80 bg-white p-3 sm:p-4 dark:border-white/10 dark:bg-[#0e1422] shrink-0">
-        <div className="max-w-4xl mx-auto w-full">
-          {/* Tanlangan fayl prebyusi (agar biriktirilgan bo'lsa) */}
+      {/* 3. FLOATING BOTTOM BAR: Exact recreation of the floating attachment button + pill input from the mockup */}
+      <footer className="p-3 sm:p-5 shrink-0">
+        <div className="max-w-xl mx-auto w-full space-y-2">
+          {/* Selected File Badge */}
           {selectedFile && (
-            <div className="mb-2.5 flex items-center justify-between p-2.5 rounded-xl bg-primary/10 border border-primary/20 text-primary text-xs">
+            <div className="flex items-center justify-between p-2.5 rounded-2xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-white/10 shadow-sm text-xs">
               <div className="flex items-center gap-2 min-w-0">
                 {selectedFile.type === 'image' ? (
                   <img
                     src={selectedFile.dataUrl}
                     alt={selectedFile.name}
-                    className="h-9 w-9 rounded-lg object-cover border border-primary/30 shrink-0"
+                    className="h-8 w-8 rounded-lg object-cover border border-slate-200 dark:border-white/10 shrink-0"
                   />
                 ) : (
-                  <Icon name="ri-file-text-line" className="text-xl shrink-0" />
+                  <Icon name="ri-file-text-line" className="text-lg text-emerald-500" />
                 )}
                 <div className="min-w-0">
-                  <p className="font-bold truncate max-w-[260px] sm:max-w-md">{selectedFile.name}</p>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400">{formatFileSize(selectedFile.size)}</p>
+                  <p className="font-bold truncate text-slate-800 dark:text-slate-200">{selectedFile.name}</p>
+                  <p className="text-[10px] text-slate-400">{formatFileSize(selectedFile.size)}</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedFile(null)}
-                className="p-1 rounded-lg hover:bg-primary/20 text-slate-500 hover:text-rose-500 transition-colors cursor-pointer"
+                className="p-1 rounded-full text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
                 title="Faylni olib tashlash"
               >
-                <Icon name="ri-close-line" className="text-lg" />
+                <Icon name="ri-close-line" className="text-base" />
               </button>
             </div>
           )}
@@ -618,64 +675,74 @@ export function SupportPage() {
               e.preventDefault();
               handleSend();
             }}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2.5"
           >
-            {/* Fayl biriktirish (Skrepka) tugmasi */}
+            {/* Left: Floating square attachment button with rounded-2xl */}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary transition-colors cursor-pointer"
-              title="Fayl yoki rasm biriktirish (PDF, Word, rasm, matn)"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white dark:bg-[#151c2c] border border-slate-200/70 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:text-emerald-500 dark:hover:text-emerald-400 shadow-sm hover:shadow-md transition-all active:scale-95 cursor-pointer"
+              title="Fayl yoki rasm biriktirish"
+              aria-label="Fayl biriktirish"
             >
-              <Icon name="ri-attachment-2" className="text-xl" />
+              <Icon name="ri-upload-2-line" className="text-xl" />
             </button>
 
-            {/* Xabar kiritish inputi */}
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Savolingizni yozing yoki fayl yuboring..."
-              className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs sm:text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:bg-white dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-primary"
-            />
+            {/* Right: Floating rounded-full pill bar */}
+            <div className="flex-1 h-12 rounded-full bg-white dark:bg-[#151c2c] border border-slate-200/70 dark:border-white/10 px-4 flex items-center justify-between shadow-sm focus-within:border-slate-300 dark:focus-within:border-white/20 transition-all">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask something..."
+                className="flex-1 bg-transparent border-none outline-none text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 min-w-0 pr-2"
+              />
 
-            {/* Yuborish tugmasi */}
-            <button
-              type="submit"
-              disabled={!input.trim() && !selectedFile}
-              className="flex h-11 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 sm:px-5 font-bold text-xs sm:text-sm text-white shadow-md transition-all hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:scale-95"
-            >
-              <span className="hidden sm:inline">Yuborish</span>
-              <Icon name="ri-send-plane-fill" className="text-base" />
-            </button>
+              {/* Up-arrow Send Button inside the pill on the right */}
+              <button
+                type="submit"
+                disabled={!input.trim() && !selectedFile}
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-all cursor-pointer ${
+                  input.trim() || selectedFile
+                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs active:scale-95'
+                    : 'bg-transparent text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                }`}
+                title="Yuborish"
+                aria-label="Yuborish"
+              >
+                <Icon name="ri-arrow-up-line" className="text-base font-bold" />
+              </button>
+            </div>
           </form>
         </div>
       </footer>
 
-      {/* Rasm to'liq ekranda ko'rish modali (Lightbox) */}
+      {/* Image Preview Modal */}
       {previewImage && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
           onClick={() => setPreviewImage(null)}
         >
-          <div className="relative max-w-4xl max-h-[90vh]">
+          <div className="relative max-w-3xl max-h-[90vh]">
             <img
               src={previewImage}
               alt="Ko‘rish"
-              className="max-h-[85vh] max-w-full rounded-xl object-contain shadow-2xl"
+              className="max-h-[85vh] max-w-full rounded-2xl object-contain shadow-2xl"
             />
             <button
               type="button"
               onClick={() => setPreviewImage(null)}
-              className="absolute -top-3 -right-3 flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-white shadow-lg hover:bg-rose-600 transition-colors"
+              className="absolute -top-3 -right-3 flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-white shadow-lg hover:bg-rose-600 transition-colors cursor-pointer"
             >
-              <Icon name="ri-close-line" className="text-xl" />
+              <Icon name="ri-close-line" className="text-lg" />
             </button>
           </div>
         </div>
       )}
 
-      {/* Chatni tozalash Alert Modali */}
+      {/* Clear Chat Confirmation Alert Modal */}
       <AlertModal
         isOpen={clearChatConfirm}
         onClose={() => setClearChatConfirm(false)}
