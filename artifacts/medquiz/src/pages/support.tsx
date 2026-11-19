@@ -11,6 +11,13 @@ interface FileAttachment {
   dataUrl: string;
 }
 
+interface RoadmapStep {
+  step: number;
+  title: string;
+  desc: string;
+  badge?: string;
+}
+
 interface SupportMessage {
   id: string;
   sender: 'user' | 'support';
@@ -20,20 +27,22 @@ interface SupportMessage {
   file?: FileAttachment;
   time: string;
   options?: { label: string; query: string }[];
-  choices?: string[];
-  summaryCard?: { title: string; items: { label: string; value: string }[] };
+  roadmap?: {
+    title: string;
+    steps: RoadmapStep[];
+  };
   actions?: { label: string; link?: string; external?: boolean; primary?: boolean }[];
 }
 
-const STORAGE_KEY = 'medquiz_support_chat_messages_v3';
+const STORAGE_KEY = 'medquiz_support_chat_messages_v4';
 
 const INITIAL_MESSAGES: SupportMessage[] = [
   {
     id: 'm-welcome',
     sender: 'support',
-    senderName: 'Assistant',
-    text: 'Assalomu alaykum! MedQuiz yordamchisiga xush kelibsiz. Qaysi masala bo‘yicha yordam beray?',
-    time: 'Bugun, hozir',
+    senderName: 'MedQuiz Yordamchi',
+    text: 'Assalomu alaykum! MedQuiz qo‘llab-quvvatlash markaziga xush kelibsiz. Savolingiz bo‘yicha quyidagi yo‘l xaritalaridan birini tanlang yoki savolingizni to‘g‘ridan-to‘g‘ri yozing:',
+    time: 'Bugun',
     options: [
       { label: 'Word yoki PDF dan test yuklash', query: 'Word yoki PDF dan test yuklash' },
       { label: 'Do‘stlar bilan jonli Battle rejimi', query: 'Battle qanday o‘ynaladi?' },
@@ -62,8 +71,8 @@ function playMessageBeep() {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(659.25, now); // E5
-    osc.frequency.exponentialRampToValueAtTime(880, now + 0.1); // A5
+    osc.frequency.setValueAtTime(659.25, now);
+    osc.frequency.exponentialRampToValueAtTime(880, now + 0.1);
     gain.gain.setValueAtTime(0.08, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
     osc.connect(gain);
@@ -144,26 +153,39 @@ export function SupportPage() {
     fileName?: string
   ): {
     text: string;
-    choices?: string[];
-    summaryCard?: SupportMessage['summaryCard'];
+    roadmap?: SupportMessage['roadmap'];
     actions?: SupportMessage['actions'];
   } => {
     const q = userQuery.toLowerCase();
 
     if (hasFile) {
       return {
-        text: `Faylingiz muvaffaqiyatli qabul qilindi. Shifokor-moderatorlarimiz uni tekshirishni boshladi.`,
-        summaryCard: {
-          title: 'Qabul qilingan hujjat',
-          items: [
-            { label: 'Fayl', value: fileName || 'Hujjat' },
-            { label: 'Holat', value: 'Ko‘rib chiqilmoqda' },
-            { label: 'Bo‘lim', value: 'MedQuiz Moderatsiya' },
+        text: `Faylingiz muvaffaqiyatli qabul qilindi. Moderatsiya va tekshirish bosqichlari quyidagicha kechadi:`,
+        roadmap: {
+          title: 'Hujjatni tekshirish yo‘l xaritasi',
+          steps: [
+            {
+              step: 1,
+              title: 'Qabul qilindi va tahlilga olindi',
+              desc: `«${fileName || 'Hujjat'}» fayli tizim xotirasiga yuklandi.`,
+              badge: 'Bajarildi',
+            },
+            {
+              step: 2,
+              title: 'Shifokor-moderator tekshiruvi',
+              desc: 'Tibbiyot ekspertlari test tuzilishi va javoblarning ilmiy to‘g‘riligini tasdiqlaydi.',
+              badge: 'Jarayonda',
+            },
+            {
+              step: 3,
+              title: 'Bazaga qo‘shish va tasdiqlash',
+              desc: 'Yakuniy test to‘plami profilingizda faollashadi va sizga xabar beriladi.',
+            },
           ],
         },
         actions: [
-          { label: 'Bekor qilish', link: '/support' },
-          { label: 'Telegram admin', link: 'https://t.me/medquiz_uz', external: true, primary: true },
+          { label: 'To‘plamlarga o‘tish', link: '/banks', primary: true },
+          { label: 'Admin bilan bog‘lanish', link: 'https://t.me/medquiz_uz', external: true },
         ],
       };
     }
@@ -177,19 +199,33 @@ export function SupportPage() {
       q.includes('to‘plam')
     ) {
       return {
-        text: `Word (.docx), PDF yoki TXT fayllardan testlarni avtomatik yuklash mumkin:`,
-        summaryCard: {
-          title: 'Yuklash qoidalari',
-          items: [
-            { label: 'Format', value: '.docx, .pdf, .txt' },
-            { label: 'To‘g‘ri javob', value: 'Oldiga «*» yoki «+» belgisi' },
-            { label: 'Variantlar', value: 'Kamida 2 ta (A, B, C, D)' },
+        text: `Word (.docx), PDF yoki TXT fayllardan yangi test to‘plamini yuklash bo‘yicha bosqichma-bosqich yo‘l xaritasi:`,
+        roadmap: {
+          title: 'Test bazasini yuklash yo‘l xaritasi',
+          steps: [
+            {
+              step: 1,
+              title: 'Faylni tayyorlash',
+              desc: 'Har bir savoldan so‘ng variantlarni joylashtiring. To‘g‘ri javob oldiga «+» yoki «*» belgisini qo‘ying (Masalan: +A) Normal qon bosimi 120/80 mm sim.ust).',
+              badge: 'Format',
+            },
+            {
+              step: 2,
+              title: 'To‘plamlar sahifasiga yuklash',
+              desc: '«To‘plamlar» sahifasiga o‘tib, «+ Yangi to‘plam» tugmasini bosing va faylingizni (.docx, .pdf yoki .txt) tanlang.',
+              badge: 'Yuklash',
+            },
+            {
+              step: 3,
+              title: 'Avtomatik testga aylantirish',
+              desc: 'MedQuiz algoritmi 1 soniyada savollar, variantlar va kalitlarni ajratib oladi. Test to‘plami mashq uchun tayyor bo‘ladi.',
+              badge: 'Tayyor',
+            },
           ],
         },
-        choices: ['To‘plam ochish', 'Namuna yuklash', 'Format qoidalari'],
         actions: [
-          { label: 'Yopish', link: '/support' },
-          { label: 'To‘plamlarga o‘tish', link: '/banks', primary: true },
+          { label: 'To‘plamlar bo‘limiga o‘tish', link: '/banks', primary: true },
+          { label: 'Yordam (Telegram)', link: 'https://t.me/medquiz_uz', external: true },
         ],
       };
     }
@@ -202,18 +238,33 @@ export function SupportPage() {
       q.includes('chaqir')
     ) {
       return {
-        text: `Do‘stlaringiz bilan jonli musobaqa (Battle) o‘tkazish bo‘yicha ko‘rsatma:`,
-        summaryCard: {
-          title: 'Battle parametrlari',
-          items: [
-            { label: 'Rejim', value: 'Klassik, Sudden Death, Speed Run' },
-            { label: 'Chaqiruv', value: 'Onlayn modal bildirishnoma' },
-            { label: 'Mukofot', value: '+10 MedCoins g‘olibga' },
+        text: `Kursdoshlar bilan onlayn test musobaqasi (Battle) o‘tkazish yo‘l xaritasi:`,
+        roadmap: {
+          title: 'Jonli Battle o‘tkazish yo‘l xaritasi',
+          steps: [
+            {
+              step: 1,
+              title: 'Xona yaratish va rejim tanlash',
+              desc: '«Battle» sahifasiga o‘tib kerakli fanni tanlang. Rejimlardan birini tanlang: Klassik, Sudden Death (bitta xatoda chiqish) yoki Speed Run.',
+              badge: '1-qadam',
+            },
+            {
+              step: 2,
+              title: 'Do‘stni taklif qilish',
+              desc: 'Kursdoshlar ro‘yxatidan do‘stingiz yonidagi «Battle» tugmasini bosing. Agar do‘stingiz onlayn bo‘lsa, ekranida taklif modali paydo bo‘ladi.',
+              badge: '2-qadam',
+            },
+            {
+              step: 3,
+              title: 'Real vaqtda bellashuv va mukofot',
+              desc: 'Savollarga bir vaqtda javob berasiz. G‘alaba qozongan ishtirokchi +10 MedCoins va reyting XP ballari bilan taqdirlanadi.',
+              badge: 'G‘alaba',
+            },
           ],
         },
         actions: [
+          { label: 'Battle bo‘limiga o‘tish', link: '/battle', primary: true },
           { label: 'Do‘stlar ro‘yxati', link: '/friends' },
-          { label: 'Battle boshlash', link: '/battle', primary: true },
         ],
       };
     }
@@ -227,18 +278,32 @@ export function SupportPage() {
       q.includes('reja')
     ) {
       return {
-        text: `Imtihon kalendari Spaced Repetition (SRS) orqali kunlik savollar me’yorini avtomatik taqsimlaydi:`,
-        summaryCard: {
-          title: 'O‘quv rejasi',
-          items: [
-            { label: 'Algoritm', value: 'SM-2 Intervalli takrorlash' },
-            { label: 'Imtihon sanasi', value: 'To‘plamlar sahifasidan' },
-            { label: 'Bildirishnoma', value: 'Tepada qo‘ng‘iroqcha' },
+        text: `Spaced Repetition (SRS) asosida imtihonga tizimli tayyorgarlik ko‘rish yo‘l xaritasi:`,
+        roadmap: {
+          title: 'Imtihon tayyorgarligi yo‘l xaritasi (SRS)',
+          steps: [
+            {
+              step: 1,
+              title: 'Imtihon sanasini belgilash',
+              desc: '«To‘plamlar» sahifasidagi fan kartochkasida kalendar belgisini bosing va rasmiy imtihon kunini tanlang.',
+              badge: 'Taqvim',
+            },
+            {
+              step: 2,
+              title: 'Kunlik me’yorni hisoblash',
+              desc: 'Tizim imtihongacha qolgan kunlarni inobatga olgan holda kunlik o‘zlashtirish me’yorini (masalan, kuniga 35 ta savol) belgilaydi.',
+              badge: 'Me’yor',
+            },
+            {
+              step: 3,
+              title: 'Intervalli takrorlash va mustahkamlash',
+              desc: 'Xato qilingan savollar SM-2 algoritmi bo‘yicha 1, 3 va 7 kunlik intervallarda qaytarilib, uzoq muddatli xotiraga muhrlanadi.',
+              badge: 'SRS',
+            },
           ],
         },
         actions: [
-          { label: 'Ortga', link: '/support' },
-          { label: 'Kalendarga o‘tish', link: '/banks', primary: true },
+          { label: 'To‘plamlarga o‘tish', link: '/banks', primary: true },
         ],
       };
     }
@@ -250,17 +315,33 @@ export function SupportPage() {
       q.includes('shikoyat')
     ) {
       return {
-        text: `Test savolidagi xatolik bo‘yicha: Test yechayotganda bayroqcha yoki shikoyat tugmasini bossangiz, savol adashganlar bankiga saqlanadi.`,
-        summaryCard: {
-          title: 'Xatolik tekshiruvi',
-          items: [
-            { label: 'Bo‘lim', value: 'Xatolarim banki' },
-            { label: 'AI Tahlil', value: 'Patofiziologik asos' },
+        text: `Savoldagi xatolikni bildirish va tuzatish bo‘yicha yo‘l xaritasi:`,
+        roadmap: {
+          title: 'Savoldagi xatolikni tuzatish yo‘l xaritasi',
+          steps: [
+            {
+              step: 1,
+              title: 'Xatoni belgilash',
+              desc: 'Test yechish davomida savol ostidagi shikoyat tugmasini bosing yoki ushbu chatga savol skrinshotini yuboring.',
+              badge: 'Belgilash',
+            },
+            {
+              step: 2,
+              title: 'Xatolarim bankida saqlash',
+              desc: 'Noto‘g‘ri topilgan savol avtomatik «Xatolarim» bankiga tushadi va u yerda AI Klinik Tushuntirish tugmasi faollashadi.',
+              badge: 'AI Tahlil',
+            },
+            {
+              step: 3,
+              title: 'Bazani yangilash',
+              desc: 'Klinik tahririyat savolni tekshirib to‘g‘rilaydi va barcha foydalanuvchilarda to‘g‘ri variant aks etadi.',
+              badge: 'Tuzatildi',
+            },
           ],
         },
         actions: [
-          { label: 'Xatolarim', link: '/mistakes' },
-          { label: 'Adminga yozish', link: 'https://t.me/medquiz_uz', external: true, primary: true },
+          { label: 'Xatolarim bo‘limi', link: '/mistakes', primary: true },
+          { label: 'Telegramda xabar berish', link: 'https://t.me/medquiz_uz', external: true },
         ],
       };
     }
@@ -272,28 +353,61 @@ export function SupportPage() {
       q.includes('aloqa')
     ) {
       return {
-        text: `MedQuiz ma’muriyati va shifokor-maslahatchilar bilan Telegram orqali to‘g‘ridan-to‘g‘ri bog‘lanishingiz mumkin.`,
-        summaryCard: {
-          title: 'Aloqa markazi',
-          items: [
-            { label: 'Telegram', value: '@medquiz_uz' },
-            { label: 'Vaqt', value: '24/7 doimiy aloqa' },
-            { label: 'Kafolat', value: '10 daqiqa ichida javob' },
+        text: `MedQuiz ma’muriyati va texnik xizmati bilan bog‘lanish yo‘l xaritasi:`,
+        roadmap: {
+          title: 'Aloqa markazi yo‘l xaritasi',
+          steps: [
+            {
+              step: 1,
+              title: 'Mavzuni shakllantirish',
+              desc: 'Savol, taklif yoki to‘lov masalasini ushbu chatda yoki Telegramda yozing.',
+              badge: 'Savol',
+            },
+            {
+              step: 2,
+              title: 'Skrinshot ilova qilish',
+              desc: 'Zarur bo‘lsa pastdagi skrepka tugmasi orqali rasm yoki faylni ilova qiling.',
+              badge: 'Ilova',
+            },
+            {
+              step: 3,
+              title: 'To‘g‘ridan-to‘g‘ri javob',
+              desc: 'Administrator 15 daqiqa ichida siz bilan bog‘lanadi va masalani hal qiladi.',
+              badge: 'Tezkor',
+            },
           ],
         },
         actions: [
-          { label: 'Bekor qilish', link: '/support' },
-          { label: 'Telegram ochish', link: 'https://t.me/medquiz_uz', external: true, primary: true },
+          { label: 'Telegram admin ochish', link: 'https://t.me/medquiz_uz', external: true, primary: true },
         ],
       };
     }
 
     return {
-      text: `Savolingiz qabul qilindi. Sizga qanday qo‘shimcha yordam bera olaman?`,
-      choices: ['Test yuklash', 'Battle qoidalari', 'Imtihon rejasi', 'Admin aloqa'],
+      text: `Savolingiz qabul qilindi. MedQuiz imkoniyatlaridan to‘liq foydalanish bo‘yicha yo‘l xaritasi:`,
+      roadmap: {
+        title: 'Platformadan samarali foydalanish yo‘l xaritasi',
+        steps: [
+          {
+            step: 1,
+            title: 'Testlarni yuklash va mustaqil yechish',
+            desc: '«To‘plamlar» sahifasidan fanni tanlang yoki o‘z savollaringizni yuklang.',
+          },
+          {
+            step: 2,
+            title: 'Xatolar ustida ishlash',
+            desc: 'Xatolar banki va AI klinik tushuntirish yordamida bilimlarni mustahkamlang.',
+          },
+          {
+            step: 3,
+            title: 'Do‘stlar bilan bellashish',
+            desc: 'Battle janglarida qatnashib MedCoins va reyting ballarini to‘plang.',
+          },
+        ],
+      },
       actions: [
-        { label: 'Bosh sahifa', link: '/dashboard' },
-        { label: 'Telegram yordam', link: 'https://t.me/medquiz_uz', external: true, primary: true },
+        { label: 'Boshqaruv paneliga o‘tish', link: '/dashboard', primary: true },
+        { label: 'Telegram admin', link: 'https://t.me/medquiz_uz', external: true },
       ],
     };
   };
@@ -328,10 +442,9 @@ export function SupportPage() {
       const botMsg: SupportMessage = {
         id: `bot-${Date.now()}`,
         sender: 'support',
-        senderName: 'Assistant',
+        senderName: 'MedQuiz Yordamchi',
         text: answer.text,
-        summaryCard: answer.summaryCard,
-        choices: answer.choices,
+        roadmap: answer.roadmap,
         actions: answer.actions,
         time: 'Hozir',
       };
@@ -365,47 +478,68 @@ export function SupportPage() {
   }, [messages, searchQuery]);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#f4f5f7] dark:bg-[#0b0f19] text-slate-900 dark:text-white overflow-hidden font-sans">
-      {/* 1. TOP HEADER: Exact clean redesign like the image */}
-      <header className="sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6 py-3.5 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md border-b border-slate-200/60 dark:border-white/5 shrink-0">
-        {/* Left: Back chevron button */}
-        <button
-          type="button"
-          onClick={handleBack}
-          className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
-          title="Ortga"
-          aria-label="Ortga"
-        >
-          <Icon name="ri-arrow-left-s-line" className="text-2xl" />
-        </button>
+    <div className="fixed inset-0 z-50 flex flex-col bg-slate-50/70 dark:bg-[#090d16] text-slate-900 dark:text-white overflow-hidden">
+      {/* 1. TOP HEADER: MedQuiz dizayn tizimiga 100% mos toza header */}
+      <header className="sticky top-0 z-30 flex items-center justify-between px-3 sm:px-6 py-3 bg-white dark:bg-[#111827] border-b border-slate-200/80 dark:border-white/10 shadow-xs shrink-0">
+        {/* Left: Ortga qaytish */}
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200/90 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-bold transition-all cursor-pointer active:scale-95 shrink-0"
+            title="Ortga qaytish"
+          >
+            <Icon name="ri-arrow-left-s-line" className="text-xl" />
+            <span className="hidden sm:inline">Ortga</span>
+          </button>
 
-        {/* Center: Title "Support Assistant" */}
-        <div className="text-center">
-          <h1 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight">
-            Support Assistant
-          </h1>
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-emerald-600 text-white shadow-md shadow-primary/25 shrink-0">
+              <Icon name="ri-customer-service-2-fill" className="text-lg sm:text-xl" />
+            </div>
+            <div>
+              <h1 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-tight">
+                Qo‘llab-quvvatlash markazi
+              </h1>
+              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 leading-none mt-0.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Onlayn yordamchi</span>
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Right: Search icon & Clear options */}
-        <div className="flex items-center gap-1">
+        {/* Right: Qidiruv va Tozalash */}
+        <div className="flex items-center gap-1.5">
           <button
             type="button"
             onClick={() => setSearchOpen((v) => !v)}
-            className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors cursor-pointer ${
+            className={`flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/10 transition-colors cursor-pointer ${
               searchOpen
-                ? 'bg-slate-100 dark:bg-white/10 text-emerald-600 dark:text-emerald-400'
-                : 'hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200'
+                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                : 'hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-300'
             }`}
             title="Xabarlarni qidirish"
             aria-label="Qidirish"
           >
-            <Icon name="ri-search-line" className="text-lg" />
+            <Icon name="ri-search-line" className="text-base sm:text-lg" />
           </button>
+
+          <a
+            href="https://t.me/medquiz_uz"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 text-xs font-bold border border-sky-500/25 transition-colors"
+            title="Telegram admin"
+          >
+            <Icon name="ri-telegram-fill" className="text-base text-sky-500" />
+            <span>Telegram</span>
+          </a>
 
           <button
             type="button"
             onClick={handleClearChat}
-            className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-rose-50 dark:hover:bg-rose-950/20 text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+            className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-slate-200/80 dark:border-white/10 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors cursor-pointer"
             title="Chat tarixini tozalash"
             aria-label="Tozalash"
           >
@@ -414,10 +548,10 @@ export function SupportPage() {
         </div>
       </header>
 
-      {/* Optional Search Bar dropdown */}
+      {/* Qidiruv paneli (Faqat qidiruv bosilganda ochiladi) */}
       {searchOpen && (
-        <div className="px-4 py-2.5 bg-white dark:bg-[#111827] border-b border-slate-200/60 dark:border-white/5 animate-in slide-in-from-top-2 duration-150 shrink-0">
-          <div className="relative max-w-xl mx-auto flex items-center">
+        <div className="px-3 sm:px-6 py-2.5 bg-white dark:bg-[#111827] border-b border-slate-200/80 dark:border-white/10 animate-in slide-in-from-top-2 duration-150 shrink-0">
+          <div className="relative max-w-2xl mx-auto flex items-center">
             <Icon name="ri-search-line" className="absolute left-3 text-slate-400 text-sm" />
             <input
               type="text"
@@ -425,7 +559,7 @@ export function SupportPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Xabarlardan qidirish..."
               autoFocus
-              className="w-full h-9 pl-9 pr-8 rounded-full bg-slate-100 dark:bg-white/5 text-xs sm:text-sm text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-emerald-500"
+              className="w-full h-9 pl-9 pr-8 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs sm:text-sm text-slate-900 dark:text-white outline-none focus:border-emerald-500"
             />
             {searchQuery && (
               <button
@@ -440,13 +574,13 @@ export function SupportPage() {
         </div>
       )}
 
-      {/* 2. CHAT MESSAGES AREA: Exactly styled like the "After" mockup */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-5">
-        <div className="max-w-xl mx-auto w-full space-y-5">
-          {/* Date Label: "Nov 28" / localized current date */}
-          <div className="text-center pt-1 pb-1">
-            <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 select-none">
-              {new Date().toLocaleDateString('uz-UZ', { month: 'short', day: 'numeric' })}
+      {/* 2. CHAT XABARLARI MAYDONI */}
+      <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 space-y-4">
+        <div className="max-w-2xl mx-auto w-full space-y-4">
+          {/* Sana ajratkichi */}
+          <div className="text-center py-1">
+            <span className="inline-block px-3 py-1 rounded-full text-[11px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-200/60 dark:bg-white/5">
+              Bugun, {new Date().toLocaleDateString('uz-UZ', { day: 'numeric', month: 'long' })}
             </span>
           </div>
 
@@ -455,12 +589,11 @@ export function SupportPage() {
 
             if (isUser) {
               return (
-                /* User Message: Clean white bubble, right-aligned */
+                /* Foydalanuvchi xabari: MedQuiz uslubidagi o'ng tomon kartasi */
                 <div key={msg.id} className="flex justify-end">
-                  <div className="max-w-[85%] sm:max-w-[75%] rounded-2xl bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white p-3.5 sm:p-4 shadow-xs border border-slate-200/60 dark:border-white/5 text-xs sm:text-sm leading-relaxed space-y-2">
-                    {/* File Attachment */}
+                  <div className="max-w-[85%] sm:max-w-[78%] rounded-2xl rounded-tr-xs bg-emerald-600 text-white p-3.5 sm:p-4 shadow-sm text-xs sm:text-sm leading-relaxed space-y-2">
                     {msg.file && (
-                      <div className="overflow-hidden rounded-xl border border-slate-100 dark:border-white/10">
+                      <div className="overflow-hidden rounded-xl border border-white/20 bg-white/10">
                         {msg.file.type === 'image' ? (
                           <img
                             src={msg.file.dataUrl}
@@ -469,10 +602,10 @@ export function SupportPage() {
                             onClick={() => setPreviewImage(msg.file!.dataUrl)}
                           />
                         ) : (
-                          <div className="flex items-center gap-2.5 p-2.5 bg-slate-50 dark:bg-white/5 text-xs">
-                            <Icon name="ri-file-text-line" className="text-lg text-emerald-500" />
+                          <div className="flex items-center gap-2.5 p-2.5 text-xs text-white">
+                            <Icon name="ri-file-text-line" className="text-lg" />
                             <span className="truncate flex-1 font-semibold">{msg.file.name}</span>
-                            <span className="text-[10px] text-slate-400">{formatFileSize(msg.file.size)}</span>
+                            <span className="text-[10px] opacity-80">{formatFileSize(msg.file.size)}</span>
                           </div>
                         )}
                       </div>
@@ -483,144 +616,156 @@ export function SupportPage() {
               );
             }
 
-            /* Assistant Message: Robot avatar on left, "Assistant" label on top, clean white card */
+            /* Yordamchi xabari: Toza MedQuiz kartasi, tepada bitta avatar va ichida chiroyli Yo'l xaritasi */
             return (
-              <div key={msg.id} className="flex items-end gap-2.5 group">
-                {/* Robot Avatar (exactly like the image) */}
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-200/80 dark:bg-white/10 border border-slate-300/60 dark:border-white/10 text-slate-700 dark:text-slate-200 shadow-2xs overflow-hidden mb-1">
-                  <span className="text-lg select-none">🤖</span>
+              <div key={msg.id} className="flex items-start gap-2.5">
+                {/* Yagona Yordamchi Avatari (faqat xabar boshida) */}
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xs mt-0.5">
+                  <Icon name="ri-stethoscope-fill" className="text-lg" />
                 </div>
 
-                <div className="flex-1 max-w-[88%] sm:max-w-[82%] space-y-1.5">
-                  {/* Subtle "Assistant" label */}
-                  <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 ml-1 block">
-                    Assistant
+                <div className="flex-1 max-w-[90%] sm:max-w-[82%] space-y-1.5">
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 ml-1">
+                    MedQuiz Yordamchi
                   </span>
 
-                  {/* Main Bubble Card */}
-                  <div className="rounded-3xl bg-white dark:bg-[#151c2c] text-slate-900 dark:text-slate-100 p-4 sm:p-5 shadow-xs border border-slate-200/60 dark:border-white/5 text-xs sm:text-sm leading-relaxed space-y-3">
-                    {/* Text */}
+                  {/* Asosiy xabar kartasi */}
+                  <div className="rounded-2xl rounded-tl-xs bg-white dark:bg-[#111827] text-slate-900 dark:text-white p-4 sm:p-5 shadow-xs border border-slate-200/80 dark:border-white/10 text-xs sm:text-sm leading-relaxed space-y-3">
                     {msg.text && (
-                      <p className="font-medium whitespace-pre-wrap text-slate-800 dark:text-slate-200">
+                      <p className="text-slate-800 dark:text-slate-200 leading-relaxed font-normal">
                         {msg.text}
                       </p>
                     )}
 
-                    {/* Interactive Option Cards (with chevron >, exactly like the mockup: "New bicycle >") */}
+                    {/* Boshlang'ich mavzular tanlovi */}
                     {msg.options && msg.options.length > 0 && (
                       <div className="space-y-1.5 pt-1">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                          Kerakli yo‘nalishni tanlang:
+                        </p>
                         {msg.options.map((opt, idx) => (
                           <button
                             key={idx}
                             type="button"
                             onClick={() => handleSend(opt.query)}
-                            className="w-full flex items-center justify-between p-3 rounded-2xl bg-slate-50 hover:bg-slate-100/90 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200/60 dark:border-white/5 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 transition-all cursor-pointer text-left active:scale-[0.99]"
+                            className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-emerald-50/60 dark:bg-white/5 dark:hover:bg-emerald-950/20 border border-slate-200/80 dark:border-white/10 hover:border-emerald-500/40 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 transition-all cursor-pointer text-left active:scale-[0.99]"
                           >
-                            <span>{opt.label}</span>
+                            <span className="flex items-center gap-2">
+                              <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+                              <span>{opt.label}</span>
+                            </span>
                             <Icon name="ri-arrow-right-s-line" className="text-base text-slate-400 shrink-0" />
                           </button>
                         ))}
                       </div>
                     )}
 
-                    {/* Inline choice pills (like $50 $100 $300 in the mockup) */}
-                    {msg.choices && msg.choices.length > 0 && (
-                      <div className="flex items-center gap-2 flex-wrap pt-1">
-                        {msg.choices.map((ch, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => handleSend(ch)}
-                            className="px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200/80 dark:border-white/5 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all active:scale-95 cursor-pointer"
-                          >
-                            {ch}
-                          </button>
-                        ))}
+                    {/* 🗺️ YO'L XARITASI (ROADMAP): Bosqichma-bosqich chiziqli vizual yo'riqnoma */}
+                    {msg.roadmap && (
+                      <div className="mt-3 p-3.5 sm:p-4 rounded-xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/15 space-y-3.5">
+                        <div className="flex items-center gap-2 pb-2.5 border-b border-emerald-500/20">
+                          <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-600 text-white text-xs">
+                            <Icon name="ri-map-2-line" />
+                          </span>
+                          <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">
+                            {msg.roadmap.title}
+                          </h4>
+                        </div>
+
+                        {/* Vertikal tutashgan bosqichlar chizig'i */}
+                        <div className="relative pl-6 space-y-3.5 before:absolute before:left-2.5 before:top-2.5 before:bottom-2.5 before:w-0.5 before:bg-emerald-500/40">
+                          {msg.roadmap.steps.map((st) => (
+                            <div key={st.step} className="relative">
+                              {/* Bosqich doirasi */}
+                              <span className="absolute -left-6 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-[10px] font-black shadow-xs ring-2 ring-white dark:ring-[#111827]">
+                                {st.step}
+                              </span>
+
+                              <div className="space-y-0.5">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <p className="text-xs font-bold text-slate-900 dark:text-white">
+                                    {st.title}
+                                  </p>
+                                  {st.badge && (
+                                    <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                                      {st.badge}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                  {st.desc}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
 
-                    {/* Summary Detail Card (like the nested card in the mockup: Amount, From, To) */}
-                    {msg.summaryCard && (
-                      <div className="rounded-2xl border border-slate-200/70 dark:border-white/5 bg-slate-50/80 dark:bg-white/[0.02] p-3.5 space-y-1.5 text-xs">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                          {msg.summaryCard.title}
-                        </span>
-                        {msg.summaryCard.items.map((it, idx) => (
-                          <div key={idx} className="flex items-center justify-between py-0.5">
-                            <span className="text-slate-500 dark:text-slate-400">{it.label}:</span>
-                            <span className="font-bold text-slate-800 dark:text-slate-200">{it.value}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                    {/* Harakat tugmalari: To'g'ridan-to'g'ri karta ichida MedQuiz uslubida */}
+                    {msg.actions && msg.actions.length > 0 && (
+                      <div className="mt-3.5 pt-3 border-t border-slate-200/70 dark:border-white/10 flex flex-wrap gap-2">
+                        {msg.actions.map((act, idx) => {
+                          const isPrimary = act.primary;
 
-                  {/* Action Pill Buttons beneath the bubble:
-                      Exact recreation of [ Cancel ] and bright lime-green [ Confirm ] from the mockup! */}
-                  {msg.actions && msg.actions.length > 0 && (
-                    <div className="flex items-center gap-2 pt-1">
-                      {msg.actions.map((act, idx) => {
-                        const isPrimary = act.primary || idx === msg.actions!.length - 1;
+                          if (act.external) {
+                            return (
+                              <a
+                                key={idx}
+                                href={act.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs ${
+                                  isPrimary
+                                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20'
+                                    : 'border border-slate-200 dark:border-white/10 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200'
+                                }`}
+                              >
+                                <Icon name="ri-external-link-line" />
+                                <span>{act.label}</span>
+                              </a>
+                            );
+                          }
 
-                        const buttonClasses = isPrimary
-                          ? 'px-6 py-2.5 rounded-full bg-[#ccff00] hover:bg-[#bbf000] text-slate-900 font-extrabold text-xs shadow-xs transition-all active:scale-95 cursor-pointer text-center'
-                          : 'px-5 py-2.5 rounded-full bg-white dark:bg-[#151c2c] hover:bg-slate-100 dark:hover:bg-white/5 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-300 font-bold text-xs transition-all active:scale-95 cursor-pointer text-center';
-
-                        if (act.external) {
-                          return (
-                            <a
-                              key={idx}
-                              href={act.link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={buttonClasses}
-                            >
-                              {act.label}
-                            </a>
-                          );
-                        }
-
-                        if (act.link) {
                           return (
                             <button
                               key={idx}
                               type="button"
-                              onClick={() => setLocation(act.link!)}
-                              className={buttonClasses}
+                              onClick={() => {
+                                if (act.link) setLocation(act.link);
+                              }}
+                              className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-xs ${
+                                isPrimary
+                                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20'
+                                  : 'border border-slate-200 dark:border-white/10 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200'
+                              }`}
                             >
-                              {act.label}
+                              <Icon name="ri-arrow-right-line" />
+                              <span>{act.label}</span>
                             </button>
                           );
-                        }
-
-                        return (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => handleSend(act.label)}
-                            className={buttonClasses}
-                          >
-                            {act.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             );
           })}
 
-          {/* Typing Indicator */}
+          {/* Yozmoqda indikatori */}
           {isTyping && (
-            <div className="flex items-end gap-2.5 animate-in fade-in duration-150">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-200/80 dark:bg-white/10 text-slate-700 dark:text-slate-200 shadow-2xs overflow-hidden mb-1">
-                <span className="text-lg select-none">🤖</span>
+            <div className="flex items-start gap-2.5 animate-in fade-in duration-150">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xs">
+                <Icon name="ri-stethoscope-fill" className="text-lg" />
               </div>
-              <div className="rounded-3xl bg-white dark:bg-[#151c2c] p-3.5 shadow-xs border border-slate-200/60 dark:border-white/5 flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce [animation-delay:-0.3s]"></span>
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce [animation-delay:-0.15s]"></span>
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce"></span>
+              <div className="rounded-2xl rounded-tl-xs bg-white dark:bg-[#111827] px-4 py-3 shadow-xs border border-slate-200/80 dark:border-white/10 flex items-center gap-1.5">
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium mr-1">
+                  Yozilmoqda
+                </span>
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:-0.3s]" />
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce [animation-delay:-0.15s]" />
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" />
               </div>
             </div>
           )}
@@ -629,31 +774,31 @@ export function SupportPage() {
         </div>
       </div>
 
-      {/* 3. FLOATING BOTTOM BAR: Exact recreation of the floating attachment button + pill input from the mockup */}
-      <footer className="p-3 sm:p-5 shrink-0">
-        <div className="max-w-xl mx-auto w-full space-y-2">
-          {/* Selected File Badge */}
+      {/* 3. FOOTER INPUT MAYDONI: Umumiy MedQuiz dizayn tizimiga mos, silliq rounded-xl shakllarda */}
+      <footer className="border-t border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#111827] p-3 sm:p-4 shrink-0 shadow-xs">
+        <div className="max-w-2xl mx-auto w-full space-y-2">
+          {/* Tanlangan fayl prebyusi */}
           {selectedFile && (
-            <div className="flex items-center justify-between p-2.5 rounded-2xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-white/10 shadow-sm text-xs">
+            <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-500/25 text-xs text-slate-900 dark:text-white">
               <div className="flex items-center gap-2 min-w-0">
                 {selectedFile.type === 'image' ? (
                   <img
                     src={selectedFile.dataUrl}
                     alt={selectedFile.name}
-                    className="h-8 w-8 rounded-lg object-cover border border-slate-200 dark:border-white/10 shrink-0"
+                    className="h-8 w-8 rounded-lg object-cover border border-emerald-500/30 shrink-0"
                   />
                 ) : (
-                  <Icon name="ri-file-text-line" className="text-lg text-emerald-500" />
+                  <Icon name="ri-file-text-line" className="text-lg text-emerald-600 shrink-0" />
                 )}
                 <div className="min-w-0">
-                  <p className="font-bold truncate text-slate-800 dark:text-slate-200">{selectedFile.name}</p>
+                  <p className="font-bold truncate">{selectedFile.name}</p>
                   <p className="text-[10px] text-slate-400">{formatFileSize(selectedFile.size)}</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedFile(null)}
-                className="p-1 rounded-full text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+                className="p-1 rounded-lg text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
                 title="Faylni olib tashlash"
               >
                 <Icon name="ri-close-line" className="text-base" />
@@ -661,7 +806,7 @@ export function SupportPage() {
             </div>
           )}
 
-          {/* Hidden File Input */}
+          {/* Yashirin fayl inputi */}
           <input
             type="file"
             ref={fileInputRef}
@@ -675,49 +820,43 @@ export function SupportPage() {
               e.preventDefault();
               handleSend();
             }}
-            className="flex items-center gap-2.5"
+            className="flex items-center gap-2"
           >
-            {/* Left: Floating square attachment button with rounded-2xl */}
+            {/* Fayl biriktirish tugmasi */}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white dark:bg-[#151c2c] border border-slate-200/70 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:text-emerald-500 dark:hover:text-emerald-400 shadow-sm hover:shadow-md transition-all active:scale-95 cursor-pointer"
-              title="Fayl yoki rasm biriktirish"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition-colors cursor-pointer shadow-2xs"
+              title="Fayl yoki rasm biriktirish (PDF, Word, rasm)"
               aria-label="Fayl biriktirish"
             >
-              <Icon name="ri-upload-2-line" className="text-xl" />
+              <Icon name="ri-attachment-2" className="text-xl" />
             </button>
 
-            {/* Right: Floating rounded-full pill bar */}
-            <div className="flex-1 h-12 rounded-full bg-white dark:bg-[#151c2c] border border-slate-200/70 dark:border-white/10 px-4 flex items-center justify-between shadow-sm focus-within:border-slate-300 dark:focus-within:border-white/20 transition-all">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask something..."
-                className="flex-1 bg-transparent border-none outline-none text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 min-w-0 pr-2"
-              />
+            {/* Xabar yozish inputi */}
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Savolingizni yozing..."
+              className="flex-1 h-11 rounded-xl border border-slate-200/90 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-4 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:border-emerald-500 focus:bg-white dark:focus:bg-[#111827] transition-all"
+            />
 
-              {/* Up-arrow Send Button inside the pill on the right */}
-              <button
-                type="submit"
-                disabled={!input.trim() && !selectedFile}
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-all cursor-pointer ${
-                  input.trim() || selectedFile
-                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs active:scale-95'
-                    : 'bg-transparent text-slate-300 dark:text-slate-600 cursor-not-allowed'
-                }`}
-                title="Yuborish"
-                aria-label="Yuborish"
-              >
-                <Icon name="ri-arrow-up-line" className="text-base font-bold" />
-              </button>
-            </div>
+            {/* Yuborish tugmasi */}
+            <button
+              type="submit"
+              disabled={!input.trim() && !selectedFile}
+              className="flex h-11 px-4 sm:px-5 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-600/20 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shrink-0"
+              title="Yuborish"
+            >
+              <span className="hidden sm:inline">Yuborish</span>
+              <Icon name="ri-send-plane-fill" className="text-base" />
+            </button>
           </form>
         </div>
       </footer>
 
-      {/* Image Preview Modal */}
+      {/* Rasm to'liq o'lchamda ko'rish modali */}
       {previewImage && (
         <div
           role="dialog"
@@ -742,7 +881,7 @@ export function SupportPage() {
         </div>
       )}
 
-      {/* Clear Chat Confirmation Alert Modal */}
+      {/* Chat tarixini tozalash Alert Modali */}
       <AlertModal
         isOpen={clearChatConfirm}
         onClose={() => setClearChatConfirm(false)}
