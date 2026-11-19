@@ -22,41 +22,103 @@ import { useI18n } from '@/lib/i18n';
 import { isDueForReview } from '@/lib/srs';
 import type { Stats } from '@/lib/types';
 
-const banners = [
-  { title: 'Kunlik mashq', text: '5 ta savol — streak uzilmaydi', href: '/banks', cta: 'Boshlash', tone: 'from-med-600 to-emerald-500' },
-  { title: 'Battle ochiq', text: 'Do‘stingizni chaqiring va ball oling', href: '/battle', cta: 'Kirish', tone: 'from-rose-500 to-pink-600' },
-  { title: 'Yutuqlar', text: 'Yangi nishonlar sizni kutmoqda', href: '/achievements', cta: 'Ko‘rish', tone: 'from-sky-500 to-indigo-500' },
-  { title: 'Reyting', text: 'Eng yaxshi natijalar shu yerda', href: '/leaderboard', cta: 'Ochish', tone: 'from-amber-500 to-orange-600' },
-  { title: 'Yangi fan', text: 'O‘z .txt savollaringizni qo‘shing', href: '/banks', cta: 'Yuklash', tone: 'from-violet-500 to-fuchsia-600' },
-];
+import { fetchBanners, DEFAULT_BANNERS } from '@/lib/admin-api';
+import type { AppBanner } from '@/lib/types';
 
 function DashBanner() {
+  const [bannersList, setBannersList] = useState<AppBanner[]>(DEFAULT_BANNERS);
   const [index, setIndex] = useState(0);
+
   useEffect(() => {
-    const timer = window.setInterval(() => setIndex((current) => (current + 1) % banners.length), 3500);
-    return () => window.clearInterval(timer);
+    let isMounted = true;
+    const load = async () => {
+      const data = await fetchBanners();
+      const activeOnly = data.filter((b) => b.active);
+      if (isMounted && activeOnly.length > 0) {
+        setBannersList(activeOnly);
+      }
+    };
+    load();
+
+    const onUpdate = () => load();
+    window.addEventListener('medquiz-banners-updated', onUpdate);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('medquiz-banners-updated', onUpdate);
+    };
   }, []);
+
+  useEffect(() => {
+    if (bannersList.length <= 1) return;
+    const timer = window.setInterval(
+      () => setIndex((current) => (current + 1) % bannersList.length),
+      3800
+    );
+    return () => window.clearInterval(timer);
+  }, [bannersList.length]);
+
+  const getTone = (theme: string) => {
+    switch (theme) {
+      case 'emerald':
+        return 'from-emerald-600 via-teal-600 to-emerald-700';
+      case 'cyan':
+        return 'from-sky-600 via-teal-600 to-cyan-600';
+      case 'purple':
+        return 'from-purple-600 via-indigo-600 to-violet-700';
+      case 'amber':
+        return 'from-amber-600 via-orange-600 to-yellow-600';
+      case 'rose':
+        return 'from-rose-600 via-pink-600 to-rose-700';
+      default:
+        return 'from-emerald-600 via-teal-600 to-emerald-700';
+    }
+  };
+
+  if (bannersList.length === 0) return null;
+
   return (
-    <div className="relative h-36 overflow-hidden rounded-[10px] sm:h-40" data-testid="dash-banner">
-      {banners.map((banner, slide) => (
+    <div className="relative h-36 overflow-hidden rounded-2xl sm:h-40 shadow-xs" data-testid="dash-banner">
+      {bannersList.map((banner, slide) => (
         <Link
-          key={banner.title}
-          href={banner.href}
-          className={`absolute inset-0 flex items-center justify-between gap-4 bg-gradient-to-r px-5 text-white transition-transform duration-500 ease-out sm:px-6 ${banner.tone} ${slide === index ? 'z-10 translate-x-0' : slide < index ? 'pointer-events-none -translate-x-full' : 'pointer-events-none translate-x-full'}`}
+          key={banner.id}
+          href={banner.actionUrl || '/dashboard'}
+          className={`absolute inset-0 flex items-center justify-between gap-4 bg-gradient-to-r px-5 text-white transition-transform duration-500 ease-out sm:px-6 ${getTone(
+            banner.theme
+          )} ${
+            slide === index
+              ? 'z-10 translate-x-0'
+              : slide < index
+              ? 'pointer-events-none -translate-x-full'
+              : 'pointer-events-none translate-x-full'
+          }`}
           data-testid="link-dash-banner"
         >
-          <div className="min-w-0">
-            <p className="mt-1 truncate font-display text-xl font-bold sm:text-2xl">{banner.title}</p>
-            <p className="mt-1 truncate text-sm text-white/90">{banner.text}</p>
+          <div className="min-w-0 space-y-1">
+            {banner.badge && (
+              <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/20 backdrop-blur-xs text-white">
+                {banner.badge}
+              </span>
+            )}
+            <p className="truncate font-display text-lg font-bold sm:text-2xl">{banner.title}</p>
+            <p className="truncate text-xs sm:text-sm text-white/90">{banner.description}</p>
           </div>
-          <span className="shrink-0 rounded-[10px] bg-white/20 px-4 py-2 text-sm font-semibold">{banner.cta}</span>
+          <span className="shrink-0 rounded-xl bg-white/20 hover:bg-white/30 backdrop-blur-xs px-4 py-2 text-xs sm:text-sm font-bold shadow-xs transition-colors">
+            {banner.actionText || 'Ko‘rish'}
+          </span>
         </Link>
       ))}
-      <div className="pointer-events-none absolute bottom-3 left-0 right-0 z-20 flex justify-center gap-1.5">
-        {banners.map((banner, dot) => (
-          <span key={banner.title} className={`h-1.5 rounded-full ${dot === index ? 'w-4 bg-white' : 'w-1.5 bg-white/40'}`} />
-        ))}
-      </div>
+      {bannersList.length > 1 && (
+        <div className="pointer-events-none absolute bottom-3 left-0 right-0 z-20 flex justify-center gap-1.5">
+          {bannersList.map((banner, dot) => (
+            <span
+              key={banner.id}
+              className={`h-1.5 rounded-full transition-all ${
+                dot === index ? 'w-4 bg-white' : 'w-1.5 bg-white/40'
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

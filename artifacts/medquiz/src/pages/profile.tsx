@@ -104,15 +104,26 @@ export function Profile() {
             </button>
           </div>
 
-          {/* Edit Profile Button */}
-          <button
-            type="button"
-            onClick={() => setEditModalOpen(true)}
-            className="inline-flex items-center gap-1.5 h-9 px-4 rounded-[10px] border border-slate-200 dark:border-white/10 bg-slate-100/90 hover:bg-slate-200/70 text-xs sm:text-sm font-bold text-slate-800 dark:bg-white/5 dark:hover:bg-white/10 dark:text-white transition-all active:scale-95 cursor-pointer shadow-xs"
-          >
-            <Icon name="ri-edit-line" className="text-emerald-600 dark:text-emerald-400 text-base" />
-            <span>Tahrirlash</span>
-          </button>
+          {/* Edit Profile Button and Admin Link */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setEditModalOpen(true)}
+              className="inline-flex items-center gap-1.5 h-9 px-4 rounded-[10px] border border-slate-200 dark:border-white/10 bg-slate-100/90 hover:bg-slate-200/70 text-xs sm:text-sm font-bold text-slate-800 dark:bg-white/5 dark:hover:bg-white/10 dark:text-white transition-all active:scale-95 cursor-pointer shadow-xs"
+            >
+              <Icon name="ri-edit-line" className="text-emerald-600 dark:text-emerald-400 text-base" />
+              <span>Tahrirlash</span>
+            </button>
+
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-[10px] border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400 transition-all active:scale-95 cursor-pointer shadow-xs"
+              title="Admin boshqaruv paneli"
+            >
+              <Icon name="ri-shield-user-line" className="text-base" />
+              <span>Admin Panel</span>
+            </Link>
+          </div>
         </div>
 
         {/* User Identity */}

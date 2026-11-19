@@ -16,6 +16,16 @@ const usersFile = path.resolve(__dirname, '.sync-users.json');
 const friendsFile = path.resolve(__dirname, '.sync-friends.json');
 const schedulesFile = path.resolve(__dirname, '.sync-schedules.json');
 const invitesFile = path.resolve(__dirname, '.sync-invites.json');
+const bannersFile = path.resolve(__dirname, '.sync-banners.json');
+const supportChatFile = path.resolve(__dirname, '.sync-support-chat.json');
+const notificationsFile = path.resolve(__dirname, '.sync-notifications.json');
+const userTimeLogsDir = path.resolve(__dirname, '.user-time-logs');
+
+try {
+  if (!fs.existsSync(userTimeLogsDir)) {
+    fs.mkdirSync(userTimeLogsDir, { recursive: true });
+  }
+} catch {}
 
 const roomsMap = new Map();
 const usersMap = new Map();
@@ -26,6 +36,9 @@ const invitesList = [];
 const chatList = [];
 const signalsList = [];
 const voicePeersList = [];
+const bannersMap = new Map();
+const supportChatList = [];
+const notificationsList = [];
 
 // Seed users
 const seedUsers = [
@@ -158,6 +171,31 @@ try {
   }
 } catch {}
 
+try {
+  if (fs.existsSync(bannersFile)) {
+    const loaded = JSON.parse(fs.readFileSync(bannersFile, 'utf-8'));
+    if (Array.isArray(loaded)) {
+      for (const b of loaded) {
+        if (b && b.id) bannersMap.set(b.id, b);
+      }
+    }
+  }
+} catch {}
+
+try {
+  if (fs.existsSync(supportChatFile)) {
+    const loaded = JSON.parse(fs.readFileSync(supportChatFile, 'utf-8'));
+    if (Array.isArray(loaded)) supportChatList.push(...loaded);
+  }
+} catch {}
+
+try {
+  if (fs.existsSync(notificationsFile)) {
+    const loaded = JSON.parse(fs.readFileSync(notificationsFile, 'utf-8'));
+    if (Array.isArray(loaded)) notificationsList.push(...loaded);
+  }
+} catch {}
+
 const persistRooms = () => {
   try {
     fs.writeFileSync(roomsFile, JSON.stringify(Array.from(roomsMap.values()).slice(-50)), 'utf-8');
@@ -185,6 +223,24 @@ const persistSchedules = () => {
 const persistInvites = () => {
   try {
     fs.writeFileSync(invitesFile, JSON.stringify(invitesList.slice(-100)), 'utf-8');
+  } catch {}
+};
+
+const persistBanners = () => {
+  try {
+    fs.writeFileSync(bannersFile, JSON.stringify(Array.from(bannersMap.values())), 'utf-8');
+  } catch {}
+};
+
+const persistSupportChat = () => {
+  try {
+    fs.writeFileSync(supportChatFile, JSON.stringify(supportChatList.slice(-1000)), 'utf-8');
+  } catch {}
+};
+
+const persistNotifications = () => {
+  try {
+    fs.writeFileSync(notificationsFile, JSON.stringify(notificationsList.slice(-200)), 'utf-8');
   } catch {}
 };
 
@@ -650,6 +706,164 @@ const server = http.createServer((req, res) => {
         (s) => s.roomCode.toLowerCase() === code && s.toPeerId === peerId && s.createdAt > since
       );
       return sendJson(200, matching);
+    }
+
+    // 22. POST /api/users/time-spent (User ilovada sarflagan vaqtini yozish)
+    if (apiPath === '/api/users/time-spent' && req.method === 'POST') {
+      return readBody((body) => {
+        const { userId, seconds, timestamp } = body || {};
+        if (userId && typeof seconds === 'number') {
+          // 1. .user-time-logs/<userId>.txt fayliga har soniya / 60 soniyada yozish
+          try {
+            const logFilePath = path.resolve(userTimeLogsDir, `${userId}.txt`);
+            const logLine = `[${new Date(timestamp || Date.now()).toISOString()}] +${seconds}s (qo'shildi: ${seconds} soniya)\n`;
+            fs.appendFileSync(logFilePath, logLine, 'utf-8');
+          } catch {}
+
+          // 2. Asosiy ma'lumotlar bazasida (usersMap) yangilash
+          const existing = usersMap.get(userId) || { id: userId, name: 'Talaba' };
+          existing.totalTimeSpent = (existing.totalTimeSpent || 0) + seconds;
+          existing.seen = Date.now();
+          usersMap.set(userId, existing);
+          persistUsers();
+
+          return sendJson(200, { ok: true, totalTimeSpent: existing.totalTimeSpent });
+        }
+        return sendJson(400, { error: 'userId va seconds talab qilinadi' });
+      });
+    }
+
+    // 23. POST /api/admin/users/block (Akkauntni bloklash yoki blokdan chiqarish)
+    if (apiPath === '/api/admin/users/block' && req.method === 'POST') {
+      return readBody((body) => {
+        const { userId, isBlocked, reason, blockedAt } = body || {};
+        if (userId) {
+          const user = usersMap.get(userId);
+          if (user) {
+            user.isBlocked = Boolean(isBlocked);
+            user.blockedReason = isBlocked ? (reason || 'Ma‘muriyat tomonidan cheklandi') : undefined;
+            user.blockedAt = isBlocked ? (blockedAt || Date.now()) : undefined;
+            usersMap.set(userId, user);
+            persistUsers();
+            return sendJson(200, { ok: true, user });
+          }
+          return sendJson(404, { error: 'Foydalanuvchi topilmadi' });
+        }
+        return sendJson(400, { error: 'userId talab qilinadi' });
+      });
+    }
+
+    // 24. POST /api/admin/users/coins (Foydalanuvchiga MedCoins berish)
+    if (apiPath === '/api/admin/users/coins' && req.method === 'POST') {
+      return readBody((body) => {
+        const { userId, amount } = body || {};
+        if (userId && typeof amount === 'number') {
+          const user = usersMap.get(userId);
+          if (user) {
+            user.coins = Math.max(0, (user.coins || 0) + amount);
+            usersMap.set(userId, user);
+            persistUsers();
+            return sendJson(200, { ok: true, coins: user.coins });
+          }
+          return sendJson(404, { error: 'Foydalanuvchi topilmadi' });
+        }
+        return sendJson(400, { error: 'userId va amount talab qilinadi' });
+      });
+    }
+
+    // 25. GET /api/banners (Barcha bannerlarni olish)
+    if (apiPath === '/api/banners' && req.method === 'GET') {
+      return sendJson(200, Array.from(bannersMap.values()));
+    }
+
+    // 26. POST /api/banners (Bannerni saqlash yoki yangilash)
+    if (apiPath === '/api/banners' && req.method === 'POST') {
+      return readBody((body) => {
+        if (body && body.id && body.title) {
+          bannersMap.set(body.id, body);
+          persistBanners();
+          return sendJson(200, { ok: true, banner: body });
+        }
+        return sendJson(400, { error: 'Banner ma‘lumotlari yetarli emas' });
+      });
+    }
+
+    // 27. DELETE /api/banners/:id (Bannerni o'chirish)
+    const bannerDelMatch = apiPath.match(/^\/api\/banners\/([a-zA-Z0-9_\-]+)$/);
+    if (bannerDelMatch && req.method === 'DELETE') {
+      const bId = bannerDelMatch[1];
+      bannersMap.delete(bId);
+      persistBanners();
+      return sendJson(200, { ok: true });
+    }
+
+    // 28. GET /api/admin/chat/conversations (Barcha suhbatlar)
+    if (apiPath === '/api/admin/chat/conversations' && req.method === 'GET') {
+      const convMap = new Map();
+      for (const msg of supportChatList) {
+        convMap.set(msg.userId, {
+          userId: msg.userId,
+          userName: msg.userName || 'Talaba',
+          userAvatar: msg.userAvatar || null,
+          lastMessage: msg.text,
+          lastTime: msg.createdAt,
+          unreadCount: 0,
+        });
+      }
+      return sendJson(200, Array.from(convMap.values()).reverse());
+    }
+
+    // 29. GET /api/admin/chat/:userId (Bitta user bilan chat tarixi)
+    const adminChatMatch = apiPath.match(/^\/api\/admin\/chat\/([a-zA-Z0-9_\-]+)$/);
+    if (adminChatMatch && req.method === 'GET') {
+      const uId = adminChatMatch[1];
+      const userMsgs = supportChatList.filter((m) => m.userId === uId);
+      return sendJson(200, userMsgs);
+    }
+
+    // 30. POST /api/admin/chat (Admin yoki userdan xabar yozish)
+    if (apiPath === '/api/admin/chat' && req.method === 'POST') {
+      return readBody((msg) => {
+        if (msg && msg.userId && msg.text) {
+          const newMsg = {
+            id: `schat-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            userId: msg.userId,
+            userName: msg.userName || 'Talaba',
+            sender: msg.sender || 'admin',
+            text: msg.text,
+            createdAt: msg.createdAt || Date.now(),
+          };
+          supportChatList.push(newMsg);
+          persistSupportChat();
+          return sendJson(200, { ok: true, message: newMsg });
+        }
+        return sendJson(400, { error: 'userId va text talab qilinadi' });
+      });
+    }
+
+    // 31. GET /api/notifications (Bildirishnomalar ro'yxati)
+    if (apiPath === '/api/notifications' && req.method === 'GET') {
+      return sendJson(200, notificationsList.slice(-50).reverse());
+    }
+
+    // 32. POST /api/admin/notifications/broadcast (Ommaviy xabarnoma yuborish)
+    if (apiPath === '/api/admin/notifications/broadcast' && req.method === 'POST') {
+      return readBody((body) => {
+        if (body && body.title && body.message) {
+          const item = {
+            id: `notif-${Date.now()}`,
+            title: body.title,
+            message: body.message,
+            type: body.type || 'info',
+            createdAt: Date.now(),
+            senderName: body.senderName || 'MedQuiz Ma’muriyati',
+          };
+          notificationsList.push(item);
+          persistNotifications();
+          return sendJson(200, { ok: true, notification: item });
+        }
+        return sendJson(400, { error: 'title va message talab qilinadi' });
+      });
     }
 
     return sendJson(404, { error: 'API endpoint topilmadi' });

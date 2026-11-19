@@ -111,9 +111,17 @@ export function medquizSyncPlugin(): Plugin {
   const friendsFile = path.resolve(import.meta.dirname, '.sync-friends.json');
   const schedulesFile = path.resolve(import.meta.dirname, '.sync-schedules.json');
   const invitesFile = path.resolve(import.meta.dirname, '.sync-invites.json');
+  const bannersFile = path.resolve(import.meta.dirname, '.sync-banners.json');
+  const supportChatFile = path.resolve(import.meta.dirname, '.sync-support-chat.json');
+  const notificationsFile = path.resolve(import.meta.dirname, '.sync-notifications.json');
+  const userTimeLogsDir = path.resolve(import.meta.dirname, '.user-time-logs');
+
+  try {
+    if (!fs.existsSync(userTimeLogsDir)) fs.mkdirSync(userTimeLogsDir, { recursive: true });
+  } catch {}
 
   const roomsMap = new Map<string, Room>();
-  const usersMap = new Map<string, User>();
+  const usersMap = new Map<string, any>();
   const friendsList: FriendRequest[] = [];
   const reactionsList: Reaction[] = [];
   const schedulesMap = new Map<string, ExamSchedule>();
@@ -121,6 +129,9 @@ export function medquizSyncPlugin(): Plugin {
   const chatList: BattleChatMessage[] = [];
   const signalsList: WebRTCSignal[] = [];
   const voicePeersList: VoicePeer[] = [];
+  const bannersMap = new Map<string, any>();
+  const supportChatList: any[] = [];
+  const notificationsList: any[] = [];
 
   // Default seed medical peers
   const seedUsers: User[] = [
@@ -294,6 +305,24 @@ export function medquizSyncPlugin(): Plugin {
   const persistInvites = () => {
     try {
       fs.writeFileSync(invitesFile, JSON.stringify(invitesList.slice(-100)), 'utf-8');
+    } catch {}
+  };
+
+  const persistBanners = () => {
+    try {
+      fs.writeFileSync(bannersFile, JSON.stringify(Array.from(bannersMap.values())), 'utf-8');
+    } catch {}
+  };
+
+  const persistSupportChat = () => {
+    try {
+      fs.writeFileSync(supportChatFile, JSON.stringify(supportChatList.slice(-1000)), 'utf-8');
+    } catch {}
+  };
+
+  const persistNotifications = () => {
+    try {
+      fs.writeFileSync(notificationsFile, JSON.stringify(notificationsList.slice(-200)), 'utf-8');
     } catch {}
   };
 
@@ -737,6 +766,199 @@ export function medquizSyncPlugin(): Plugin {
           );
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify(matching));
+          return;
+        }
+
+        // 22. POST /api/users/time-spent
+        if (url === '/api/users/time-spent' && req.method === 'POST') {
+          readBody((body: any) => {
+            const { userId, seconds, timestamp } = body || {};
+            if (userId && typeof seconds === 'number') {
+              try {
+                const logFilePath = path.resolve(userTimeLogsDir, `${userId}.txt`);
+                const logLine = `[${new Date(timestamp || Date.now()).toISOString()}] +${seconds}s (qo'shildi: ${seconds}s)\n`;
+                fs.appendFileSync(logFilePath, logLine, 'utf-8');
+              } catch {}
+
+              const existing = usersMap.get(userId) || { id: userId, name: 'Talaba' };
+              existing.totalTimeSpent = (existing.totalTimeSpent || 0) + seconds;
+              existing.seen = Date.now();
+              usersMap.set(userId, existing);
+              persistUsers();
+
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ ok: true, totalTimeSpent: existing.totalTimeSpent }));
+            } else {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ error: 'userId va seconds talab qilinadi' }));
+            }
+          });
+          return;
+        }
+
+        // 23. POST /api/admin/users/block
+        if (url === '/api/admin/users/block' && req.method === 'POST') {
+          readBody((body: any) => {
+            const { userId, isBlocked, reason, blockedAt } = body || {};
+            if (userId) {
+              const user = usersMap.get(userId);
+              if (user) {
+                user.isBlocked = Boolean(isBlocked);
+                user.blockedReason = isBlocked ? (reason || 'Ma‘muriyat tomonidan cheklandi') : undefined;
+                user.blockedAt = isBlocked ? (blockedAt || Date.now()) : undefined;
+                usersMap.set(userId, user);
+                persistUsers();
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ ok: true, user }));
+                return;
+              }
+              res.statusCode = 404;
+              res.end(JSON.stringify({ error: 'Foydalanuvchi topilmadi' }));
+              return;
+            }
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'userId talab qilinadi' }));
+          });
+          return;
+        }
+
+        // 24. POST /api/admin/users/coins
+        if (url === '/api/admin/users/coins' && req.method === 'POST') {
+          readBody((body: any) => {
+            const { userId, amount } = body || {};
+            if (userId && typeof amount === 'number') {
+              const user = usersMap.get(userId);
+              if (user) {
+                user.coins = Math.max(0, (user.coins || 0) + amount);
+                usersMap.set(userId, user);
+                persistUsers();
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ ok: true, coins: user.coins }));
+                return;
+              }
+              res.statusCode = 404;
+              res.end(JSON.stringify({ error: 'Foydalanuvchi topilmadi' }));
+              return;
+            }
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'userId va amount talab qilinadi' }));
+          });
+          return;
+        }
+
+        // 25. GET /api/banners
+        if (url === '/api/banners' && req.method === 'GET') {
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify(Array.from(bannersMap.values())));
+          return;
+        }
+
+        // 26. POST /api/banners
+        if (url === '/api/banners' && req.method === 'POST') {
+          readBody((body: any) => {
+            if (body && body.id && body.title) {
+              bannersMap.set(body.id, body);
+              persistBanners();
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ ok: true, banner: body }));
+            } else {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ error: 'Banner ma‘lumotlari yetarli emas' }));
+            }
+          });
+          return;
+        }
+
+        // 27. DELETE /api/banners/:id
+        const bannerDelMatch = url.match(/^\/api\/banners\/([a-zA-Z0-9_\-]+)$/);
+        if (bannerDelMatch && req.method === 'DELETE') {
+          bannersMap.delete(bannerDelMatch[1]);
+          persistBanners();
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ ok: true }));
+          return;
+        }
+
+        // 28. GET /api/admin/chat/conversations
+        if (url === '/api/admin/chat/conversations' && req.method === 'GET') {
+          const convMap = new Map<string, any>();
+          for (const msg of supportChatList) {
+            convMap.set(msg.userId, {
+              userId: msg.userId,
+              userName: msg.userName || 'Talaba',
+              userAvatar: msg.userAvatar || null,
+              lastMessage: msg.text,
+              lastTime: msg.createdAt,
+              unreadCount: 0,
+            });
+          }
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify(Array.from(convMap.values()).reverse()));
+          return;
+        }
+
+        // 29. GET /api/admin/chat/:userId
+        const adminChatMatch = url.match(/^\/api\/admin\/chat\/([a-zA-Z0-9_\-]+)$/);
+        if (adminChatMatch && req.method === 'GET') {
+          const uId = adminChatMatch[1];
+          const userMsgs = supportChatList.filter((m) => m.userId === uId);
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify(userMsgs));
+          return;
+        }
+
+        // 30. POST /api/admin/chat
+        if (url === '/api/admin/chat' && req.method === 'POST') {
+          readBody((msg: any) => {
+            if (msg && msg.userId && msg.text) {
+              const newMsg = {
+                id: `schat-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                userId: msg.userId,
+                userName: msg.userName || 'Talaba',
+                sender: msg.sender || 'admin',
+                text: msg.text,
+                createdAt: msg.createdAt || Date.now(),
+              };
+              supportChatList.push(newMsg);
+              persistSupportChat();
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ ok: true, message: newMsg }));
+            } else {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ error: 'userId va text talab qilinadi' }));
+            }
+          });
+          return;
+        }
+
+        // 31. GET /api/notifications
+        if (url === '/api/notifications' && req.method === 'GET') {
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify(notificationsList.slice(-50).reverse()));
+          return;
+        }
+
+        // 32. POST /api/admin/notifications/broadcast
+        if (url === '/api/admin/notifications/broadcast' && req.method === 'POST') {
+          readBody((body: any) => {
+            if (body && body.title && body.message) {
+              const item = {
+                id: `notif-${Date.now()}`,
+                title: body.title,
+                message: body.message,
+                type: body.type || 'info',
+                createdAt: Date.now(),
+                senderName: body.senderName || 'MedQuiz Ma’muriyati',
+              };
+              notificationsList.push(item);
+              persistNotifications();
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ ok: true, notification: item }));
+            } else {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ error: 'title va message talab qilinadi' }));
+            }
+          });
           return;
         }
 

@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { Icon } from '@/components/chrome';
 import { AlertModal } from '@/components/alert-modal';
 import { useStore } from '@/lib/store';
+import { sendAdminChatMessage, fetchAdminChat } from '@/lib/admin-api';
 
 interface FileAttachment {
   name: string;
@@ -114,6 +115,50 @@ export function SupportPage() {
     } catch {}
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping, selectedFile]);
+
+  // Administrator tomonidan yuborilgan jonli javoblarni tekshirib borish
+  useEffect(() => {
+    if (!me?.id) return;
+    let isMounted = true;
+
+    const pollAdminMessages = async () => {
+      try {
+        const msgs = await fetchAdminChat(me.id);
+        const adminMsgs = msgs.filter((m) => m.sender === 'admin');
+        if (isMounted && adminMsgs.length > 0) {
+          setMessages((prev) => {
+            let updated = false;
+            const next = [...prev];
+            for (const am of adminMsgs) {
+              const msgId = `admin-reply-${am.id}`;
+              const exists = next.some((m) => m.id === msgId || (m.text === am.text && m.senderName.includes('Admin')));
+              if (!exists) {
+                updated = true;
+                next.push({
+                  id: msgId,
+                  sender: 'support',
+                  senderName: '👨‍💼 Administrator (Jonli javob)',
+                  text: am.text,
+                  time: new Date(am.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                });
+              }
+            }
+            if (updated) {
+              playMessageBeep();
+            }
+            return updated ? next : prev;
+          });
+        }
+      } catch {}
+    };
+
+    pollAdminMessages();
+    const timer = window.setInterval(pollAdminMessages, 4000);
+    return () => {
+      isMounted = false;
+      window.clearInterval(timer);
+    };
+  }, [me?.id]);
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -431,6 +476,11 @@ export function SupportPage() {
     const hadFile = Boolean(selectedFile);
     const fileName = selectedFile?.name;
     setSelectedFile(null);
+
+    // Admin chat paneliga ham xabarni yuboramiz
+    if (textToSend && me?.id) {
+      sendAdminChatMessage(me.id, textToSend, me.name || 'Talaba', 'user').catch(() => {});
+    }
 
     setIsTyping(true);
 

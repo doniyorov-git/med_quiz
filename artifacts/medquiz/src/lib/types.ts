@@ -38,6 +38,12 @@ export type Me = {
   bio?: string;
   avatar: string | null;
   xp?: number;
+  coins?: number;
+  totalTimeSpent?: number; // Jami ilovada sarflangan soniyalar
+  isBlocked?: boolean;
+  blockedReason?: string;
+  blockedAt?: number;
+  role?: 'admin' | 'user' | string;
 };
 
 export type Contrast = 'standard' | 'high';
@@ -168,6 +174,12 @@ export type PublicUser = {
   streak: number;
   seen: number;
   friendsCount?: number;
+  coins?: number;
+  totalTimeSpent?: number; // Jami ilovada sarflangan soniyalar
+  isBlocked?: boolean;
+  blockedReason?: string;
+  blockedAt?: number;
+  role?: 'admin' | 'user' | string;
 };
 
 export type FriendRequest = {
@@ -256,5 +268,42 @@ export type UserSession = {
   createdAt: number;
   lastActive: number;
 };
+
+export type AppBannerTheme = 'emerald' | 'cyan' | 'purple' | 'amber' | 'rose';
+
+export type AppBanner = {
+  id: string;
+  title: string;
+  description: string;
+  badge?: string;
+  theme: AppBannerTheme;
+  icon?: string;
+  actionText?: string;
+  actionUrl?: string;
+  active: boolean;
+  createdAt: number;
+  updatedAt?: number;
+};
+
+export type AdminChatMessage = {
+  id: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string | null;
+  sender: 'user' | 'admin' | 'system';
+  text: string;
+  createdAt: number;
+  read?: boolean;
+};
+
+export type BroadcastNotification = {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'alert';
+  createdAt: number;
+  senderName: string;
+};
+
 
 

@@ -18,6 +18,7 @@ import {
   HiOutlineSearch,
   HiOutlineStar,
   HiOutlineSupport,
+  HiOutlineShieldCheck,
   HiOutlineUser,
   HiOutlineX,
   HiUser,
@@ -71,6 +72,7 @@ const sideNav: { href: string; labelKey: TranslationKey; defaultLabel: string; i
   { href: '/leaderboard', labelKey: 'nav_leaderboard', defaultLabel: 'Reyting', icon: HiOutlineChartSquareBar },
   { href: '/achievements', labelKey: 'nav_achievements', defaultLabel: 'Yutuqlar', icon: HiOutlineStar },
   { href: '/support', labelKey: 'nav_support' as TranslationKey, defaultLabel: 'Qo‘llab-quvvatlash', icon: HiOutlineSupport },
+  { href: '/admin', labelKey: 'nav_admin' as any, defaultLabel: 'Admin Panel', icon: HiOutlineShieldCheck },
   { href: '/profile', labelKey: 'nav_profile' as TranslationKey, defaultLabel: 'Profil', icon: HiOutlineUser },
 ];
 

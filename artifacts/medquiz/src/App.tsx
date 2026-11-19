@@ -1,7 +1,10 @@
 import { Redirect, Route, Router, Switch } from 'wouter';
 import { Shell } from '@/components/chrome';
 import { StoreProvider, useStore } from '@/lib/store';
+import { useUserTimeTracker } from '@/lib/time-tracker';
+import { BlockedAccountScreen } from '@/components/blocked-account-screen';
 import { Achievements } from '@/pages/achievements';
+import { AdminPage } from '@/pages/admin';
 import { Banks } from '@/pages/banks';
 import { BattleLobby, BattleRoom } from '@/pages/battle';
 import { Dashboard } from '@/pages/dashboard';
@@ -20,7 +23,13 @@ import type { ReactNode } from 'react';
 function Guard({ children }: { children: ReactNode }) {
   const { me } = useStore();
   if (!me) return <Redirect to="/" />;
+  if (me.isBlocked) return <BlockedAccountScreen me={me} />;
   return <Shell>{children}</Shell>;
+}
+
+function GlobalAppTracker() {
+  useUserTimeTracker();
+  return null;
 }
 
 function Pages() {
@@ -41,7 +50,8 @@ function Pages() {
       <Route path="/profile"><Guard><Profile /></Guard></Route>
       <Route path="/settings"><Redirect to="/profile" /></Route>
       <Route path="/achievements"><Guard><Achievements /></Guard></Route>
-      <Route path="/support">{me ? <SupportPage /> : <Redirect to="/" />}</Route>
+      <Route path="/admin"><Guard><AdminPage /></Guard></Route>
+      <Route path="/support">{me ? (me.isBlocked ? <BlockedAccountScreen me={me} /> : <SupportPage />) : <Redirect to="/" />}</Route>
       <Route>
         <div className="grid min-h-[100dvh] place-items-center px-6">
           <div className="text-center">
@@ -58,6 +68,7 @@ export default function App() {
   const base = import.meta.env.BASE_URL.replace(/\/$/, '');
   return (
     <StoreProvider>
+      <GlobalAppTracker />
       <Router base={base}>
         <Pages />
       </Router>
