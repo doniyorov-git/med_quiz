@@ -292,7 +292,7 @@ export function SupportPage() {
       id: `u-${Date.now()}`,
       sender: 'user',
       senderName: me?.name || 'Talaba',
-      avatar: me?.avatar,
+      avatar: me?.avatar || undefined,
       text: raw || (filePayload ? `[Yuborilgan fayl: ${filePayload.name}]` : undefined),
       file: filePayload,
       time: new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }),

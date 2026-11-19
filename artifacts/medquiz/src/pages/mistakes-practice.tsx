@@ -3,10 +3,11 @@ import { Link } from 'wouter';
 import { Btn, Icon, Panel } from '@/components/chrome';
 import { Choices } from '@/components/choices';
 import { ResultCard, bigBtn, bigBtnLine } from '@/components/result-card';
-import { recordMistake, removeMistake } from '@/lib/model';
+import { recordMistake, removeMistake, updateMistakeSRS } from '@/lib/model';
 import { isCorrectPick, shuffle } from '@/lib/parser';
 import { useBanks, useMistakes } from '@/lib/store';
 import { playSound } from '@/lib/sound';
+import { isDueForReview } from '@/lib/srs';
 import type { MistakeItem, Question } from '@/lib/types';
 
 type Result = { item: MistakeItem; ok: boolean; picks: number[] };
@@ -31,6 +32,7 @@ export function MistakesPractice() {
 
   const scopeName = useMemo(() => {
     if (scope === 'all') return 'Barcha xatolarim';
+    if (scope === 'srs') return 'Bugungi takrorlash (SRS)';
     if (scope === 'saved') return 'Saqlangan savollar';
     return banks.find((b) => b.id === scope)?.name ?? mistakes.find((m) => m.bankId === scope)?.bankName ?? 'Fan';
   }, [scope, banks, mistakes]);
@@ -46,6 +48,7 @@ export function MistakesPractice() {
       mistakes.filter((m) => {
         if (!Array.isArray(m.options) || m.options.length < 2 || !m.options.some((o) => o.correct)) return false;
         if (scope === 'all') return true;
+        if (scope === 'srs') return isDueForReview(m);
         if (scope === 'saved') return Boolean(m.saved);
         return m.bankId === scope;
       }),
@@ -217,11 +220,15 @@ export function MistakesPractice() {
   const next = () => {
     if (!run.locked) return;
     const ok = isCorrectPick(question, run.picks);
-    // update the persistent mistakes list
+    // update SRS and mistake status
     if (ok) {
-      if (!item.saved) removeMistake(item.id);
+      updateMistakeSRS(item.questionId, true);
+      if (!item.saved && (item.repetitions || 0) >= 2) {
+        removeMistake(item.id);
+      }
     } else {
       recordMistake(item.bankId, item.bankName, question, run.picks);
+      updateMistakeSRS(item.questionId, false);
     }
     const results = [...run.results, { item, ok, picks: run.picks }];
     if (run.index >= run.items.length - 1) {

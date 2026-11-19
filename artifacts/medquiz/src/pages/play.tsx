@@ -8,6 +8,8 @@ import { recordDailyWorkoutProgress, recordSolo, recordMistake, toggleSaveQuesti
 import { cleanQuestion, isCorrectPick, shuffle } from '@/lib/parser';
 import { useBanks, useStore } from '@/lib/store';
 import { playSound } from '@/lib/sound';
+import { AiExplanationModal } from '@/components/ai-explanation-modal';
+import { AuscultationPlayer } from '@/components/audio-player';
 import type { OrderMode, Question } from '@/lib/types';
 
 type Run = {
@@ -39,6 +41,7 @@ export function Play() {
   const [limit, setLimit] = useState(30);
   const [run, setRun] = useState<Run | null>(null);
   const [done, setDone] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
 
   useEffect(() => {
     if (!run || done || run.locked || limit === 0) return;
@@ -271,28 +274,50 @@ export function Play() {
         {question.image && (
           <img src={question.image} alt="" className="mb-2 sm:mb-4 max-h-36 sm:max-h-60 w-full rounded-[10px] object-contain" />
         )}
+        {question.audio && (
+          <AuscultationPlayer src={question.audio} title="Auskultatsiya yozuvi" />
+        )}
         <Choices question={question} picks={run.picks} locked={run.locked} onPick={toggle} />
-        <div className="mt-3 sm:mt-5 flex justify-end">
-          {!run.locked ? (
-            <Btn
-              className="py-1.5 px-3.5 text-xs sm:text-sm"
-              testId="button-check"
-              disabled={!run.picks.length}
-              onClick={() => {
-                const ok = isCorrectPick(question, run.picks);
-                playSound(ok ? 'correct' : 'wrong');
-                setRun({ ...run, locked: true });
-              }}
+        <div className="mt-3 sm:mt-5 flex items-center justify-between gap-2 flex-wrap">
+          {run.locked ? (
+            <button
+              type="button"
+              onClick={() => setShowAiModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-emerald-700 dark:text-emerald-300 text-xs font-bold transition-all cursor-pointer shadow-xs"
             >
-              Tekshirish
-            </Btn>
-          ) : (
-            <Btn className="py-1.5 px-3.5 text-xs sm:text-sm" testId="button-next" onClick={finishQuestion}>
-              {run.index === run.questions.length - 1 ? 'Natija' : 'Keyingisi'}
-            </Btn>
-          )}
+              <Icon name="ri-sparkling-fill" className="text-emerald-500 text-sm" />
+              <span>AI Klinik Tushuntirish</span>
+            </button>
+          ) : <div />}
+          <div className="flex items-center gap-2">
+            {!run.locked ? (
+              <Btn
+                className="py-1.5 px-3.5 text-xs sm:text-sm"
+                testId="button-check"
+                disabled={!run.picks.length}
+                onClick={() => {
+                  const ok = isCorrectPick(question, run.picks);
+                  playSound(ok ? 'correct' : 'wrong');
+                  setRun({ ...run, locked: true });
+                }}
+              >
+                Tekshirish
+              </Btn>
+            ) : (
+              <Btn className="py-1.5 px-3.5 text-xs sm:text-sm" testId="button-next" onClick={finishQuestion}>
+                {run.index === run.questions.length - 1 ? 'Natija' : 'Keyingisi'}
+              </Btn>
+            )}
+          </div>
         </div>
       </Panel>
+
+      <AiExplanationModal
+        isOpen={showAiModal}
+        onClose={() => setShowAiModal(false)}
+        question={question}
+        pickedIndices={run.picks}
+      />
     </div>
   );
 }

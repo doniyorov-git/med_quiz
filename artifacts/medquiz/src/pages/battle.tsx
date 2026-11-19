@@ -8,6 +8,8 @@ import { Btn, Icon, Panel, fieldClass } from '@/components/chrome';
 import { Choices, Ring } from '@/components/choices';
 import { Dropdown } from '@/components/dropdown';
 import { CelebrationBadge, Trophy } from '@/components/result-card';
+import { AuscultationPlayer } from '@/components/audio-player';
+import { AiExplanationModal } from '@/components/ai-explanation-modal';
 import {
   answerRoom,
   beginLive,
@@ -58,6 +60,7 @@ export function BattleLobby() {
   const [count, setCount] = useState(10);
   const [order, setOrder] = useState<OrderMode>('mixed');
   const [seconds, setSeconds] = useState(30);
+  const [battleMode, setBattleMode] = useState<'standard' | 'sudden_death' | 'speed_run'>('standard');
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [joinError, setJoinError] = useState('');
@@ -504,15 +507,17 @@ export function BattleLobby() {
                           const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
                           const shuffledQs = [...cleanQs].sort(() => 0.5 - Math.random()).slice(0, 10);
                           const newRoom: Room = {
+                            id: `room-${roomCode}`,
                             code: roomCode,
                             hostId: me ? me.id : 'me',
                             bankId: b.id,
                             bankName: b.name,
                             questions: shuffledQs,
-                            count: shuffledQs.length,
+                            order: 'mixed',
                             seconds: 25,
                             status: 'live',
                             index: 0,
+                            countdownAt: null,
                             questionStartedAt: Date.now(),
                             players: [
                               { id: me ? me.id : 'me', name: me ? me.name : 'Talaba', avatar: me ? me.avatar : null, seen: Date.now() },
@@ -521,6 +526,7 @@ export function BattleLobby() {
                             answers: {},
                             createdAt: Date.now(),
                             updatedAt: Date.now(),
+                            rewardsGiven: false,
                           };
                           putRoom(newRoom);
                           setLocation(`/battle/${roomCode}`);
@@ -610,6 +616,51 @@ export function BattleLobby() {
                   options={timeOptions}
                   onChange={(val) => setSeconds(Number(val))}
                 />
+
+                {/* Battle Rejimi */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Battle rejimi
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setBattleMode('standard')}
+                      className={`p-2.5 rounded-[10px] border text-left transition-all cursor-pointer ${
+                        battleMode === 'standard'
+                          ? 'border-emerald-500 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300'
+                          : 'border-slate-200 dark:border-white/10 hover:border-slate-300'
+                      }`}
+                    >
+                      <p className="font-bold text-xs">Klassik</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Oddiy ball to‘plash</p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBattleMode('sudden_death')}
+                      className={`p-2.5 rounded-[10px] border text-left transition-all cursor-pointer ${
+                        battleMode === 'sudden_death'
+                          ? 'border-rose-500 bg-rose-500/10 text-rose-800 dark:text-rose-300'
+                          : 'border-slate-200 dark:border-white/10 hover:border-slate-300'
+                      }`}
+                    >
+                      <p className="font-bold text-xs text-rose-600 dark:text-rose-400">Sudden Death</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">1 xato = chiqish</p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBattleMode('speed_run')}
+                      className={`p-2.5 rounded-[10px] border text-left transition-all cursor-pointer ${
+                        battleMode === 'speed_run'
+                          ? 'border-amber-500 bg-amber-500/10 text-amber-800 dark:text-amber-300'
+                          : 'border-slate-200 dark:border-white/10 hover:border-slate-300'
+                      }`}
+                    >
+                      <p className="font-bold text-xs text-amber-600 dark:text-amber-400">Speed Run</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">60 soniya blitz</p>
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <Btn
@@ -624,7 +675,7 @@ export function BattleLobby() {
                     return;
                   }
                   setError('');
-                  const room = createRoom(me, bank, count, order, seconds);
+                  const room = createRoom(me, bank, count, order, seconds, battleMode);
                   setSheet(null);
                   setLocation(`/battle/${room.code}`);
                 }}
@@ -1529,6 +1580,14 @@ function LiveQuestion({ room, meId, host }: { room: Room; meId: string; host: bo
   const mine = (room.answers ?? {})[meId]?.[String(room.index)];
   const multi = !!question && (question.options ?? []).filter((option) => option?.correct).length > 1;
   const [picks, setPicks] = useState<number[]>([]);
+  const [showAiModal, setShowAiModal] = useState(false);
+
+  const isEliminated =
+    room.mode === 'sudden_death' &&
+    (() => {
+      const answers = room.answers?.[meId] ?? {};
+      return Object.values(answers).some((ans: any) => ans && ans.points === 0);
+    })();
 
   useEffect(() => setPicks([]), [room.index]);
 
@@ -1539,7 +1598,7 @@ function LiveQuestion({ room, meId, host }: { room: Room; meId: string; host: bo
   const isLastQuestion = room.index + 1 >= (room.questions ?? []).length;
 
   const handleSinglePick = (index: number) => {
-    if (isAnswered) return;
+    if (isAnswered || isEliminated) return;
     const userPicks = [index];
     answerRoom(meId, room.code, userPicks);
     const correct = isCorrectPick(question, userPicks);
@@ -1552,7 +1611,7 @@ function LiveQuestion({ room, meId, host }: { room: Room; meId: string; host: bo
   };
 
   const handleMultiSubmit = () => {
-    if (isAnswered || !picks.length) return;
+    if (isAnswered || !picks.length || isEliminated) return;
     answerRoom(meId, room.code, picks);
     const correct = isCorrectPick(question, picks);
     if (!correct) {
@@ -1573,11 +1632,35 @@ function LiveQuestion({ room, meId, host }: { room: Room; meId: string; host: bo
           <p className="text-xs text-muted-foreground font-bold">
             Savol {room.index + 1} / {room.questions.length}
           </p>
+          {room.mode && (
+            <span
+              className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                room.mode === 'sudden_death'
+                  ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25'
+                  : room.mode === 'speed_run'
+                  ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25'
+                  : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25'
+              }`}
+            >
+              {room.mode === 'sudden_death'
+                ? '💀 Sudden Death'
+                : room.mode === 'speed_run'
+                ? '⚡ Speed Run'
+                : 'Klassik'}
+            </span>
+          )}
         </div>
         <span className="text-[11px] px-2.5 py-1 rounded-[8px] bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 font-bold border border-slate-200/60 dark:border-white/10">
           {multi ? 'Ko‘p javobli' : 'Bitta to‘g‘ri javob'}
         </span>
       </div>
+
+      {isEliminated && (
+        <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-center text-rose-600 dark:text-rose-400 font-bold text-xs flex items-center justify-center gap-2">
+          <Icon name="ri-skull-line" className="text-base" />
+          <span>Siz Sudden Death rejimida xato qildingiz va o‘yindan chetlatildingiz.</span>
+        </div>
+      )}
 
       {question.image && (
         <img
@@ -1585,6 +1668,10 @@ function LiveQuestion({ room, meId, host }: { room: Room; meId: string; host: bo
           alt=""
           className="my-3 max-h-52 sm:max-h-72 w-full rounded-[10px] object-contain border border-slate-200/60 dark:border-white/10"
         />
+      )}
+
+      {question.audio && (
+        <AuscultationPlayer src={question.audio} title="Auskultatsiya yozuvi" />
       )}
 
       <h2 className="text-base sm:text-lg font-bold leading-relaxed text-slate-900 dark:text-white">
@@ -1595,9 +1682,9 @@ function LiveQuestion({ room, meId, host }: { room: Room; meId: string; host: bo
       <Choices
         question={question}
         picks={shown}
-        locked={isAnswered}
+        locked={isAnswered || isEliminated}
         onPick={(index) => {
-          if (isAnswered) return;
+          if (isAnswered || isEliminated) return;
           if (!multi) {
             handleSinglePick(index);
             return;
@@ -1668,7 +1755,18 @@ function LiveQuestion({ room, meId, host }: { room: Room; meId: string; host: bo
             : 'Xato tahlili xatolar bo‘limida saqlanadi.'}
         </p>
 
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          {isAnswered && (
+            <button
+              type="button"
+              onClick={() => setShowAiModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 text-xs font-bold transition-all cursor-pointer"
+            >
+              <Icon name="ri-sparkling-fill" className="text-emerald-500 text-xs" />
+              <span>AI Tushuntirish</span>
+            </button>
+          )}
+
           {multi && !isAnswered && (
             <Btn
               className="py-2.5 px-5 text-xs sm:text-sm font-bold !rounded-[12px] bg-emerald-600 hover:bg-emerald-700 text-white"
@@ -1701,6 +1799,13 @@ function LiveQuestion({ room, meId, host }: { room: Room; meId: string; host: bo
           )}
         </div>
       </div>
+
+      <AiExplanationModal
+        isOpen={showAiModal}
+        onClose={() => setShowAiModal(false)}
+        question={question}
+        pickedIndices={shown}
+      />
     </Panel>
   );
 }

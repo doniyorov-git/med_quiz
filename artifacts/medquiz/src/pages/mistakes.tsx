@@ -3,6 +3,8 @@ import { Link, useLocation } from 'wouter';
 import { Btn, Icon, Panel } from '@/components/chrome';
 import { useMistakes, useBanks } from '@/lib/store';
 import { removeMistake, toggleSaveQuestion, clearMistakesForBank } from '@/lib/model';
+import { isDueForReview, formatReviewCountdown } from '@/lib/srs';
+import { AiExplanationModal } from '@/components/ai-explanation-modal';
 import type { MistakeItem } from '@/lib/types';
 
 export function MistakesPage() {
@@ -14,6 +16,7 @@ export function MistakesPage() {
     if (typeof window !== 'undefined') {
       const tab = new URLSearchParams(window.location.search).get('tab');
       if (tab === 'saved') return 'saved';
+      if (tab === 'srs') return 'srs';
     }
     return 'all';
   };
@@ -45,18 +48,23 @@ export function MistakesPage() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const tab = new URLSearchParams(window.location.search).get('tab');
-      if (tab === 'saved') {
-        setSelectedTab('saved');
-      }
+      if (tab === 'saved') setSelectedTab('saved');
+      else if (tab === 'srs') setSelectedTab('srs');
     }
   }, [location]);
   const [onlySaved, setOnlySaved] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [explainingItem, setExplainingItem] = useState<MistakeItem | null>(null);
+
+  const dueCount = useMemo(() => mistakes.filter(isDueForReview).length, [mistakes]);
+  const savedCount = useMemo(() => mistakes.filter((m) => m.saved).length, [mistakes]);
 
   // Filtered list
   const filteredMistakes = useMemo(() => {
     return mistakes.filter((item) => {
-      if (selectedTab !== 'all' && selectedTab !== 'saved' && item.bankId !== selectedTab) {
+      if (selectedTab === 'srs') {
+        if (!isDueForReview(item)) return false;
+      } else if (selectedTab !== 'all' && selectedTab !== 'saved' && item.bankId !== selectedTab) {
         return false;
       }
       if (selectedTab === 'saved' && !item.saved) {
@@ -74,8 +82,6 @@ export function MistakesPage() {
       return true;
     });
   }, [mistakes, selectedTab, onlySaved, searchQuery]);
-
-  const savedCount = useMemo(() => mistakes.filter((m) => m.saved).length, [mistakes]);
 
   // Practice ONLY the mistakes of the current tab (not the whole bank)
   const handlePractice = () => {
@@ -155,6 +161,28 @@ export function MistakesPage() {
                 }`}
               >
                 {mistakes.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSelectedTab('srs')}
+              className={`flex items-center gap-2 pb-3 pt-2 px-3 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all cursor-pointer shrink-0 ${
+                selectedTab === 'srs'
+                  ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:border-slate-300'
+              }`}
+            >
+              <Icon name="ri-time-line" className="text-base" />
+              <span>Bugungi takrorlash (SRS)</span>
+              <span
+                className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  selectedTab === 'srs'
+                    ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                    : 'bg-slate-100 dark:bg-white/10 text-slate-500'
+                }`}
+              >
+                {dueCount}
               </span>
             </button>
 
@@ -281,9 +309,30 @@ export function MistakesPage() {
                     <span className="text-[11px] text-slate-400">
                       #{idx + 1} · {new Date(item.timestamp).toLocaleDateString('uz-UZ')}
                     </span>
+                    {item.nextReviewDate && (
+                      <span className={`px-2 py-0.5 rounded-[6px] text-[10px] font-bold inline-flex items-center gap-1 ${
+                        isDueForReview(item)
+                          ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30'
+                          : 'bg-slate-100 dark:bg-white/5 text-slate-500 border border-slate-200 dark:border-white/10'
+                      }`}>
+                        <Icon name="ri-time-line" className="text-xs" />
+                        {isDueForReview(item) ? 'Bugun takrorlash' : formatReviewCountdown(item.nextReviewDate)}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-1">
+                    {/* AI Explanation Button */}
+                    <button
+                      type="button"
+                      onClick={() => setExplainingItem(item)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-[8px] bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 text-xs font-semibold transition-all cursor-pointer"
+                      title="AI Klinik Tushuntirish"
+                    >
+                      <Icon name="ri-sparkling-fill" className="text-emerald-500 text-xs" />
+                      <span className="hidden sm:inline">AI Tushuntirish</span>
+                    </button>
+
                     {/* Save / Bookmark Button */}
                     <button
                       type="button"
@@ -381,6 +430,21 @@ export function MistakesPage() {
             );
           })}
         </div>
+      )}
+
+      {explainingItem && (
+        <AiExplanationModal
+          isOpen={Boolean(explainingItem)}
+          onClose={() => setExplainingItem(null)}
+          question={{
+            id: explainingItem.questionId,
+            prompt: explainingItem.prompt,
+            options: explainingItem.options,
+            image: explainingItem.image,
+            audio: explainingItem.audio,
+          }}
+          pickedIndices={explainingItem.pickedIndices}
+        />
       )}
     </div>
   );

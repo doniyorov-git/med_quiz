@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   HiOutlinePhone,
   HiOutlineUser,
@@ -13,6 +13,8 @@ import { findAccountByLogin, normalizeUsername, normalizePhone, saveStoredAccoun
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { useI18n } from '@/lib/i18n';
 import { defaultUsername } from '@/lib/model';
+import { TermsModal, PrivacyModal } from '@/components/legal-modals';
+import { isTelegramMiniApp, getTelegramUser, syncTelegramWithServer } from '@/lib/telegram';
 
 function GoogleIcon({ className = 'w-5 h-5' }: { className?: string }) {
   return (
@@ -57,9 +59,65 @@ export function Welcome() {
   // UI state
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [telegramStatus, setTelegramStatus] = useState<string | null>(null);
+
+  // Legal agreement state with localStorage persistence
+  const [isAgreed, setIsAgreed] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('medquiz_terms_agreed') === 'true';
+    }
+    return false;
+  });
+  const [showTerms, setShowTerms] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+
+  // Telegram TMA auto-detection and synchronization
+  useEffect(() => {
+    if (isTelegramMiniApp()) {
+      const tgUser = getTelegramUser();
+      if (tgUser) {
+        syncTelegramWithServer().then((res) => {
+          if (res.ok && res.user) {
+            const agreed = localStorage.getItem('medquiz_terms_agreed') === 'true' || res.user.termsAgreed;
+            if (agreed) {
+              enter(
+                {
+                  name: res.user.name || `${tgUser.first_name} ${tgUser.last_name || ''}`.trim(),
+                  username: res.user.username || (tgUser.username ? tgUser.username.toLowerCase() : `tg_${tgUser.id}`),
+                  phone: res.user.phone || '',
+                  telegramId: tgUser.id,
+                  termsAgreed: true,
+                  termsAgreedAt: Date.now(),
+                },
+                res.user
+              );
+            } else {
+              setRegFullName(`${tgUser.first_name} ${tgUser.last_name || ''}`.trim());
+              if (tgUser.username) setRegUsername(tgUser.username.toLowerCase());
+              if (res.user.phone) setRegPhone(res.user.phone.replace('+998', '').trim());
+              if (res.needsContact) {
+                setTelegramStatus('Iltimos, botimizda telefon raqamingizni tasdiqlang');
+              }
+            }
+          }
+        });
+      }
+    }
+  }, []);
+
+  const handleAgreeChange = (checked: boolean) => {
+    setIsAgreed(checked);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('medquiz_terms_agreed', checked ? 'true' : 'false');
+    }
+  };
 
   // Google Login Handler
   const handleGoogleLogin = async () => {
+    if (!isAgreed) {
+      setErrorMessage('Iltimos, avval foydalanish shartlariga rozilik bildiring.');
+      return;
+    }
     setErrorMessage('');
     setIsGoogleLoading(true);
     try {
@@ -251,6 +309,21 @@ export function Welcome() {
           </button>
         </div>
 
+        {/* Telegram contact prompt alert */}
+        {telegramStatus && (
+          <div className="mb-4 rounded-[10px] border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/30 p-3 text-xs text-emerald-700 dark:text-emerald-400 flex items-center justify-between gap-2">
+            <span className="flex-1 font-medium">{telegramStatus}</span>
+            <a
+              href="https://t.me/medquiz_uz_bot"
+              target="_blank"
+              rel="noreferrer"
+              className="shrink-0 px-2.5 py-1 rounded-md bg-primary text-white text-[11px] font-bold hover:brightness-105"
+            >
+              Botga o‘tish
+            </a>
+          </div>
+        )}
+
         {/* Error message alert */}
         {errorMessage && (
           <div className="mb-4 rounded-[10px] border border-rose-500/30 bg-rose-50 dark:bg-rose-950/30 p-3 text-xs text-rose-600 dark:text-rose-400 flex items-start gap-2">
@@ -304,10 +377,42 @@ export function Welcome() {
               </div>
             </div>
 
+            {/* Mandatory Legal Agreement Checkbox */}
+            <div className="pt-1">
+              <label className="flex items-start gap-2.5 cursor-pointer text-xs text-slate-600 dark:text-slate-400 select-none">
+                <input
+                  type="checkbox"
+                  checked={isAgreed}
+                  onChange={(e) => handleAgreeChange(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-500 accent-emerald-500 focus:ring-emerald-500 dark:border-slate-700 cursor-pointer shrink-0"
+                />
+                <span className="leading-snug">
+                  Men{' '}
+                  <button
+                    type="button"
+                    onClick={() => setShowTerms(true)}
+                    className="text-emerald-600 dark:text-emerald-400 font-semibold underline hover:opacity-80 transition-opacity cursor-pointer"
+                  >
+                    Foydalanish shartlari
+                  </button>{' '}
+                  va{' '}
+                  <button
+                    type="button"
+                    onClick={() => setShowPrivacy(true)}
+                    className="text-emerald-600 dark:text-emerald-400 font-semibold underline hover:opacity-80 transition-opacity cursor-pointer"
+                  >
+                    Maxfiylik siyosati
+                  </button>{' '}
+                  bilan tanishdim hamda ularga to‘liq roziman.
+                </span>
+              </label>
+            </div>
+
             {/* Submit Login Button */}
             <button
               type="submit"
-              className="w-full mt-2 flex items-center justify-center gap-2 rounded-[10px] bg-gradient-to-r from-med-600 to-med-500 py-2.5 px-4 text-xs sm:text-sm font-bold text-white shadow-md shadow-med-500/25 hover:brightness-105 active:scale-[0.99] transition-all cursor-pointer"
+              disabled={!isAgreed}
+              className="w-full mt-2 flex items-center justify-center gap-2 rounded-[10px] bg-gradient-to-r from-med-600 to-med-500 py-2.5 px-4 text-xs sm:text-sm font-bold text-white shadow-md shadow-med-500/25 hover:brightness-105 active:scale-[0.99] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:brightness-100"
               data-testid="button-login-submit"
             >
               <span>{t('auth_login_btn')}</span>
@@ -404,10 +509,42 @@ export function Welcome() {
               </div>
             </div>
 
+            {/* Mandatory Legal Agreement Checkbox */}
+            <div className="pt-1">
+              <label className="flex items-start gap-2.5 cursor-pointer text-xs text-slate-600 dark:text-slate-400 select-none">
+                <input
+                  type="checkbox"
+                  checked={isAgreed}
+                  onChange={(e) => handleAgreeChange(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-500 accent-emerald-500 focus:ring-emerald-500 dark:border-slate-700 cursor-pointer shrink-0"
+                />
+                <span className="leading-snug">
+                  Men{' '}
+                  <button
+                    type="button"
+                    onClick={() => setShowTerms(true)}
+                    className="text-emerald-600 dark:text-emerald-400 font-semibold underline hover:opacity-80 transition-opacity cursor-pointer"
+                  >
+                    Foydalanish shartlari
+                  </button>{' '}
+                  va{' '}
+                  <button
+                    type="button"
+                    onClick={() => setShowPrivacy(true)}
+                    className="text-emerald-600 dark:text-emerald-400 font-semibold underline hover:opacity-80 transition-opacity cursor-pointer"
+                  >
+                    Maxfiylik siyosati
+                  </button>{' '}
+                  bilan tanishdim hamda ularga to‘liq roziman.
+                </span>
+              </label>
+            </div>
+
             {/* Submit Register Button */}
             <button
               type="submit"
-              className="w-full mt-2 flex items-center justify-center gap-2 rounded-[10px] bg-gradient-to-r from-med-600 to-med-500 py-2.5 px-4 text-xs sm:text-sm font-bold text-white shadow-md shadow-med-500/25 hover:brightness-105 active:scale-[0.99] transition-all cursor-pointer"
+              disabled={!isAgreed}
+              className="w-full mt-2 flex items-center justify-center gap-2 rounded-[10px] bg-gradient-to-r from-med-600 to-med-500 py-2.5 px-4 text-xs sm:text-sm font-bold text-white shadow-md shadow-med-500/25 hover:brightness-105 active:scale-[0.99] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:brightness-100"
               data-testid="button-register-submit"
             >
               <span>{t('auth_register_btn')}</span>
@@ -428,14 +565,18 @@ export function Welcome() {
         <button
           type="button"
           onClick={handleGoogleLogin}
-          disabled={isGoogleLoading}
-          className="w-full flex items-center justify-center gap-2.5 rounded-[10px] border border-slate-200 bg-white py-2.5 px-4 text-xs sm:text-sm font-semibold text-slate-700 shadow-xs hover:bg-slate-50 active:scale-[0.99] transition-all dark:border-white/10 dark:bg-[#1a2234] dark:text-white dark:hover:bg-[#20293d] cursor-pointer"
+          disabled={!isAgreed || isGoogleLoading}
+          className="w-full flex items-center justify-center gap-2.5 rounded-[10px] border border-slate-200 bg-white py-2.5 px-4 text-xs sm:text-sm font-semibold text-slate-700 shadow-xs hover:bg-slate-50 active:scale-[0.99] transition-all dark:border-white/10 dark:bg-[#1a2234] dark:text-white dark:hover:bg-[#20293d] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           data-testid="button-google-login"
         >
           <GoogleIcon />
           <span>{isGoogleLoading ? 'Kirilmoqda...' : t('auth_google_continue')}</span>
         </button>
       </div>
+
+      {/* Legal Modals */}
+      <TermsModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
+      <PrivacyModal isOpen={showPrivacy} onClose={() => setShowPrivacy(false)} />
     </div>
   );
 }

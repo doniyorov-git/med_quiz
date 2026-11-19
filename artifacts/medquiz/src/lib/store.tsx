@@ -31,6 +31,9 @@ export type EnterData = {
   password?: string;
   phone?: string;
   email?: string;
+  telegramId?: string | number;
+  termsAgreed?: boolean;
+  termsAgreedAt?: number;
   university?: string;
   course?: string;
   faculty?: string;

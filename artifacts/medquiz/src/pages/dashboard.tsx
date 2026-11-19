@@ -18,6 +18,7 @@ import { Icon } from '@/components/chrome';
 import { cleanQuestion } from '@/lib/parser';
 import { useBanks, useMistakes, useStatsMap, useStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
+import { isDueForReview } from '@/lib/srs';
 import type { Stats } from '@/lib/types';
 
 const banners = [
@@ -71,11 +72,41 @@ export function Dashboard() {
   const average = stats?.answered ? Math.round((stats.correct / stats.answered) * 100) : 0;
   const ready = banks.filter((bank) => (bank.questions ?? []).some((question) => cleanQuestion(question)));
   const savedCount = mistakes.filter((m) => m.saved).length;
+  const dueCount = mistakes.filter(isDueForReview).length;
 
   return (
     <div className="space-y-6 lg:space-y-8">
       {/* Restored DashBanner */}
       <DashBanner />
+
+      {/* Spaced Repetition (SRS) Review Callout */}
+      {dueCount > 0 && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-[10px] border border-emerald-500/30 bg-emerald-500/10 dark:bg-emerald-500/5 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[8px] bg-emerald-500 text-white shadow-md shadow-emerald-500/25">
+              <Icon name="ri-time-line" className="text-xl" />
+            </div>
+            <div>
+              <p className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                <span>Bugungi takrorlash (SRS)</span>
+                <span className="px-2 py-0.5 rounded-full text-xs font-black bg-emerald-500 text-white">
+                  {dueCount} ta savol
+                </span>
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Spaced repetition algoritmi bo‘yicha bugun xotirangizni mustahkamlash vaqti keldi.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/mistakes/practice?scope=srs"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-[8px] bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition-all cursor-pointer whitespace-nowrap"
+          >
+            <span>Takrorlashni boshlash</span>
+            <Icon name="ri-arrow-right-line" className="text-sm" />
+          </Link>
+        </div>
+      )}
 
       {/* Quick stats grid */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">

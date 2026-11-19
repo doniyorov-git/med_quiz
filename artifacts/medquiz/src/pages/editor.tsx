@@ -11,6 +11,7 @@ import {
 } from 'react-icons/hi';
 import { Btn, Field, Icon, fieldClass } from '@/components/chrome';
 import { ImageField } from '@/components/image-field';
+import { AuscultationPlayer } from '@/components/audio-player';
 import { deleteBank, renameBank, replaceQuestions } from '@/lib/model';
 import { blankQuestion, cleanQuestion, parseQuizText, serializeQuiz, uid, extractTextFromFile } from '@/lib/parser';
 import { useBanks } from '@/lib/store';
@@ -288,6 +289,35 @@ export function Editor() {
                     onChange={(image) => update(question.id, { image })}
                     label="Savol rasmi (ixtiyoriy) — yuklash, aylantirish, olib tashlash"
                   />
+
+                  {/* Auscultation Audio File/URL Field */}
+                  <div className="space-y-1.5 rounded-[12px] border border-slate-200/80 dark:border-white/10 p-3 bg-slate-50/40 dark:bg-white/[0.01]">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                        <Icon name="ri-stethoscope-line" className="text-primary text-sm" />
+                        <span>Auskultatsiya audio yozuvi (ixtiyoriy — MP3, WAV yoki URL):</span>
+                      </label>
+                      {question.audio && (
+                        <button
+                          type="button"
+                          onClick={() => update(question.id, { audio: null })}
+                          className="text-[11px] text-rose-500 hover:underline font-semibold cursor-pointer"
+                        >
+                          Audioni o‘chirish
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      value={question.audio || ''}
+                      placeholder="https://... audio fayl havolasi yoki URL"
+                      onChange={(e) => update(question.id, { audio: e.target.value.trim() || null })}
+                      className="w-full rounded-[8px] border border-slate-200 bg-white py-2 px-3 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-white/10 dark:bg-[#1a2234] dark:text-white"
+                    />
+                    {question.audio && (
+                      <AuscultationPlayer src={question.audio} title="Kiritilgan audio namunasi" />
+                    )}
+                  </div>
 
                   <div className="space-y-2.5">
                     <p className="input-label">Javob variantlari (to‘g‘ri javob uchun «+» belgisini bosing):</p>

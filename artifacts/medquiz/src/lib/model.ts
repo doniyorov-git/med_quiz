@@ -1,5 +1,6 @@
 import { clearSession, readFresh, readSession, updateKey, writeKey, writeSession } from '@/lib/db';
 import { cleanQuestion, isCorrectPick, shuffle, uid } from '@/lib/parser';
+import { calculateNextReview } from '@/lib/srs';
 import type {
   Bank,
   BankExamSchedule,
@@ -43,6 +44,8 @@ const emptyStats = (me: Me): Stats => ({
   correct: 0,
   answered: 0,
   xp: 0,
+  coins: 20,
+  streakFreezes: 1,
   streak: 0,
   lastDay: '',
   perfects: 0,
@@ -623,10 +626,25 @@ export function recordSolo(me: Me, result: SoloResult) {
   const today = dayKey();
   updateKey<Record<string, Stats>>(STATS, {}, (map) => {
     const current = map[me.id] ?? emptyStats(me);
-    let streak = current.streak;
-    if (current.lastDay === today) streak = Math.max(streak, 1);
-    else if (current.lastDay === yesterdayKey()) streak += 1;
-    else streak = 1;
+    let streak = current.streak ?? 0;
+    let streakFreezes = current.streakFreezes ?? 1;
+
+    if (current.lastDay === today) {
+      streak = Math.max(streak, 1);
+    } else if (current.lastDay === yesterdayKey()) {
+      streak += 1;
+    } else {
+      if (streak > 0 && streakFreezes > 0) {
+        streakFreezes -= 1;
+        streak += 1;
+      } else {
+        streak = 1;
+      }
+    }
+
+    const earnedCoins = result.correct + (result.perfect ? 5 : 0);
+    const coins = (current.coins ?? 20) + earnedCoins;
+
     return {
       ...map,
       [me.id]: {
@@ -637,6 +655,8 @@ export function recordSolo(me: Me, result: SoloResult) {
         correct: current.correct + result.correct,
         answered: current.answered + result.total,
         xp: current.xp + result.xp,
+        coins,
+        streakFreezes,
         streak,
         lastDay: today,
         perfects: current.perfects + (result.perfect ? 1 : 0),
@@ -725,7 +745,14 @@ export function putRoom(next: Room) {
   syncRoomToServer(withTime);
 }
 
-export function createRoom(me: Me, bank: Bank, count: number, order: OrderMode, seconds: number): Room {
+export function createRoom(
+  me: Me,
+  bank: Bank,
+  count: number,
+  order: OrderMode,
+  seconds: number,
+  mode: 'standard' | 'sudden_death' | 'speed_run' = 'standard'
+): Room {
   let questions = (bank.questions ?? []).map((question) => cleanQuestion(question)).filter((question): question is Question => question !== null);
   if (order === 'mixed') questions = shuffle(questions);
   questions = questions.slice(0, Math.max(1, Math.min(count, questions.length)));
@@ -737,7 +764,8 @@ export function createRoom(me: Me, bank: Bank, count: number, order: OrderMode, 
     bankId: bank.id,
     bankName: bank.name,
     order,
-    seconds,
+    seconds: mode === 'speed_run' ? 60 : seconds,
+    mode,
     status: 'lobby',
     questions,
     players: [{ ...player, ready: false }],
@@ -894,6 +922,8 @@ export function claimBattle(me: Me, room: Room) {
   const mine = Object.values(answers[me.id] ?? {});
   const answered = mine.length;
   const correct = mine.filter((answer) => (answer?.points ?? 0) > 0).length;
+  const earnedCoins = correct + (won ? 10 : 0);
+
   updateKey<Record<string, Stats>>(STATS, {}, (latest) => {
     const stats = latest[me.id] ?? current;
     if (stats.claimedRooms.includes(room.id)) return latest;
@@ -904,6 +934,7 @@ export function claimBattle(me: Me, room: Room) {
         name: me.name,
         avatar: me.avatar,
         xp: (stats.xp ?? 0) + gained,
+        coins: (stats.coins ?? 20) + earnedCoins,
         battlePlayed: (stats.battlePlayed ?? 0) + 1,
         battleWins: (stats.battleWins ?? 0) + (won ? 1 : 0),
         claimedRooms: [...(stats.claimedRooms ?? []), room.id],
@@ -911,6 +942,30 @@ export function claimBattle(me: Me, room: Room) {
       },
     };
   });
+}
+
+export function buyStreakFreeze(me: Me): { ok: boolean; message: string } {
+  let success = false;
+  let msg = '';
+  updateKey<Record<string, Stats>>(STATS, {}, (map) => {
+    const current = map[me.id] ?? emptyStats(me);
+    const coins = current.coins ?? 20;
+    if (coins < 15) {
+      msg = 'Mablag‘ yetarli emas (kamida 15 MedCoins kerak)';
+      return map;
+    }
+    success = true;
+    msg = 'Streak Freeze muvaffaqiyatli xarid qilindi!';
+    return {
+      ...map,
+      [me.id]: {
+        ...current,
+        coins: coins - 15,
+        streakFreezes: (current.streakFreezes ?? 0) + 1,
+      },
+    };
+  });
+  return { ok: success, message: msg };
 }
 
 let invitesSnap: { raw: string | null; value: Invite[] } | null = null;
@@ -1311,17 +1366,24 @@ export function recordMistake(
   updateKey<MistakeItem[]>(MISTAKES, [], (list) => {
     const safeList = Array.isArray(list) ? list : [];
     const existingIndex = safeList.findIndex((m) => m.questionId === question.id);
+    const existing = existingIndex >= 0 ? safeList[existingIndex] : null;
+
     const item: MistakeItem = {
-      id: existingIndex >= 0 ? safeList[existingIndex].id : uid('mistake'),
+      id: existing ? existing.id : uid('mistake'),
       questionId: question.id,
       bankId,
       bankName: bankName || 'Fan',
       prompt: question.prompt,
       options: question.options,
       image: question.image,
+      audio: question.audio || null,
       pickedIndices,
       timestamp: Date.now(),
-      saved: existingIndex >= 0 ? (saved || safeList[existingIndex].saved) : saved,
+      saved: existing ? (saved || existing.saved) : saved,
+      interval: 1,
+      repetitions: 0,
+      easeFactor: existing?.easeFactor || 2.5,
+      nextReviewDate: Date.now() + 24 * 60 * 60 * 1000,
     };
     if (existingIndex >= 0) {
       const copy = [...safeList];
@@ -1329,6 +1391,24 @@ export function recordMistake(
       return copy;
     }
     return [item, ...safeList];
+  });
+}
+
+export function updateMistakeSRS(questionId: string, isCorrect: boolean) {
+  updateKey<MistakeItem[]>(MISTAKES, [], (list) => {
+    const safeList = Array.isArray(list) ? list : [];
+    const idx = safeList.findIndex((m) => m.questionId === questionId || m.id === questionId);
+    if (idx < 0) return safeList;
+
+    const current = safeList[idx];
+    const srsData = calculateNextReview(current, isCorrect);
+    const copy = [...safeList];
+    copy[idx] = {
+      ...current,
+      ...srsData,
+      timestamp: Date.now(),
+    };
+    return copy;
   });
 }
 

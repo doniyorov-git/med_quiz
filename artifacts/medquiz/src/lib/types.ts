@@ -11,6 +11,7 @@ export type Question = {
   prompt: string;
   options: Option[];
   image: string | null;
+  audio?: string | null;
 };
 
 export type Bank = {
@@ -28,12 +29,19 @@ export type Me = {
   phone?: string;
   password?: string;
   email?: string;
+  telegramId?: string | number;
+  termsAgreed?: boolean;
+  termsAgreedAt?: number;
   university: string;
   course: string;
   faculty: string;
   bio?: string;
   avatar: string | null;
+  xp?: number;
 };
+
+export type Contrast = 'standard' | 'high';
+export type FontSize = 'standard' | 'large' | 'huge';
 
 export type DayStat = {
   correct: number;
@@ -50,6 +58,8 @@ export type Stats = {
   answered: number;
   xp: number;
   streak: number;
+  coins?: number;
+  streakFreezes?: number;
   lastDay: string;
   perfects: number;
   fastCorrect: number;
@@ -69,6 +79,7 @@ export type RoomPlayer = {
   name: string;
   avatar: string | null;
   ready?: boolean;
+  seen?: number;
 };
 
 export type Room = {
@@ -79,6 +90,7 @@ export type Room = {
   bankName: string;
   order: OrderMode;
   seconds: number;
+  mode?: 'standard' | 'sudden_death' | 'speed_run';
   status: 'lobby' | 'countdown' | 'live' | 'done';
   questions: Question[];
   players: RoomPlayer[];
@@ -191,9 +203,14 @@ export type MistakeItem = {
   prompt: string;
   options: Option[];
   image: string | null;
+  audio?: string | null;
   pickedIndices: number[];
   timestamp: number;
   saved?: boolean;
+  interval?: number;
+  repetitions?: number;
+  easeFactor?: number;
+  nextReviewDate?: number;
 };
 
 export type BattleChatMessage = {

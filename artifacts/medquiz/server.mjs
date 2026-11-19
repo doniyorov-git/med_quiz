@@ -354,6 +354,79 @@ const server = http.createServer((req, res) => {
       });
     }
 
+    // 7.1 POST /api/auth/telegram-sync
+    if (apiPath === '/api/auth/telegram-sync' && req.method === 'POST') {
+      return readBody((body) => {
+        if (!body || !body.telegramId) {
+          return sendJson(400, { ok: false, error: 'Telegram ID talab qilinadi' });
+        }
+
+        const tgIdStr = String(body.telegramId);
+        let foundUser = null;
+        for (const user of usersMap.values()) {
+          if (String(user.telegramId) === tgIdStr || String(user.id) === `tg-${tgIdStr}`) {
+            foundUser = user;
+            break;
+          }
+        }
+
+        if (!foundUser && body.username) {
+          const normUsername = String(body.username).toLowerCase().replace(/^@/, '');
+          for (const user of usersMap.values()) {
+            if (user.username && user.username.toLowerCase() === normUsername) {
+              foundUser = user;
+              break;
+            }
+          }
+        }
+
+        if (foundUser) {
+          const updated = {
+            ...foundUser,
+            telegramId: tgIdStr,
+            termsAgreed: true,
+            termsAgreedAt: foundUser.termsAgreedAt || Date.now(),
+            seen: Date.now(),
+          };
+          if (body.photoUrl && !updated.avatar) updated.avatar = body.photoUrl;
+          if (body.phone && !updated.phone) updated.phone = body.phone;
+          usersMap.set(updated.id, updated);
+          persistUsers();
+          return sendJson(200, {
+            ok: true,
+            user: updated,
+            needsContact: !updated.phone,
+          });
+        }
+
+        const newUser = {
+          id: `tg-${tgIdStr}`,
+          telegramId: tgIdStr,
+          name: `${body.firstName || ''} ${body.lastName || ''}`.trim() || `Talaba ${tgIdStr.slice(-4)}`,
+          username: body.username ? String(body.username).toLowerCase() : `user_${tgIdStr}`,
+          phone: body.phone || '',
+          avatar: body.photoUrl || null,
+          role: 'Talaba',
+          rating: 1000,
+          xp: 50,
+          coins: 20,
+          streak: 1,
+          streakFreezes: 1,
+          termsAgreed: true,
+          termsAgreedAt: Date.now(),
+          seen: Date.now(),
+        };
+
+        usersMap.set(newUser.id, newUser);
+        persistUsers();
+        return sendJson(200, {
+          ok: true,
+          user: newUser,
+          needsContact: !newUser.phone,
+        });
+      });
+    }
+
     // 8. GET /api/friends
     if (apiPath === '/api/friends' && req.method === 'GET') {
       return sendJson(200, friendsList);
